@@ -1,5 +1,5 @@
 # Used by "mix format"
-locals_without_parens = [defdefault: 2]
+locals_without_parens = []
 
 [
   inputs: ["{mix,.credo,.formatter,.dialyzer_ignore}.exs", "{config,lib,test}/**/*.{ex,exs}"],
