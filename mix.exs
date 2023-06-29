@@ -1,10 +1,10 @@
 defmodule MyPackage.MixProject do
   use Mix.Project
 
-  @app :my_package
-  @name "MyPackage"
+  @app :babel
+  @name "Babel"
   @description "A cool description"
-  @repo "https://github.com/sascha-wolf/my_package"
+  @repo "https://github.com/sascha-wolf/#{@app}"
 
   def project do
     [
