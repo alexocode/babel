@@ -14,4 +14,4 @@ Before submitting the PR make sure the following are checked:
 * [ ] Added tests.
 * [ ] Ran `mix check.all`, it verifies the formatting and runs `credo` and `dialyzer`
 * [ ] Ran `mix test`
-* [ ] Added an entry to the [Changelog](https://github.com/sascha-wolf/knigge/blob/main/CHANGELOG.md) if the new code introduces user-observable changes. See the [changelog entry format](https://github.com/sascha-wolf/knigge/blob/main/CONTRIBUTING.md#changelog-entry-format).
+* [ ] Added an entry to the [Changelog](https://github.com/sascha-wolf/babel/blob/main/CHANGELOG.md) if the new code introduces user-observable changes. See the [changelog entry format](https://github.com/sascha-wolf/babel/blob/main/CONTRIBUTING.md#changelog-entry-format).
