@@ -17,10 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     container: hexpm/elixir:${{ matrix.elixir }}-erlang-${{ matrix.otp }}-alpine-${{ matrix.alpine }}
     env:
-      MIX_ENV: test
       VERSION_ALPINE: ${{ matrix.alpine }}
       VERSION_ELIXIR: ${{ matrix.elixir }}
       VERSION_OTP: ${{ matrix.otp }}
+      MIX_ENV: test
     strategy:
       fail-fast: false
       matrix:
@@ -48,7 +48,28 @@ jobs:
             otp: 23.0.2
           - alpine: 3.14.0
             elixir: 1.12.3
-            otp: 24.1.1
+            otp: 24.3.4.13
+          - alpine: 3.18.2
+            elixir: 1.13.4
+            otp: 24.3.4.13
+          - alpine: 3.18.2
+            elixir: 1.13.4
+            otp: 25.3.2.3
+          - alpine: 3.18.2
+            elixir: 1.14.5
+            otp: 24.3.4.13
+          - alpine: 3.18.2
+            elixir: 1.14.5
+            otp: 25.3.2.3
+          - alpine: 3.18.2
+            elixir: 1.15.0
+            otp: 24.3.4.13
+          - alpine: 3.18.2
+            elixir: 1.15.0
+            otp: 25.3.2.3
+          - alpine: 3.18.2
+            elixir: 1.15.0
+            otp: 26.0.2
     steps:
       - uses: actions/checkout@v2
 
@@ -78,12 +99,12 @@ jobs:
   coverage:
     name: Collect Test Coverage
     runs-on: ubuntu-latest
-    container: hexpm/elixir:1.11.2-erlang-22.3.4.3-alpine-3.11.6
+    container: hexpm/elixir:1.15.0-erlang-26.0.2-alpine-3.18.6
     env:
+      VERSION_ALPINE: 3.18.2
+      VERSION_ELIXIR: 1.15.0
+      VERSION_OTP: 26.0.2
       MIX_ENV: test
-      VERSION_ALPINE: 3.11.6
-      VERSION_ELIXIR: 1.11.2
-      VERSION_OTP: 22.3.4.3
     steps:
       - name: Install git (required for mix coveralls.github)
         run: apk add --no-cache git
@@ -121,12 +142,12 @@ jobs:
   check_style:
     name: Check Style
     runs-on: ubuntu-latest
-    container: hexpm/elixir:1.11.2-erlang-22.3.4.3-alpine-3.11.6
+    container: hexpm/elixir:1.15.0-erlang-26.0.2-alpine-3.18.6
     env:
+      VERSION_ALPINE: 3.18.2
+      VERSION_ELIXIR: 1.15.0
+      VERSION_OTP: 26.0.2
       MIX_ENV: dev
-      VERSION_ALPINE: 3.11.6
-      VERSION_ELIXIR: 1.11.2
-      VERSION_OTP: 22.3.4.3
     steps:
       - uses: actions/checkout@v2
 
@@ -157,12 +178,12 @@ jobs:
   check_types:
     name: Check Types
     runs-on: ubuntu-latest
-    container: hexpm/elixir:1.11.2-erlang-22.3.4.3-alpine-3.11.6
+    container: hexpm/elixir:1.15.0-erlang-26.0.2-alpine-3.18.6
     env:
+      VERSION_ALPINE: 3.18.2
+      VERSION_ELIXIR: 1.15.0
+      VERSION_OTP: 26.0.2
       MIX_ENV: dev
-      VERSION_ALPINE: 3.11.6
-      VERSION_ELIXIR: 1.11.2
-      VERSION_OTP: 22.3.4.3
     steps:
       - uses: actions/checkout@v2
 

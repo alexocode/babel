@@ -14,11 +14,11 @@ jobs:
   publish_to_hex:
     name: Publish to Hex.pm
     runs-on: ubuntu-latest
-    container: hexpm/elixir:1.11.2-erlang-22.3.4.3-alpine-3.11.6
+    container: hexpm/elixir:1.15.0-erlang-26.0.2-alpine-3.18.6
     env:
-      VERSION_ALPINE: 3.11.6
-      VERSION_ELIXIR: 1.11.2
-      VERSION_OTP: 22.3.4.3
+      VERSION_ALPINE: 3.18.2
+      VERSION_ELIXIR: 1.15.0
+      VERSION_OTP: 26.0.2
     steps:
       - uses: actions/checkout@v2
 
