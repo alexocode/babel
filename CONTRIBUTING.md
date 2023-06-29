@@ -1,7 +1,7 @@
 # Contributing
 
 If you discover issues, have ideas for improvements or new features,
-please [open an issue](https://github.com/sascha-wolf/knigge/issues)
+please [open an issue](https://github.com/sascha-wolf/babel/issues)
 or submit a pull request.
 
 Make sure to follow the following guidelines when doing so.
@@ -40,10 +40,10 @@ Here are a few examples:
 
 * Mark it up in [Markdown syntax](https://daringfireball.net/projects/markdown/syntax).
 * The entry line should start with `- ` (a dash and a space).
-* Begin with a link to your pull request (`[#456](https://github.com/sascha-wolf/knigge/pull/456): `)
+* Begin with a link to your pull request (`[#456](https://github.com/sascha-wolf/babel/pull/456): `)
 * Describe the core idea of the change. The sentence should end with punctuation.
 * If this is a breaking change, mark it with `**(Breaking)**`.
 * At the end of the entry, add an implicit link to your GitHub user page as `([@username])`.
-* If this is your first contribution to Knigge, add a link definition for the implicit link to the bottom of the changelog as `[@username]: https://github.com/username`.
+* If this is your first contribution to babel, add a link definition for the implicit link to the bottom of the changelog as `[@username]: https://github.com/username`.
 
 *These guidelines were inspired by the [contribution guidelines of the rubocop project](https://github.com/rubocop/rubocop/blob/master/CONTRIBUTING.md).*
