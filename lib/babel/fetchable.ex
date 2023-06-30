@@ -1,4 +1,11 @@
 defprotocol Babel.Fetchable do
+  @typedoc """
+  Anything that implements this protocol.
+
+  Has default implementations for Map, List, and Tuple, and a fallback for structs.
+  """
+  @type t :: term
+
   @fallback_to_any true
 
   @doc "Fetch the given path the data"
