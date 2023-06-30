@@ -29,4 +29,40 @@ defmodule Babel.Step.Builder.Primitives do
       {:error, error} -> raise error
     end
   end
+
+  def cast(:boolean, binary) do
+    binary
+    |> String.trim()
+    |> String.downcase()
+    |> case do
+      truthy when truthy in ["true", "yes"] ->
+        {:ok, true}
+
+      falsy when falsy in ["false", "no"] ->
+        {:ok, false}
+
+      _other ->
+        {:error, {:invalid_boolean, binary}}
+    end
+  end
+
+  def cast(:float, binary) do
+    case Float.parse(binary) do
+      {float, ""} when is_float(float) ->
+        {:ok, float}
+
+      _other ->
+        {:error, {:invalid_float, binary}}
+    end
+  end
+
+  def cast(:integer, binary) do
+    case Integer.parse(binary) do
+      {integer, ""} when is_integer(integer) ->
+        {:ok, integer}
+
+      _other ->
+        {:error, {:invalid_integer, binary}}
+    end
+  end
 end

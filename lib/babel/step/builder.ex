@@ -22,48 +22,10 @@ defmodule Babel.Step.Builder do
   @spec cast(name, :boolean) :: Step.t(Babel.data(), boolean)
   @spec cast(name, Step.step_fun(input, output)) :: Step.t(input, output)
         when input: any, output: any
-  def cast(name \\ nil, target_or_function)
+  def cast(name \\ nil, type_or_function)
 
-  def cast(name, :boolean) do
-    cast(name || {:cast, :boolean}, fn binary ->
-      binary
-      |> String.trim()
-      |> String.downcase()
-      |> case do
-        truthy when truthy in ["true", "yes"] ->
-          {:ok, true}
-
-        falsy when falsy in ["false", "no"] ->
-          {:ok, false}
-
-        _other ->
-          {:error, {:invalid_boolean, binary}}
-      end
-    end)
-  end
-
-  def cast(name, :float) do
-    cast(name || {:cast, :float}, fn binary ->
-      case Float.parse(binary) do
-        {float, ""} when is_float(float) ->
-          {:ok, float}
-
-        _other ->
-          {:error, {:invalid_float, binary}}
-      end
-    end)
-  end
-
-  def cast(name, :integer) do
-    cast(name || {:cast, :integer}, fn binary ->
-      case Integer.parse(binary) do
-        {integer, ""} when is_integer(integer) ->
-          {:ok, integer}
-
-        _other ->
-          {:error, {:invalid_integer, binary}}
-      end
-    end)
+  def cast(name, type) when type in [:boolean, :float, :integer] do
+    cast(name || {:cast, type}, &Primitives.cast(type, &1))
   end
 
   def cast(name, function) when is_function(function, 1) do
@@ -83,6 +45,7 @@ defmodule Babel.Step.Builder do
       |> Enum.reduce({:ok, []}, fn element, {ok_or_error, list} ->
         {name, element}
         |> Step.new(mapper)
+        # TODO: Invoke a returned step
         |> Step.apply(element)
         |> case do
           {^ok_or_error, value} ->
