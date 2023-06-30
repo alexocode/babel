@@ -1,4 +1,4 @@
-defmodule Babel.Primitives do
+defmodule Babel.Step.Builder.Primitives do
   @moduledoc false
 
   def fetch(data, path) do
