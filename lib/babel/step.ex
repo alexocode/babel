@@ -10,7 +10,7 @@ defmodule Babel.Step do
         }
   defstruct [:function, :name]
 
-  @typedoc "Any term that describes what this step does"
+  @typedoc "A term describing what this step does"
   @type name() :: term
 
   @type step_fun :: step_fun(any, any)
