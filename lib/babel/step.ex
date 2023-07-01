@@ -17,6 +17,8 @@ defmodule Babel.Step do
   @type step_fun(input, output) ::
           (input -> output | {:ok, output} | :error | {:error, reason :: any})
 
+  defguard is_step_function(function) when is_function(function, 1)
+
   @spec new(name, step_fun(input, output)) :: t(input, output) when input: any, output: any
   def new(name, function) when is_function(function, 1) do
     %__MODULE__{name: name, function: function}
@@ -38,5 +40,23 @@ defmodule Babel.Step do
       data ->
         {:ok, data}
     end
+  end
+
+  @spec chain(list(t)) :: Step.t()
+  def chain(list) when is_list(list) do
+    names = Enum.map(list, & &1.name)
+
+    new(
+      {:chain, names},
+      &Enum.reduce_while(list, {:ok, &1}, fn step, {:ok, data} ->
+        case apply(step, data) do
+          {:ok, result} ->
+            {:cont, {:ok, result}}
+
+          {:error, error} ->
+            {:halt, {:error, error}}
+        end
+      end)
+    )
   end
 end

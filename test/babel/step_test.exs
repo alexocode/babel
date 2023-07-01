@@ -1,6 +1,8 @@
 defmodule Babel.StepTest do
   use ExUnit.Case, async: true
 
+  import Babel.Support.StepFactory
+
   alias Babel.Step
 
   describe "new/p" do
@@ -45,24 +47,37 @@ defmodule Babel.StepTest do
       assert %Babel.Error{} = error
       assert error.reason == ref
       assert error.data == :ignored
+      assert error.step == step
     end
   end
 
-  defp step(function) when is_function(function, 1) do
-    step({:test, make_ref()}, function)
-  end
+  describe "chain/1" do
+    test "returns a step whose name is a combination of the given steps" do
+      step1 = step()
+      step2 = step()
+      step3 = step()
 
-  defp step(name) do
-    # To make the step functions different
-    ref = make_ref()
+      chained_step = Step.chain([step1, step2, step3])
 
-    step(name, fn _ -> {name, ref} end)
-  end
+      assert chained_step.name == {:chain, [step1.name, step2.name, step3.name]}
+    end
 
-  defp step(name, function) do
-    %Step{
-      name: name,
-      function: function
-    }
+    test "returns a step which applies all given steps when applied" do
+      data = %{
+        some: %{
+          nested: [
+            "values"
+          ]
+        }
+      }
+
+      step1 = step(fn %{some: some} -> some end)
+      step2 = step(fn %{nested: nested} -> nested end)
+      step3 = step(fn [value] -> value end)
+
+      chained_step = Step.chain([step1, step2, step3])
+
+      assert Step.apply(chained_step, data) == {:ok, "values"}
+    end
   end
 end
