@@ -223,18 +223,200 @@ defmodule Babel.Enum do
   @spec max(t) :: t(element | no_return)
   @spec max(t, (-> empty_result)) :: t(element | empty_result) when empty_result: any
   @spec max(t, (element, element -> boolean) | module()) ::
-          element | empty_result
+          t(element | empty_result)
         when empty_result: any
   @spec max(t, (element, element -> boolean) | module(), (-> empty_result)) ::
-          element | empty_result
+          t(element | empty_result)
         when empty_result: any
   deflifted max(babel)
   deflifted max(babel, empty_fallback)
   deflifted max(babel, sorter, empty_fallback)
 
-  @spec max_by(t, (element -> any), empty_fallback) :: t(element | empty_result)
-        when empty_result: any,
-             empty_fallback: (-> empty_result) | (element, element -> boolean) | module()
+  @spec max_by(t, (element -> any), (-> empty_result) | (element, element -> boolean) | module()) ::
+          t(element | empty_result)
+        when empty_result: any
   deflifted max_by(babel, fun, empty_fallback)
-            when is_function(fun, 1) and is_function(empty_fallback, 0)
+            when is_function(fun, 1)
+
+  @spec max_by(
+          t,
+          (element -> any),
+          (element, element -> boolean) | module(),
+          (-> empty_result)
+        ) :: t(element | empty_result)
+        when empty_result: any
+  deflifted max_by(babel, fun, sorter, empty_fallback)
+            when is_function(fun, 1)
+
+  @spec member?(t, element) :: t(boolean)
+  deflifted member?(babel, element)
+
+  @spec min(t) :: t(element | no_return)
+  @spec min(t, (-> empty_result)) :: t(element | empty_result) when empty_result: any
+  @spec min(t, (element, element -> boolean) | module()) ::
+          t(element | empty_result)
+        when empty_result: any
+  @spec min(t, (element, element -> boolean) | module(), (-> empty_result)) ::
+          t(element | empty_result)
+        when empty_result: any
+  deflifted min(babel)
+  deflifted min(babel, empty_fallback)
+  deflifted min(babel, sorter, empty_fallback)
+
+  @spec min_by(t, (element -> any), (-> empty_result) | (element, element -> boolean) | module()) ::
+          t(element | empty_result)
+        when empty_result: any
+  deflifted min_by(babel, fun, empty_fallback) when is_function(fun, 1)
+
+  @spec min_by(
+          t,
+          (element -> any),
+          (element, element -> boolean) | module(),
+          (-> empty_result)
+        ) :: t(element | empty_result)
+        when empty_result: any
+  deflifted min_by(babel, fun, sorter, empty_fallback) when is_function(fun, 1)
+
+  @spec min_max(t) :: t({element, element} | no_return)
+  deflifted min_max(babel)
+
+  @spec min_max(t, (-> empty_result)) :: t({element, element} | empty_result)
+        when empty_result: any
+  deflifted min_max(babel, empty_fallback)
+
+  @spec min_max_by(t, (element -> any), (-> empty_result)) :: {element, element} | empty_result
+        when empty_result: any
+  @spec min_max_by(t, (element -> any), (element, element -> boolean) | module()) ::
+          t({element, element} | no_return)
+  deflifted min_max_by(babel, fun, empty_fallback) when is_function(fun, 1)
+
+  @spec min_max_by(
+          t,
+          (element -> any),
+          (element, element -> boolean) | module(),
+          (-> empty_result)
+        ) :: t({element, element} | empty_result)
+        when empty_result: any
+  deflifted min_max_by(babel, fun, sorter, empty_fallback) when is_function(fun, 1)
+
+  @spec split_with(t, (element -> as_boolean(term))) :: t({list, list})
+  deflifted split_with(babel, fun)
+
+  @spec random(t) :: t(element)
+  deflifted random(babel)
+
+  @spec reduce(t, (element, acc -> acc)) :: t(acc)
+  deflifted reduce(babel, fun)
+  @spec reduce(t, acc, (element, acc -> acc)) :: t(acc)
+  deflifted reduce(babel, acc, fun)
+
+  @spec reduce_while(t, acc, (element, acc -> {:cont, acc} | {:halt, halted})) :: t(acc | halted)
+        when acc: any, halted: any
+  deflifted reduce_while(babel, acc, fun)
+
+  @spec reject(t, (element -> as_boolean(term))) :: t(list)
+  deflifted reject(babel, fun)
+
+  @spec reverse(t) :: t(list)
+  deflifted reverse(babel)
+
+  @spec reverse(t, enum) :: t(list)
+  deflifted reverse(babel, tail)
+
+  @spec reverse_slice(t, non_neg_integer, non_neg_integer) :: t(list)
+  deflifted reverse_slice(babel, start_index, count)
+            when is_integer(start_index) and start_index >= 0 and is_integer(count) and count >= 0
+
+  @spec slide(t, Range.t() | index, index) :: t(list)
+  deflifted slide(babel, range_or_single_index, insertion_index)
+
+  @spec scan(t, (element, acc -> acc)) :: t(list(acc)) when acc: any
+  deflifted scan(babel, fun)
+  @spec scan(t, acc, (element, acc -> acc)) :: t(list(acc)) when acc: any
+  deflifted scan(babel, acc, fun)
+
+  @spec shuffle(t) :: t(list)
+  deflifted shuffle(babel)
+
+  @spec slice(t, Range.t()) :: t(list)
+  deflifted slice(babel, index_range)
+
+  @spec slice(t, index, non_neg_integer) :: t(list)
+  deflifted slice(babel, start_index, amount)
+            when is_integer(start_index) and is_integer(amount)
+
+  @spec sort(t) :: t(list)
+  deflifted sort(babel)
+
+  @spec sort(
+          t,
+          (element, element -> boolean) | :asc | :desc | module() | {:asc | :desc, module()}
+        ) :: t(list)
+  deflifted sort(babel, sorter)
+
+  @spec sort_by(t, (element -> mapped_element)) :: t(list) when mapped_element: element
+  deflifted sort_by(babel, mapper)
+
+  @spec sort_by(
+          t,
+          (element -> mapped_element),
+          (element, element -> boolean) | :asc | :desc | module() | {:asc | :desc, module()}
+        ) :: t(list)
+        when mapped_element: element
+  deflifted sort_by(babel, mapper, sorter)
+
+  @spec split(t, integer) :: t({list, list})
+  deflifted split(babel, count) when is_integer(count)
+
+  @spec split_while(t, (element -> as_boolean(term))) :: t({list, list})
+  deflifted split_while(babel, fun)
+
+  @spec sum(t) :: t(number)
+  deflifted sum(babel)
+
+  @spec product(t) :: t(number)
+  deflifted product(babel)
+
+  @spec take(t, integer) :: t(list)
+  deflifted take(babel, amount) when is_integer(amount)
+
+  @spec take_every(t, non_neg_integer) :: t(list)
+  deflifted take_every(babel, nth) when is_integer(nth) and nth >= 0
+
+  @spec take_random(t, non_neg_integer) :: t(list)
+  deflifted take_random(babel, count) when is_integer(count) and count >= 0
+
+  @spec take_while(t, (element -> as_boolean(term))) :: t(list)
+  deflifted take_while(babel, fun)
+
+  @spec to_list(t) :: t([element])
+  deflifted to_list(babel)
+
+  @spec uniq(t) :: t(list)
+  deflifted uniq(babel)
+
+  @spec uniq_by(t, (element -> term)) :: t(list)
+  deflifted uniq_by(babel, fun)
+
+  @spec unzip(t) :: t({[element], [element]})
+  deflifted unzip(babel)
+
+  @spec with_index(t, integer) :: t([{term, integer}])
+  deflifted with_index(babel)
+  @spec with_index(t, (element, index -> value)) :: t([value]) when value: any
+  deflifted with_index(babel, fun_or_offset)
+
+  @spec zip(t, enum) :: t([{any, any}])
+  deflifted zip(babel, enumerable2)
+
+  @spec zip_with(t, enum, (enum1_elem :: term, enum2_elem :: term -> zipped)) :: t([zipped])
+        when zipped: term
+  deflifted zip_with(babel, enumerable2, zip_fun) when is_function(zip_fun, 2)
+
+  @spec zip_reduce(t, enum, acc, (enum1_elem :: term, enum2_elem :: term, acc -> acc)) :: t(acc)
+        when acc: term
+  deflifted zip_reduce(babel, right, acc, reducer) when is_function(reducer, 3)
+
+  @spec zip_reduce(t, acc, ([term], acc -> acc)) :: t(acc) when acc: term
+  deflifted zip_reduce(babel, acc, reducer) when is_function(reducer, 2)
 end
