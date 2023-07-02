@@ -169,11 +169,11 @@ defmodule Babel.Enum do
   @spec find_value(t, default, (element -> any)) :: t(any | nil)
   deflifted find_value(babel, default, fun)
 
-  @spec flat_map(t, (element -> t)) :: t(list)
+  @spec flat_map(t, (element -> enum)) :: t(list)
   deflifted flat_map(babel, fun)
 
   @spec flat_map_reduce(t, acc, fun) :: t({[any], acc})
-        when fun: (element, acc -> {t, acc} | {:halt, acc})
+        when fun: (element, acc -> {enum, acc} | {:halt, acc})
   deflifted flat_map_reduce(babel, acc, fun)
 
   @spec frequencies(t) :: t(map)
