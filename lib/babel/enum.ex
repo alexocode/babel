@@ -1,83 +1,13 @@
-defmodule Babel.Enum.Lifting do
-  @moduledoc false
-
-  alias Babel.{Pipeline, Step}
-
-  require Step
-
-  defmacro deflifted(call) do
-    {name, [babel | args]} = name_and_args(call)
-
-    doc = """
-    Returns a Babel struct that wraps `Enum.#{name}/#{1 + length(args)}`.
-
-    See the moduledoc for further details.
-    """
-
-    quote location: :keep do
-      @doc unquote(doc)
-      def unquote(call) do
-        unquote(__MODULE__).wrap(unquote(babel), unquote(name), unquote(args))
-      end
-    end
-  end
-
-  defp name_and_args({:when, _, [call | _guards]}) do
-    name_and_args(call)
-  end
-
-  defp name_and_args({name, _, args}) do
-    {name, without_defaults!(name, args)}
-  end
-
-  defp without_defaults!(name, args) do
-    Enum.each(args, fn
-      {:\\, _, [_var | _]} = default ->
-        raise ArgumentError,
-              "default found where none expected(#{name}): " <> Macro.to_string(default)
-
-      _ ->
-        :ok
-    end)
-
-    args
-  end
-
-  @spec wrap(Babel.Enum.t(), func_name :: atom, args :: list) :: Babel.Enum.t()
-  def wrap(babel, func_name, args) when is_atom(func_name) and is_list(args) do
-    wrap(babel, {func_name, args}, &apply(Elixir.Enum, func_name, [&1 | args]))
-  end
-
-  @spec wrap(
-          Babel.Enum.t(in_between),
-          name :: Step.name(),
-          function :: Step.step_fun(in_between, output)
-        ) :: Babel.Enum.t(output)
-        when in_between: in_between, output: any
-  def wrap(%Pipeline{} = pipeline, name, function) when Step.is_step_function(function) do
-    Pipeline.chain(pipeline, Step.new(name, function))
-  end
-
-  def wrap(%Step{} = step, name, function) when Step.is_step_function(function) do
-    Pipeline.new(
-      :pipeline,
-      [
-        step,
-        Step.new(name, function)
-      ]
-    )
-  end
-end
-
 defmodule Babel.Enum do
   alias Babel.Step
 
-  import __MODULE__.Lifting
+  import Babel.Lifting
 
   require Step
 
   @type t :: t(term)
   @type t(output) :: Babel.Applicable.t(enum, output)
+  @type pipeline(output) :: Babel.Lifting.pipeline(output)
   @type enum :: Enum.t()
   @type acc :: any
   @type element :: any
@@ -86,337 +16,347 @@ defmodule Babel.Enum do
   @typedoc "Zero-based index. It can also be a negative integer."
   @type index :: integer
 
-  @spec all?(t) :: t(boolean)
-  deflifted all?(babel)
+  @spec all?(t) :: pipeline(boolean)
+  deflifted all?(babel), from: Enum
 
-  @spec all?(t, (element -> as_boolean(term))) :: t(boolean)
-  deflifted all?(babel, fun)
+  @spec all?(t, (element -> as_boolean(term))) :: pipeline(boolean)
+  deflifted all?(babel, fun), from: Enum
 
-  @spec any?(t) :: t(boolean)
-  deflifted any?(babel)
+  @spec any?(t) :: pipeline(boolean)
+  deflifted any?(babel), from: Enum
 
-  @spec any?(t, (element -> as_boolean(term))) :: t(boolean)
-  deflifted any?(babel, fun)
+  @spec any?(t, (element -> as_boolean(term))) :: pipeline(boolean)
+  deflifted any?(babel, fun), from: Enum
 
-  @spec at(t, index) :: t(element | default)
-  deflifted at(babel, index) when is_integer(index)
-  @spec at(t, index, default) :: t(element | default)
-  deflifted at(babel, index, default) when is_integer(index)
+  @spec at(t, index) :: pipeline(element | default)
+  deflifted at(babel, index) when is_integer(index), from: Enum
+  @spec at(t, index, default) :: pipeline(element | default)
+  deflifted at(babel, index, default) when is_integer(index), from: Enum
 
-  @spec chunk_every(t, pos_integer) :: t([list()])
-  deflifted chunk_every(babel, count)
+  @spec chunk_every(t, pos_integer) :: pipeline([list()])
+  deflifted chunk_every(babel, count), from: Enum
 
-  @spec chunk_every(t, pos_integer, pos_integer) :: t([list()])
+  @spec chunk_every(t, pos_integer, pos_integer) :: pipeline([list()])
   deflifted chunk_every(babel, count, step)
-            when is_integer(count) and count > 0 and is_integer(step) and step > 0
+            when is_integer(count) and count > 0 and is_integer(step) and step > 0,
+            from: Enum
 
-  @spec chunk_every(t, pos_integer, pos_integer, enum | :discard) :: t([list()])
+  @spec chunk_every(t, pos_integer, pos_integer, enum | :discard) :: pipeline([list()])
   deflifted chunk_every(babel, count, step, leftover)
-            when is_integer(count) and count > 0 and is_integer(step) and step > 0
+            when is_integer(count) and count > 0 and is_integer(step) and step > 0,
+            from: Enum
 
-  @spec chunk_while(t, acc, chunk_fun, after_fun) :: t(enum)
+  @spec chunk_while(t, acc, chunk_fun, after_fun) :: pipeline(enum)
         when chunk: any,
              chunk_fun: (element, acc -> {:cont, chunk, acc} | {:cont, acc} | {:halt, acc}),
              after_fun: (acc -> {:cont, chunk, acc} | {:cont, acc})
-  deflifted chunk_while(babel, acc, chunk_fun, after_fun)
+  deflifted chunk_while(babel, acc, chunk_fun, after_fun), from: Enum
 
-  @spec chunk_by(t, (element -> any)) :: t([list])
-  deflifted chunk_by(babel, fun)
+  @spec chunk_by(t, (element -> any)) :: pipeline([list])
+  deflifted chunk_by(babel, fun), from: Enum
 
-  @spec count(t) :: t(non_neg_integer)
-  deflifted count(babel)
+  @spec count(t) :: pipeline(non_neg_integer)
+  deflifted count(babel), from: Enum
 
-  @spec count(t, (element -> as_boolean(term))) :: t(non_neg_integer)
-  deflifted count(babel, fun)
+  @spec count(t, (element -> as_boolean(term))) :: pipeline(non_neg_integer)
+  deflifted count(babel, fun), from: Enum
 
-  @spec count_until(t, pos_integer) :: t(non_neg_integer)
-  deflifted count_until(babel, limit) when is_integer(limit) and limit > 0
+  @spec count_until(t, pos_integer) :: pipeline(non_neg_integer)
+  deflifted count_until(babel, limit) when is_integer(limit) and limit > 0, from: Enum
 
-  @spec count_until(t, (element -> as_boolean(term)), pos_integer) :: t(non_neg_integer)
-  deflifted count_until(babel, fun, limit) when is_integer(limit) and limit > 0
+  @spec count_until(t, (element -> as_boolean(term)), pos_integer) :: pipeline(non_neg_integer)
+  deflifted count_until(babel, fun, limit) when is_integer(limit) and limit > 0, from: Enum
 
-  @spec dedup(t) :: t(list)
-  deflifted dedup(babel)
+  @spec dedup(t) :: pipeline(list)
+  deflifted dedup(babel), from: Enum
 
-  @spec dedup_by(t, (element -> term)) :: t(list)
-  deflifted dedup_by(babel, fun)
+  @spec dedup_by(t, (element -> term)) :: pipeline(list)
+  deflifted dedup_by(babel, fun), from: Enum
 
-  @spec drop(t, integer) :: t(list)
-  deflifted drop(babel, amount) when is_integer(amount)
+  @spec drop(t, integer) :: pipeline(list)
+  deflifted drop(babel, amount) when is_integer(amount), from: Enum
 
-  @spec drop_every(t, non_neg_integer) :: t(list)
-  deflifted drop_every(babel, nth) when is_integer(nth) and nth >= 0
+  @spec drop_every(t, non_neg_integer) :: pipeline(list)
+  deflifted drop_every(babel, nth) when is_integer(nth) and nth >= 0, from: Enum
 
-  @spec drop_while(t, (element -> as_boolean(term))) :: t(list)
-  deflifted drop_while(babel, fun)
+  @spec drop_while(t, (element -> as_boolean(term))) :: pipeline(list)
+  deflifted drop_while(babel, fun), from: Enum
 
-  @spec empty?(t) :: t(boolean)
-  deflifted empty?(babel)
+  @spec empty?(t) :: pipeline(boolean)
+  deflifted empty?(babel), from: Enum
 
-  @spec filter(t, (element -> as_boolean(term))) :: t(list)
-  deflifted filter(babel, fun)
+  @spec filter(t, (element -> as_boolean(term))) :: pipeline(list)
+  deflifted filter(babel, fun), from: Enum
 
-  @spec find(t, (element -> any)) :: t(element | default)
-  deflifted find(babel, fun)
-  @spec find(t, default, (element -> any)) :: t(element | default)
-  deflifted find(babel, default, fun)
+  @spec find(t, (element -> any)) :: pipeline(element | default)
+  deflifted find(babel, fun), from: Enum
+  @spec find(t, default, (element -> any)) :: pipeline(element | default)
+  deflifted find(babel, default, fun), from: Enum
 
-  @spec find_index(t, (element -> any)) :: t(non_neg_integer | nil)
-  deflifted find_index(babel, fun)
+  @spec find_index(t, (element -> any)) :: pipeline(non_neg_integer | nil)
+  deflifted find_index(babel, fun), from: Enum
 
-  @spec find_value(t, (element -> any)) :: t(any | nil)
-  deflifted find_value(babel, fun)
-  @spec find_value(t, default, (element -> any)) :: t(any | nil)
-  deflifted find_value(babel, default, fun)
+  @spec find_value(t, (element -> any)) :: pipeline(any | nil)
+  deflifted find_value(babel, fun), from: Enum
+  @spec find_value(t, default, (element -> any)) :: pipeline(any | nil)
+  deflifted find_value(babel, default, fun), from: Enum
 
-  @spec flat_map(t, (element -> enum)) :: t(list)
-  deflifted flat_map(babel, fun)
+  @spec flat_map(t, (element -> enum)) :: pipeline(list)
+  deflifted flat_map(babel, fun), from: Enum
 
-  @spec flat_map_reduce(t, acc, fun) :: t({[any], acc})
+  @spec flat_map_reduce(t, acc, fun) :: pipeline({[any], acc})
         when fun: (element, acc -> {enum, acc} | {:halt, acc})
-  deflifted flat_map_reduce(babel, acc, fun)
+  deflifted flat_map_reduce(babel, acc, fun), from: Enum
 
-  @spec frequencies(t) :: t(map)
-  deflifted frequencies(babel)
+  @spec frequencies(t) :: pipeline(map)
+  deflifted frequencies(babel), from: Enum
 
-  @spec frequencies_by(t, (element -> any)) :: t(map)
-  deflifted frequencies_by(babel, key_fun) when is_function(key_fun, 1)
+  @spec frequencies_by(t, (element -> any)) :: pipeline(map)
+  deflifted frequencies_by(babel, key_fun) when is_function(key_fun, 1), from: Enum
 
   @spec group_by(t, (element -> any)) :: map
-  deflifted group_by(babel, key_fun) when is_function(key_fun, 1)
+  deflifted group_by(babel, key_fun) when is_function(key_fun, 1), from: Enum
   @spec group_by(t, (element -> any), (element -> any)) :: map
   deflifted group_by(babel, key_fun, value_fun)
-            when is_function(key_fun, 1) and is_function(value_fun, 1)
+            when is_function(key_fun, 1) and is_function(value_fun, 1),
+            from: Enum
 
-  @spec intersperse(t, element) :: t(list)
-  deflifted intersperse(babel, separator)
+  @spec intersperse(t, element) :: pipeline(list)
+  deflifted intersperse(babel, separator), from: Enum
 
   # TODO: Custom impl for this?
-  # @spec into(t(), Collectable.t()) :: t(Collectable.t())
-  # deflifted into(babel, collectable)
+  # @spec into(t(), Collectable.t()) :: pipeline(Collectable.t())
+  # deflifted into(babel, collectable), from:   Enum
 
-  # @spec into(t(), Collectable.t(), (term -> term)) :: t(Collectable.t())
-  # deflifted into(babel, collectable, transform) do
+  # @spec into(t(), Collectable.t(), (term -> term)) :: pipeline(Collectable.t())
+  # deflifted into(babel, collectable, transform) do, from:   Enum
 
-  @spec join(t) :: t(String.t())
-  @spec join(t, String.t()) :: t(String.t())
-  deflifted join(babel)
-  deflifted join(babel, joiner)
+  @spec join(t) :: pipeline(String.t())
+  @spec join(t, String.t()) :: pipeline(String.t())
+  deflifted join(babel), from: Enum
+  deflifted join(babel, joiner), from: Enum
 
-  @spec map(t, (element -> any)) :: t(list)
-  deflifted map(babel, fun)
+  @spec map(t, (element -> any)) :: pipeline(list)
+  deflifted map(babel, fun), from: Enum
 
-  @spec map_every(t, non_neg_integer, (element -> any)) :: t(list)
-  deflifted map_every(babel, nth, fun)
+  @spec map_every(t, non_neg_integer, (element -> any)) :: pipeline(list)
+  deflifted map_every(babel, nth, fun), from: Enum
 
-  @spec map_intersperse(t, element(), (element -> any())) :: t(list)
-  deflifted map_intersperse(babel, separator, mapper)
+  @spec map_intersperse(t, element(), (element -> any())) :: pipeline(list)
+  deflifted map_intersperse(babel, separator, mapper), from: Enum
 
-  @spec map_join(t, (element -> String.Chars.t())) :: t(String.t())
-  @spec map_join(t, String.t(), (element -> String.Chars.t())) :: t(String.t())
-  deflifted map_join(babel, mapper)
-  deflifted map_join(babel, joiner, mapper) when is_binary(joiner)
+  @spec map_join(t, (element -> String.Chars.t())) :: pipeline(String.t())
+  @spec map_join(t, String.t(), (element -> String.Chars.t())) :: pipeline(String.t())
+  deflifted map_join(babel, mapper), from: Enum
+  deflifted map_join(babel, joiner, mapper) when is_binary(joiner), from: Enum
 
-  @spec map_reduce(t, acc, (element, acc -> {element, acc})) :: t({list, acc})
-  deflifted map_reduce(babel, acc, fun)
+  @spec map_reduce(t, acc, (element, acc -> {element, acc})) :: pipeline({list, acc})
+  deflifted map_reduce(babel, acc, fun), from: Enum
 
-  @spec max(t) :: t(element | no_return)
-  @spec max(t, (-> empty_result)) :: t(element | empty_result) when empty_result: any
+  @spec max(t) :: pipeline(element | no_return)
+  @spec max(t, (-> empty_result)) :: pipeline(element | empty_result) when empty_result: any
   @spec max(t, (element, element -> boolean) | module()) ::
           t(element | empty_result)
         when empty_result: any
   @spec max(t, (element, element -> boolean) | module(), (-> empty_result)) ::
           t(element | empty_result)
         when empty_result: any
-  deflifted max(babel)
-  deflifted max(babel, empty_fallback)
-  deflifted max(babel, sorter, empty_fallback)
+  deflifted max(babel), from: Enum
+  deflifted max(babel, empty_fallback), from: Enum
+  deflifted max(babel, sorter, empty_fallback), from: Enum
 
   @spec max_by(t, (element -> any), (-> empty_result) | (element, element -> boolean) | module()) ::
           t(element | empty_result)
         when empty_result: any
   deflifted max_by(babel, fun, empty_fallback)
-            when is_function(fun, 1)
+            when is_function(fun, 1),
+            from: Enum
 
   @spec max_by(
           t,
           (element -> any),
           (element, element -> boolean) | module(),
           (-> empty_result)
-        ) :: t(element | empty_result)
+        ) :: pipeline(element | empty_result)
         when empty_result: any
   deflifted max_by(babel, fun, sorter, empty_fallback)
-            when is_function(fun, 1)
+            when is_function(fun, 1),
+            from: Enum
 
-  @spec member?(t, element) :: t(boolean)
-  deflifted member?(babel, element)
+  @spec member?(t, element) :: pipeline(boolean)
+  deflifted member?(babel, element), from: Enum
 
-  @spec min(t) :: t(element | no_return)
-  @spec min(t, (-> empty_result)) :: t(element | empty_result) when empty_result: any
+  @spec min(t) :: pipeline(element | no_return)
+  @spec min(t, (-> empty_result)) :: pipeline(element | empty_result) when empty_result: any
   @spec min(t, (element, element -> boolean) | module()) ::
           t(element | empty_result)
         when empty_result: any
   @spec min(t, (element, element -> boolean) | module(), (-> empty_result)) ::
           t(element | empty_result)
         when empty_result: any
-  deflifted min(babel)
-  deflifted min(babel, empty_fallback)
-  deflifted min(babel, sorter, empty_fallback)
+  deflifted min(babel), from: Enum
+  deflifted min(babel, empty_fallback), from: Enum
+  deflifted min(babel, sorter, empty_fallback), from: Enum
 
   @spec min_by(t, (element -> any), (-> empty_result) | (element, element -> boolean) | module()) ::
           t(element | empty_result)
         when empty_result: any
-  deflifted min_by(babel, fun, empty_fallback) when is_function(fun, 1)
+  deflifted min_by(babel, fun, empty_fallback) when is_function(fun, 1), from: Enum
 
   @spec min_by(
           t,
           (element -> any),
           (element, element -> boolean) | module(),
           (-> empty_result)
-        ) :: t(element | empty_result)
+        ) :: pipeline(element | empty_result)
         when empty_result: any
-  deflifted min_by(babel, fun, sorter, empty_fallback) when is_function(fun, 1)
+  deflifted min_by(babel, fun, sorter, empty_fallback) when is_function(fun, 1), from: Enum
 
-  @spec min_max(t) :: t({element, element} | no_return)
-  deflifted min_max(babel)
+  @spec min_max(t) :: pipeline({element, element} | no_return)
+  deflifted min_max(babel), from: Enum
 
-  @spec min_max(t, (-> empty_result)) :: t({element, element} | empty_result)
+  @spec min_max(t, (-> empty_result)) :: pipeline({element, element} | empty_result)
         when empty_result: any
-  deflifted min_max(babel, empty_fallback)
+  deflifted min_max(babel, empty_fallback), from: Enum
 
   @spec min_max_by(t, (element -> any), (-> empty_result)) :: {element, element} | empty_result
         when empty_result: any
   @spec min_max_by(t, (element -> any), (element, element -> boolean) | module()) ::
           t({element, element} | no_return)
-  deflifted min_max_by(babel, fun, empty_fallback) when is_function(fun, 1)
+  deflifted min_max_by(babel, fun, empty_fallback) when is_function(fun, 1), from: Enum
 
   @spec min_max_by(
           t,
           (element -> any),
           (element, element -> boolean) | module(),
           (-> empty_result)
-        ) :: t({element, element} | empty_result)
+        ) :: pipeline({element, element} | empty_result)
         when empty_result: any
-  deflifted min_max_by(babel, fun, sorter, empty_fallback) when is_function(fun, 1)
+  deflifted min_max_by(babel, fun, sorter, empty_fallback) when is_function(fun, 1), from: Enum
 
-  @spec split_with(t, (element -> as_boolean(term))) :: t({list, list})
-  deflifted split_with(babel, fun)
+  @spec split_with(t, (element -> as_boolean(term))) :: pipeline({list, list})
+  deflifted split_with(babel, fun), from: Enum
 
-  @spec random(t) :: t(element)
-  deflifted random(babel)
+  @spec random(t) :: pipeline(element)
+  deflifted random(babel), from: Enum
 
-  @spec reduce(t, (element, acc -> acc)) :: t(acc)
-  deflifted reduce(babel, fun)
-  @spec reduce(t, acc, (element, acc -> acc)) :: t(acc)
-  deflifted reduce(babel, acc, fun)
+  @spec reduce(t, (element, acc -> acc)) :: pipeline(acc)
+  deflifted reduce(babel, fun), from: Enum
+  @spec reduce(t, acc, (element, acc -> acc)) :: pipeline(acc)
+  deflifted reduce(babel, acc, fun), from: Enum
 
-  @spec reduce_while(t, acc, (element, acc -> {:cont, acc} | {:halt, halted})) :: t(acc | halted)
+  @spec reduce_while(t, acc, (element, acc -> {:cont, acc} | {:halt, halted})) ::
+          pipeline(acc | halted)
         when acc: any, halted: any
-  deflifted reduce_while(babel, acc, fun)
+  deflifted reduce_while(babel, acc, fun), from: Enum
 
-  @spec reject(t, (element -> as_boolean(term))) :: t(list)
-  deflifted reject(babel, fun)
+  @spec reject(t, (element -> as_boolean(term))) :: pipeline(list)
+  deflifted reject(babel, fun), from: Enum
 
-  @spec reverse(t) :: t(list)
-  deflifted reverse(babel)
+  @spec reverse(t) :: pipeline(list)
+  deflifted reverse(babel), from: Enum
 
-  @spec reverse(t, enum) :: t(list)
-  deflifted reverse(babel, tail)
+  @spec reverse(t, enum) :: pipeline(list)
+  deflifted reverse(babel, tail), from: Enum
 
-  @spec reverse_slice(t, non_neg_integer, non_neg_integer) :: t(list)
+  @spec reverse_slice(t, non_neg_integer, non_neg_integer) :: pipeline(list)
   deflifted reverse_slice(babel, start_index, count)
-            when is_integer(start_index) and start_index >= 0 and is_integer(count) and count >= 0
+            when is_integer(start_index) and start_index >= 0 and is_integer(count) and count >= 0,
+            from: Enum
 
-  @spec slide(t, Range.t() | index, index) :: t(list)
-  deflifted slide(babel, range_or_single_index, insertion_index)
+  @spec slide(t, Range.t() | index, index) :: pipeline(list)
+  deflifted slide(babel, range_or_single_index, insertion_index), from: Enum
 
-  @spec scan(t, (element, acc -> acc)) :: t(list(acc)) when acc: any
-  deflifted scan(babel, fun)
-  @spec scan(t, acc, (element, acc -> acc)) :: t(list(acc)) when acc: any
-  deflifted scan(babel, acc, fun)
+  @spec scan(t, (element, acc -> acc)) :: pipeline(list(acc)) when acc: any
+  deflifted scan(babel, fun), from: Enum
+  @spec scan(t, acc, (element, acc -> acc)) :: pipeline(list(acc)) when acc: any
+  deflifted scan(babel, acc, fun), from: Enum
 
-  @spec shuffle(t) :: t(list)
-  deflifted shuffle(babel)
+  @spec shuffle(t) :: pipeline(list)
+  deflifted shuffle(babel), from: Enum
 
-  @spec slice(t, Range.t()) :: t(list)
-  deflifted slice(babel, index_range)
+  @spec slice(t, Range.t()) :: pipeline(list)
+  deflifted slice(babel, index_range), from: Enum
 
-  @spec slice(t, index, non_neg_integer) :: t(list)
+  @spec slice(t, index, non_neg_integer) :: pipeline(list)
   deflifted slice(babel, start_index, amount)
-            when is_integer(start_index) and is_integer(amount)
+            when is_integer(start_index) and is_integer(amount),
+            from: Enum
 
-  @spec sort(t) :: t(list)
-  deflifted sort(babel)
+  @spec sort(t) :: pipeline(list)
+  deflifted sort(babel), from: Enum
 
   @spec sort(
           t,
           (element, element -> boolean) | :asc | :desc | module() | {:asc | :desc, module()}
-        ) :: t(list)
-  deflifted sort(babel, sorter)
+        ) :: pipeline(list)
+  deflifted sort(babel, sorter), from: Enum
 
-  @spec sort_by(t, (element -> mapped_element)) :: t(list) when mapped_element: element
-  deflifted sort_by(babel, mapper)
+  @spec sort_by(t, (element -> mapped_element)) :: pipeline(list) when mapped_element: element
+  deflifted sort_by(babel, mapper), from: Enum
 
   @spec sort_by(
           t,
           (element -> mapped_element),
           (element, element -> boolean) | :asc | :desc | module() | {:asc | :desc, module()}
-        ) :: t(list)
+        ) :: pipeline(list)
         when mapped_element: element
-  deflifted sort_by(babel, mapper, sorter)
+  deflifted sort_by(babel, mapper, sorter), from: Enum
 
-  @spec split(t, integer) :: t({list, list})
-  deflifted split(babel, count) when is_integer(count)
+  @spec split(t, integer) :: pipeline({list, list})
+  deflifted split(babel, count) when is_integer(count), from: Enum
 
-  @spec split_while(t, (element -> as_boolean(term))) :: t({list, list})
-  deflifted split_while(babel, fun)
+  @spec split_while(t, (element -> as_boolean(term))) :: pipeline({list, list})
+  deflifted split_while(babel, fun), from: Enum
 
-  @spec sum(t) :: t(number)
-  deflifted sum(babel)
+  @spec sum(t) :: pipeline(number)
+  deflifted sum(babel), from: Enum
 
-  @spec product(t) :: t(number)
-  deflifted product(babel)
+  @spec product(t) :: pipeline(number)
+  deflifted product(babel), from: Enum
 
-  @spec take(t, integer) :: t(list)
-  deflifted take(babel, amount) when is_integer(amount)
+  @spec take(t, integer) :: pipeline(list)
+  deflifted take(babel, amount) when is_integer(amount), from: Enum
 
-  @spec take_every(t, non_neg_integer) :: t(list)
-  deflifted take_every(babel, nth) when is_integer(nth) and nth >= 0
+  @spec take_every(t, non_neg_integer) :: pipeline(list)
+  deflifted take_every(babel, nth) when is_integer(nth) and nth >= 0, from: Enum
 
-  @spec take_random(t, non_neg_integer) :: t(list)
-  deflifted take_random(babel, count) when is_integer(count) and count >= 0
+  @spec take_random(t, non_neg_integer) :: pipeline(list)
+  deflifted take_random(babel, count) when is_integer(count) and count >= 0, from: Enum
 
-  @spec take_while(t, (element -> as_boolean(term))) :: t(list)
-  deflifted take_while(babel, fun)
+  @spec take_while(t, (element -> as_boolean(term))) :: pipeline(list)
+  deflifted take_while(babel, fun), from: Enum
 
-  @spec to_list(t) :: t([element])
-  deflifted to_list(babel)
+  @spec to_list(t) :: pipeline([element])
+  deflifted to_list(babel), from: Enum
 
-  @spec uniq(t) :: t(list)
-  deflifted uniq(babel)
+  @spec uniq(t) :: pipeline(list)
+  deflifted uniq(babel), from: Enum
 
-  @spec uniq_by(t, (element -> term)) :: t(list)
-  deflifted uniq_by(babel, fun)
+  @spec uniq_by(t, (element -> term)) :: pipeline(list)
+  deflifted uniq_by(babel, fun), from: Enum
 
-  @spec unzip(t) :: t({[element], [element]})
-  deflifted unzip(babel)
+  @spec unzip(t) :: pipeline({[element], [element]})
+  deflifted unzip(babel), from: Enum
 
-  @spec with_index(t, integer) :: t([{term, integer}])
-  deflifted with_index(babel)
-  @spec with_index(t, (element, index -> value)) :: t([value]) when value: any
-  deflifted with_index(babel, fun_or_offset)
+  @spec with_index(t, integer) :: pipeline([{term, integer}])
+  deflifted with_index(babel), from: Enum
+  @spec with_index(t, (element, index -> value)) :: pipeline([value]) when value: any
+  deflifted with_index(babel, fun_or_offset), from: Enum
 
-  @spec zip(t, enum) :: t([{any, any}])
-  deflifted zip(babel, enumerable2)
+  @spec zip(t, enum) :: pipeline([{any, any}])
+  deflifted zip(babel, enumerable2), from: Enum
 
-  @spec zip_with(t, enum, (enum1_elem :: term, enum2_elem :: term -> zipped)) :: t([zipped])
+  @spec zip_with(t, enum, (enum1_elem :: term, enum2_elem :: term -> zipped)) ::
+          pipeline([zipped])
         when zipped: term
-  deflifted zip_with(babel, enumerable2, zip_fun) when is_function(zip_fun, 2)
+  deflifted zip_with(babel, enumerable2, zip_fun) when is_function(zip_fun, 2), from: Enum
 
-  @spec zip_reduce(t, enum, acc, (enum1_elem :: term, enum2_elem :: term, acc -> acc)) :: t(acc)
+  @spec zip_reduce(t, enum, acc, (enum1_elem :: term, enum2_elem :: term, acc -> acc)) ::
+          pipeline(acc)
         when acc: term
-  deflifted zip_reduce(babel, right, acc, reducer) when is_function(reducer, 3)
+  deflifted zip_reduce(babel, right, acc, reducer) when is_function(reducer, 3), from: Enum
 
-  @spec zip_reduce(t, acc, ([term], acc -> acc)) :: t(acc) when acc: term
-  deflifted zip_reduce(babel, acc, reducer) when is_function(reducer, 2)
+  @spec zip_reduce(t, acc, ([term], acc -> acc)) :: pipeline(acc) when acc: term
+  deflifted zip_reduce(babel, acc, reducer) when is_function(reducer, 2), from: Enum
 end
