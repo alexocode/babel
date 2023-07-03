@@ -1,4 +1,9 @@
 defmodule Babel.Error do
+  @type t :: %__MODULE__{
+          reason: term,
+          data: term,
+          step: term
+        }
   defexception [:reason, :data, :step]
 
   @impl true

@@ -1,6 +1,9 @@
 defmodule Babel do
   @type data :: Babel.Fetchable.t()
 
+  @typedoc "Any term that describes a Babel operation (like a pipeline or step)"
+  @type name :: any
+
   # @spec apply(t, data) :: {:ok, output} | {:error, Babel.Error.t()} when output: any
   def apply!(_babel, _data) do
     # babel.last_step

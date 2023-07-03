@@ -9,7 +9,7 @@ defmodule Babel.Pipeline do
             steps_in_reverse_order: []
 
   @typedoc "A term describing what this pipeline does"
-  @type name() :: term
+  @type name() :: Babel.name()
   @type step() :: Babel.Applicable.t()
 
   @spec new(name) :: t

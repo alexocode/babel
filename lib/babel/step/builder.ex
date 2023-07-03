@@ -34,9 +34,10 @@ defmodule Babel.Step.Builder do
     Step.new(name || :cast, function)
   end
 
-  @spec flat_map(mapper :: Step.t(input, output)) :: Step.t(Enumerable.t(input), list(output))
+  @spec flat_map(mapper :: Step.t(input, output) | (input -> Step.t(input, output))) ::
+          Step.t(Enumerable.t(input), list(output))
         when input: any, output: any
-  @spec flat_map(name, mapper :: (input -> Step.t(input, output))) ::
+  @spec flat_map(name, mapper :: Step.t(input, output) | (input -> Step.t(input, output))) ::
           Step.t(Enumerable.t(input), list(output))
         when input: any, output: any
   def flat_map(name \\ nil, mapper)
