@@ -1,7 +1,7 @@
 defmodule Babel.Enum.Lifting do
   @moduledoc false
 
-  alias Babel.Step
+  alias Babel.{Pipeline, Step}
 
   require Step
 
@@ -49,16 +49,23 @@ defmodule Babel.Enum.Lifting do
   end
 
   @spec wrap(
-          Step.t(input, in_between),
+          Babel.Enum.t(in_between),
           name :: Step.name(),
           function :: Step.step_fun(in_between, output)
-        ) :: Step.t(input, output)
-        when input: any, in_between: in_between, output: any
+        ) :: Babel.Enum.t(output)
+        when in_between: in_between, output: any
+  def wrap(%Pipeline{} = pipeline, name, function) when Step.is_step_function(function) do
+    Pipeline.chain(pipeline, Step.new(name, function))
+  end
+
   def wrap(%Step{} = step, name, function) when Step.is_step_function(function) do
-    Step.chain([
-      step,
-      Step.new(name, function)
-    ])
+    Pipeline.new(
+      :pipeline,
+      [
+        step,
+        Step.new(name, function)
+      ]
+    )
   end
 end
 
@@ -69,8 +76,8 @@ defmodule Babel.Enum do
 
   require Step
 
-  @type t :: Step.t(any, enum)
-  @type t(output) :: Step.t(enum, output)
+  @type t :: t(term)
+  @type t(output) :: Babel.Applicable.t(enum, output)
   @type enum :: Enum.t()
   @type acc :: any
   @type element :: any
