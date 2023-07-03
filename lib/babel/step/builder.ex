@@ -45,26 +45,25 @@ defmodule Babel.Step.Builder do
     name = name || :flat_map
 
     Step.new(name, fn data ->
-      data
-      |> Enum.reduce({:ok, []}, fn element, {ok_or_error, list} ->
-        %Step{} = mapped_step = mapper.(element)
+      {ok_or_error, list} =
+        Enum.reduce(data, {:ok, []}, fn element, {ok_or_error, list} ->
+          %Step{} = mapped_step = mapper.(element)
 
-        mapped_step
-        |> Step.apply(element)
-        |> case do
-          {^ok_or_error, value} ->
-            {ok_or_error, [value | list]}
+          mapped_step
+          |> Step.apply(element)
+          |> case do
+            {^ok_or_error, value} ->
+              {ok_or_error, [value | list]}
 
-          {:error, error} when ok_or_error == :ok ->
-            {:error, [error]}
+            {:error, error} when ok_or_error == :ok ->
+              {:error, [error]}
 
-          {:ok, _value} when ok_or_error == :error ->
-            {:error, list}
-        end
-      end)
-      |> then(fn {ok_or_error, list} ->
-        {ok_or_error, Enum.reverse(list)}
-      end)
+            {:ok, _value} when ok_or_error == :error ->
+              {:error, list}
+          end
+        end)
+
+      {ok_or_error, Enum.reverse(list)}
     end)
   end
 
