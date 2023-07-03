@@ -2,6 +2,8 @@ defmodule Babel.Step.Builder do
   alias Babel.Step
   alias Babel.Step.Builder.Primitives
 
+  require Step
+
   @type path :: term | list(term)
   @type name :: Step.name()
 
@@ -32,20 +34,22 @@ defmodule Babel.Step.Builder do
     Step.new(name || :cast, function)
   end
 
-  @spec map(mapper :: (input -> output)) :: Step.t(Enumerable.t(input), list(output))
+  @spec flat_map(mapper :: Step.t(input, output)) :: Step.t(Enumerable.t(input), list(output))
         when input: any, output: any
-  @spec map(name, mapper :: Step.step_fun(input, output)) ::
+  @spec flat_map(name, mapper :: (input -> Step.t(input, output))) ::
           Step.t(Enumerable.t(input), list(output))
         when input: any, output: any
-  def map(name \\ nil, mapper) do
-    name = name || :map
+  def flat_map(name \\ nil, mapper)
+
+  def flat_map(name, mapper) when is_function(mapper, 1) do
+    name = name || :flat_map
 
     Step.new(name, fn data ->
       data
       |> Enum.reduce({:ok, []}, fn element, {ok_or_error, list} ->
-        {name, element}
-        |> Step.new(mapper)
-        # TODO: Invoke a returned step
+        %Step{} = mapped_step = mapper.(element)
+
+        mapped_step
         |> Step.apply(element)
         |> case do
           {^ok_or_error, value} ->
@@ -62,5 +66,12 @@ defmodule Babel.Step.Builder do
         {ok_or_error, Enum.reverse(list)}
       end)
     end)
+  end
+
+  def flat_map(name, %Step{} = mapper) do
+    flat_map(
+      name || {:flat_map, mapper.name},
+      fn _ -> mapper end
+    )
   end
 end
