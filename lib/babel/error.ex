@@ -1,6 +1,12 @@
 defmodule Babel.Error do
   defexception [:reason, :data, :step]
 
+  @impl true
+  def message(%__MODULE__{}) do
+    # TODO Generate error message
+    "TODO"
+  end
+
   def maybe_wrap_error(maybe_error, params \\ []) do
     case do_wrap(maybe_error) do
       %__MODULE__{} = error ->
