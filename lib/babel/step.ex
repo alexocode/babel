@@ -59,4 +59,8 @@ defmodule Babel.Step do
       end)
     )
   end
+
+  defimpl Babel.Applicable do
+    def apply(step, data), do: Babel.Step.apply(step, data)
+  end
 end
