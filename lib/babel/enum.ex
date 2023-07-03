@@ -14,19 +14,12 @@ defmodule Babel.Enum.Lifting do
     See the moduledoc for further details.
     """
 
-    q =
-      quote location: :keep do
-        @doc unquote(doc)
-        def unquote(call) do
-          unquote(__MODULE__).wrap(unquote(babel), unquote(name), unquote(args))
-        end
+    quote location: :keep do
+      @doc unquote(doc)
+      def unquote(call) do
+        unquote(__MODULE__).wrap(unquote(babel), unquote(name), unquote(args))
       end
-
-    # q
-    # |> Macro.to_string()
-    # |> IO.puts()
-
-    q
+    end
   end
 
   defp name_and_args({:when, _, [call | _guards]}) do
