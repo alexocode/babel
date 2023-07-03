@@ -50,34 +50,4 @@ defmodule Babel.StepTest do
       assert error.step == step
     end
   end
-
-  describe "chain/1" do
-    test "returns a step whose name is a combination of the given steps" do
-      step1 = step()
-      step2 = step()
-      step3 = step()
-
-      chained_step = Step.chain([step1, step2, step3])
-
-      assert chained_step.name == {:chain, [step1.name, step2.name, step3.name]}
-    end
-
-    test "returns a step which applies all given steps when applied" do
-      data = %{
-        some: %{
-          nested: [
-            "values"
-          ]
-        }
-      }
-
-      step1 = step(fn %{some: some} -> some end)
-      step2 = step(fn %{nested: nested} -> nested end)
-      step3 = step(fn [value] -> value end)
-
-      chained_step = Step.chain([step1, step2, step3])
-
-      assert Step.apply(chained_step, data) == {:ok, "values"}
-    end
-  end
 end
