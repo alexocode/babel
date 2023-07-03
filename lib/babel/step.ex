@@ -11,7 +11,7 @@ defmodule Babel.Step do
   defstruct [:function, :name]
 
   @typedoc "A term describing what this step does"
-  @type name() :: term
+  @type name() :: Babel.name()
 
   @type step_fun :: step_fun(any, any)
   @type step_fun(input, output) ::
@@ -42,7 +42,7 @@ defmodule Babel.Step do
     end
   end
 
-  @spec chain(list(t)) :: Step.t()
+  @spec chain(list(t)) :: t()
   def chain(list) when is_list(list) do
     names = Enum.map(list, & &1.name)
 
