@@ -99,7 +99,7 @@ jobs:
   coverage:
     name: Collect Test Coverage
     runs-on: ubuntu-latest
-    container: hexpm/elixir:1.15.0-erlang-26.0.2-alpine-3.18.6
+    container: hexpm/elixir:1.15.0-erlang-26.0.2-alpine-3.18.2
     env:
       VERSION_ALPINE: 3.18.2
       VERSION_ELIXIR: 1.15.0
@@ -142,7 +142,7 @@ jobs:
   check_style:
     name: Check Style
     runs-on: ubuntu-latest
-    container: hexpm/elixir:1.15.0-erlang-26.0.2-alpine-3.18.6
+    container: hexpm/elixir:1.15.0-erlang-26.0.2-alpine-3.18.2
     env:
       VERSION_ALPINE: 3.18.2
       VERSION_ELIXIR: 1.15.0
@@ -178,7 +178,7 @@ jobs:
   check_types:
     name: Check Types
     runs-on: ubuntu-latest
-    container: hexpm/elixir:1.15.0-erlang-26.0.2-alpine-3.18.6
+    container: hexpm/elixir:1.15.0-erlang-26.0.2-alpine-3.18.2
     env:
       VERSION_ALPINE: 3.18.2
       VERSION_ELIXIR: 1.15.0
