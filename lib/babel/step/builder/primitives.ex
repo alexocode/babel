@@ -10,8 +10,7 @@ defmodule Babel.Step.Builder.Primitives do
           {:cont, {:ok, next}}
 
         :error ->
-          # TODO: Better erroring
-          {:halt, {:error, %Babel.Error{}}}
+          {:halt, {:error, {:not_found, path_segment}}}
       end
     end)
   end

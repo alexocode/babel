@@ -42,7 +42,7 @@ defmodule Babel.Step do
   def apply(%__MODULE__{} = step, data) do
     data
     |> step.function.()
-    |> Babel.Error.maybe_wrap_error(data: data, step: step)
+    |> Babel.Error.wrap_if_error(data, step)
     |> case do
       {:error, error} ->
         {:error, error}
