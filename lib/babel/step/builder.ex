@@ -36,8 +36,8 @@ defmodule Babel.Step.Builder do
     Step.new(name || :cast, function)
   end
 
-  # @spec into(name, mapper :: (input -> output)) :: Step.t(input, output)
-  #       when input: any, output: any
+  @spec into(intoable) :: Step.t(any, intoable) when intoable: Babel.Intoable.t()
+  @spec into(name, intoable) :: Step.t(any, intoable) when intoable: Babel.Intoable.t()
   def into(name \\ nil, intoable)
 
   def into(name, intoable) do
