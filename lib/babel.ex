@@ -38,8 +38,8 @@ defmodule Babel do
   end
 
   @spec get(t | nil, name, path) :: t
-  def get(babel \\ nil, name \\ nil, path) do
-    chain(babel, Step.Builder.get(name, path))
+  def get(babel \\ nil, name \\ nil, path, default) do
+    chain(babel, Step.Builder.get(name, path, default))
   end
 
   @spec cast(t | nil, name, :boolean) :: t(boolean)
