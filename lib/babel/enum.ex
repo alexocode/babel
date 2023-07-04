@@ -125,12 +125,12 @@ defmodule Babel.Enum do
   @spec intersperse(t, element) :: pipeline(list)
   deflifted intersperse(babel, separator), from: Enum
 
-  # TODO: Custom impl for this?
-  # @spec into(t(), Collectable.t()) :: pipeline(Collectable.t())
-  # deflifted into(babel, collectable), from:   Enum
+  @spec into(t(), collectable) :: pipeline(collectable) when collectable: Collectable.t()
+  deflifted into(babel, collectable), from: Enum
 
-  # @spec into(t(), Collectable.t(), (term -> term)) :: pipeline(Collectable.t())
-  # deflifted into(babel, collectable, transform) do, from:   Enum
+  @spec into(t(), collectable, (term -> term)) :: pipeline(collectable)
+        when collectable: Collectable.t()
+  deflifted into(babel, collectable, transform), from: Enum
 
   @spec join(t) :: pipeline(String.t())
   @spec join(t, String.t()) :: pipeline(String.t())
