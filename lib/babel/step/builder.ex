@@ -46,14 +46,11 @@ defmodule Babel.Step.Builder do
         %struct{} -> struct
         %{} -> :map
         list when is_list(list) -> :list
+        tuple when is_tuple(tuple) -> :tuple
         other -> other
       end
 
-    Step.new(name || {:into, type}, fn _ -> nil end)
-  end
-
-  def into(name, _intoable) do
-    Step.new(name || {:into, module}, fn _ -> nil end)
+    Step.new(name || {:into, type}, &Babel.Intoable.into(intoable, &1))
   end
 
   @spec map(mapper :: (input -> output)) :: Step.t(Enumerable.t(input), list(output))
