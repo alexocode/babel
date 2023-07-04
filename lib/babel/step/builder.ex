@@ -1,4 +1,6 @@
 defmodule Babel.Step.Builder do
+  @moduledoc false
+
   alias Babel.Step
   alias Babel.Step.Builder.Primitives
 
@@ -34,10 +36,38 @@ defmodule Babel.Step.Builder do
     Step.new(name || :cast, function)
   end
 
-  @spec flat_map(mapper :: Step.t(input, output) | (input -> Step.t(input, output))) ::
+  # @spec into(name, mapper :: (input -> output)) :: Step.t(input, output)
+  #       when input: any, output: any
+  def into(name \\ nil, intoable)
+
+  def into(name, intoable) do
+    type =
+      case intoable do
+        %struct{} -> struct
+        %{} -> :map
+        list when is_list(list) -> :list
+        other -> other
+      end
+
+    Step.new(name || {:into, type}, fn _ -> nil end)
+  end
+
+  def into(name, _intoable) do
+    Step.new(name || {:into, module}, fn _ -> nil end)
+  end
+
+  @spec map(mapper :: (input -> output)) :: Step.t(Enumerable.t(input), list(output))
+        when input: any, output: any
+  @spec map(name, mapper :: (input -> output)) :: Step.t(Enumerable.t(input), list(output))
+        when input: any, output: any
+  def map(name \\ nil, mapper) do
+    Step.new(name || :map, &Enum.map(&1, mapper))
+  end
+
+  @spec flat_map(mapper :: (input -> Step.t(input, output))) ::
           Step.t(Enumerable.t(input), list(output))
         when input: any, output: any
-  @spec flat_map(name, mapper :: Step.t(input, output) | (input -> Step.t(input, output))) ::
+  @spec flat_map(name, mapper :: (input -> Step.t(input, output))) ::
           Step.t(Enumerable.t(input), list(output))
         when input: any, output: any
   def flat_map(name \\ nil, mapper)

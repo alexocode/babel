@@ -12,6 +12,8 @@ defmodule Babel.Pipeline do
   @type name() :: Babel.name()
   @type step() :: Babel.Applicable.t()
 
+  @type chainable() :: t() | Babel.Applicable.t()
+
   @spec new(name) :: t
   @spec new(name, steps :: [step]) :: t
   def new(name, steps \\ []) do
@@ -21,9 +23,14 @@ defmodule Babel.Pipeline do
     }
   end
 
-  @doc "Alias for `new/1`."
-  @spec begin(name) :: t
-  def begin(name), do: new(name)
+  @spec chain(t, t) :: t
+  def chain(%__MODULE__{} = left, %__MODULE__{} = right) do
+    Map.update!(
+      left,
+      :steps_in_reverse_order,
+      &Enum.concat(right.steps_in_reverse_order, &1)
+    )
+  end
 
   @spec chain(t, step | [step]) :: t
   def chain(%__MODULE__{} = pipeline, step_or_steps) do
@@ -32,7 +39,11 @@ defmodule Babel.Pipeline do
       |> List.wrap()
       |> Enum.reverse()
 
-    Map.update!(pipeline, :steps_in_reverse_order, &Enum.concat(reversed_steps, &1))
+    Map.update!(
+      pipeline,
+      :steps_in_reverse_order,
+      &Enum.concat(reversed_steps, &1)
+    )
   end
 
   @spec apply(t(input, output), Babel.data()) :: {:ok, output} | {:error, Babel.Error.t()}

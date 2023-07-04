@@ -14,8 +14,9 @@ defmodule Babel.Step do
   @type name() :: Babel.name()
 
   @type step_fun :: step_fun(any, any)
-  @type step_fun(input, output) ::
-          (input -> output | {:ok, output} | :error | {:error, reason :: any})
+  @type step_fun(input, output) :: (input -> result(output))
+
+  @type result(output) :: output | {:ok, output} | :error | {:error, reason :: any}
 
   defguard is_step_function(function) when is_function(function, 1)
 

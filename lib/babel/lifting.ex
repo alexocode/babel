@@ -63,12 +63,6 @@ defmodule Babel.Lifting do
       when is_atom(module) and is_atom(func_name) and is_list(args) do
     wrapped = Step.new({module, func_name}, &apply(Elixir.Enum, func_name, [&1 | args]))
 
-    case babel do
-      %Pipeline{} ->
-        Pipeline.chain(babel, wrapped)
-
-      %Step{} ->
-        Pipeline.new(:pipeline, [babel, wrapped])
-    end
+    Babel.chain(babel, wrapped)
   end
 end
