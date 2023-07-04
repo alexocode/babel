@@ -1,5 +1,6 @@
 defmodule Babel.Error do
   @type t :: t([t] | any)
+  # TODO: Add some kind of "stacktrace"
   @type t(reason) :: %__MODULE__{
           reason: reason,
           data: Babel.data(),
