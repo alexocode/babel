@@ -7,6 +7,9 @@ defmodule Babel do
   @type t(output) :: t(any, output)
   @type t(input, output) :: Babel.Pipeline.t(input, output) | Babel.Step.t(output)
 
+  @type pipeline() :: pipeline(term)
+  @type pipeline(output) :: Babel.Pipeline.t(output)
+
   @type data :: Babel.Fetchable.t()
 
   @typedoc "Any term that describes a Babel operation (like a pipeline or step)"

@@ -1,12 +1,6 @@
 defmodule Babel.Lifting do
   @moduledoc false
 
-  @type t :: t(any, term)
-  @type t(input, output) :: Babel.Step.t(input, output) | Babel.Pipeline.t(input, output)
-
-  @type pipeline() :: pipeline(term)
-  @type pipeline(output) :: Babel.Pipeline.t(output)
-
   defmacro deflifted(call, from: module) do
     {name, [babel | args]} = name_and_args(call)
 
@@ -54,7 +48,7 @@ defmodule Babel.Lifting do
   end
 
   @doc false
-  @spec wrap_and_chain(t, {module, atom, list}) :: pipeline()
+  @spec wrap_and_chain(Babel.t() | nil, {module, atom, list}) :: Babel.t()
   def wrap_and_chain(babel, {module, func_name, args})
       when is_atom(module) and is_atom(func_name) and is_list(args) do
     wrapped = Babel.Step.new({module, func_name}, &apply(Elixir.Enum, func_name, [&1 | args]))

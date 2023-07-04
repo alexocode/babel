@@ -6,8 +6,9 @@ defmodule Babel.Enum do
   require Step
 
   @type t :: t(term)
-  @type t(output) :: Babel.Applicable.t(enum, output)
-  @type pipeline(output) :: Babel.Lifting.pipeline(output)
+  @type t(output) :: Babel.t(enum, output)
+  @type pipeline(output) :: Babel.pipeline(output)
+
   @type enum :: Enum.t()
   @type acc :: any
   @type element :: any
