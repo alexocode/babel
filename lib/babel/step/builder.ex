@@ -9,12 +9,11 @@ defmodule Babel.Step.Builder do
   @type path :: term | list(term)
   @type name :: Step.name()
 
-  @spec at(path) :: Step.t(Babel.data())
-  @spec at(name, path) :: Step.t(Babel.data())
-  def at(name \\ nil, path) do
+  @spec fetch(name, path) :: Step.t(Babel.data())
+  def fetch(name \\ nil, path) do
     path = List.wrap(path)
 
-    Step.new(name || {:at, path}, &Primitives.fetch(&1, path))
+    Step.new(name || {:fetch, path}, &Primitives.fetch(&1, path))
   end
 
   @spec get(name, path, default) :: Step.t(Babel.data(), any | default) when default: any
