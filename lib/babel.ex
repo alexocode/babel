@@ -26,6 +26,12 @@ defmodule Babel do
   @spec begin(name) :: Pipeline.t()
   def begin(name \\ nil), do: Pipeline.new(name)
 
+  @doc "Alias for `fetch/3`."
+  @spec at(t | nil, name, path) :: t
+  def at(babel \\ nil, name \\ nil, path) do
+    fetch(babel, name, path)
+  end
+
   @spec fetch(t | nil, name, path) :: t
   def fetch(babel \\ nil, name \\ nil, path) do
     chain(babel, Step.Builder.fetch(name, path))
