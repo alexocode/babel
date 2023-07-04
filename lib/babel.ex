@@ -1,30 +1,40 @@
 defmodule Babel do
+  import Kernel, except: [apply: 2]
+
   alias Babel.{Pipeline, Step}
 
-  @type t :: Babel.Pipeline.t() | Babel.Step.t()
+  @type t :: t(term)
+  @type t(output) :: t(any, output)
+  @type t(input, output) :: Babel.Pipeline.t(input, output) | Babel.Step.t(output)
+
   @type data :: Babel.Fetchable.t()
 
   @typedoc "Any term that describes a Babel operation (like a pipeline or step)"
   @type name :: any
 
-  @spec apply(Babel.Applicable.t(input, output), input) ::
-          {:ok, output} | {:error, Babel.Error.t()}
-        when input: Babel.data(), output: any
-  def apply(babel, data) do
-    Babel.Applicable.apply(babel, data)
-  end
+  @typedoc "A term or list of terms describing like in `get_in/2`"
+  @type path :: term | list(term)
 
   @doc "Begin a new `Babel.Pipeline`."
   @spec begin(name) :: Pipeline.t()
-  def begin(name), do: Pipeline.new(name)
+  def begin(name \\ nil), do: Pipeline.new(name)
 
-  def at(babel, name \\ nil, path) do
+  @spec at(t | nil, name, path) :: t
+  def at(babel \\ nil, name \\ nil, path) do
     chain(babel, Step.Builder.at(name, path))
   end
 
-  def cast(babel, name \\ nil, target) do
+  @spec cast(t | nil, name, :boolean) :: t(boolean)
+  @spec cast(t | nil, name, :integer) :: t(integer)
+  @spec cast(t | nil, name, :float) :: t(float)
+  def cast(babel \\ nil, name \\ nil, target) do
     chain(babel, Step.Builder.cast(name, target))
   end
+
+  @spec chain(nil, next) :: next when next: t
+  @spec chain(t(input, in_between), next :: t(in_between, output)) :: Pipeline.t(input, output)
+        when input: any, in_between: term, output: term
+  def chain(nil, next), do: next
 
   def chain(%Pipeline{} = pipeline, next) do
     Pipeline.chain(pipeline, next)
@@ -36,49 +46,47 @@ defmodule Babel do
     chain(pipeline, next)
   end
 
-  def into(babel, name \\ nil, intoable) do
+  @spec into(t | nil, name, intoable) :: t(intoable) when intoable: Babel.Intoable.t()
+  def into(babel \\ nil, name \\ nil, intoable) do
     chain(babel, Step.Builder.into(name, intoable))
   end
 
-  @spec map(t, name, (input -> output)) :: Pipeline.t([output])
+  @spec map(
+          t(Enumerable.t(input)) | nil,
+          name,
+          (input -> output)
+        ) :: t([output])
         when input: data, output: term
-  def map(babel, name \\ nil, mapper) do
+  def map(babel \\ nil, name \\ nil, mapper) do
     chain(babel, Step.Builder.map(name, mapper))
   end
 
-  @spec flat_map(t, name, mapper :: (input -> Step.t(input, output))) :: Pipeline.t([output])
+  @spec flat_map(
+          t(Enumerable.t(input)) | nil,
+          name,
+          mapper :: (input -> Step.t(input, output))
+        ) :: t([output])
         when input: data, output: term
-  def flat_map(babel, name \\ nil, mapper) do
+  def flat_map(babel \\ nil, name \\ nil, mapper) do
     chain(babel, Step.Builder.flat_map(name, mapper))
   end
 
-  # @spec apply(t, data) :: {:ok, output} | {:error, Babel.Error.t()} when output: any
-  def apply!(_babel, _data) do
-    # babel.last_step
-    # |> Enum.reverse()
-    # |> Enum.reduce_while({:ok, data}, fn step, {:ok, data} ->
-    #   case Babel.Step.apply_one(step, data) do
-    #     {:ok, value} ->
-    #       {:cont, {:ok, value}}
-
-    #     {:error, error} ->
-    #       {:halt, {:error, error}}
-    #   end
-    # end)
+  @spec apply(Babel.Applicable.t(input, output), input) ::
+          {:ok, output} | {:error, Babel.Error.t()}
+        when input: Babel.data(), output: any
+  def apply(babel, data) do
+    Babel.Applicable.apply(babel, data)
   end
 
-  # @spec apply(t(), data) :: {:ok, any}
-  # def apply(%Babel{} = babel, data) do
-  #   babel.reversed_steps
-  #   |> Enum.reverse()
-  #   |> Enum.reduce_while({:ok, data}, fn step, {:ok, next} ->
-  #     case Babel.Step.apply(step, next) do
-  #       {:ok, value} ->
-  #         {:cont, {:ok, value}}
+  @spec apply!(Babel.Applicable.t(input, output), input) :: output | no_return
+        when input: Babel.data(), output: any
+  def apply!(babel, data) do
+    case apply(babel, data) do
+      {:ok, output} ->
+        output
 
-  #       {:error, details} ->
-  #         {:halt, {:error, details}}
-  #     end
-  #   end)
-  # end
+      {:error, %Babel.Error{} = error} ->
+        raise error
+    end
+  end
 end
