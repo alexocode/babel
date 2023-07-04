@@ -17,6 +17,13 @@ defmodule Babel.Step.Builder do
     Step.new(name || {:at, path}, &Primitives.fetch(&1, path))
   end
 
+  @spec get(name, path, default) :: Step.t(Babel.data(), any | default) when default: any
+  def get(name \\ nil, path, default) do
+    path = List.wrap(path)
+
+    Step.new(name || {:get, path}, &Primitives.get(&1, path, default))
+  end
+
   @spec cast(:integer) :: Step.t(Babel.data(), integer)
   @spec cast(:float) :: Step.t(Babel.data(), float)
   @spec cast(:boolean) :: Step.t(Babel.data(), boolean)

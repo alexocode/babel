@@ -31,6 +31,11 @@ defmodule Babel do
     chain(babel, Step.Builder.at(name, path))
   end
 
+  @spec get(t | nil, name, path) :: t
+  def get(babel \\ nil, name \\ nil, path) do
+    chain(babel, Step.Builder.get(name, path))
+  end
+
   @spec cast(t | nil, name, :boolean) :: t(boolean)
   @spec cast(t | nil, name, :integer) :: t(integer)
   @spec cast(t | nil, name, :float) :: t(float)
