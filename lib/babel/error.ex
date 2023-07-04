@@ -1,10 +1,42 @@
 defmodule Babel.Error do
-  @type t :: %__MODULE__{
-          reason: [t] | any,
+  @type t :: t([t] | any)
+  @type t(reason) :: %__MODULE__{
+          reason: reason,
           data: Babel.data(),
           step: Babel.Step.t()
         }
   defexception [:reason, :data, :step]
+
+  @spec wrap_if_error(
+          {:error, reason} | other,
+          Babel.data(),
+          Babel.Step.t()
+        ) :: {:error, t(reason)} | other
+        when reason: any, other: any
+  def wrap_if_error(maybe_error, data, step) do
+    case do_wrap(maybe_error) do
+      %__MODULE__{} = error ->
+        {:error, set_if_nil(error, data: data, step: step)}
+
+      other ->
+        other
+    end
+  end
+
+  defp do_wrap(:error), do: %__MODULE__{reason: :unknown}
+  defp do_wrap({:error, %__MODULE__{} = error}), do: error
+  defp do_wrap({:error, [%__MODULE__{} = error]}), do: error
+  defp do_wrap({:error, reason}), do: %__MODULE__{reason: reason}
+  defp do_wrap(other), do: other
+
+  defp set_if_nil(error, params) do
+    Enum.reduce(params, error, fn {key, value}, error ->
+      Map.update!(error, key, fn
+        nil -> value
+        existing -> existing
+      end)
+    end)
+  end
 
   @impl true
   def message(%__MODULE__{} = error) do
@@ -73,30 +105,5 @@ defmodule Babel.Error do
     step_name = if error.step.name, do: inspect(error.step.name), else: "unnamed"
 
     indent <> "- Step(#{step_name}) | reason: #{inspect(error.reason, pretty: false, limit: 50)}"
-  end
-
-  def wrap_if_error(maybe_error, data, step) do
-    case do_wrap(maybe_error) do
-      %__MODULE__{} = error ->
-        {:error, set_if_nil(error, data: data, step: step)}
-
-      other ->
-        other
-    end
-  end
-
-  defp do_wrap(:error), do: %__MODULE__{reason: :unknown}
-  defp do_wrap({:error, %__MODULE__{} = error}), do: error
-  defp do_wrap({:error, [%__MODULE__{} = error]}), do: error
-  defp do_wrap({:error, reason}), do: %__MODULE__{reason: reason}
-  defp do_wrap(other), do: other
-
-  defp set_if_nil(error, params) do
-    Enum.reduce(params, error, fn {key, value}, error ->
-      Map.update!(error, key, fn
-        nil -> value
-        existing -> existing
-      end)
-    end)
   end
 end
