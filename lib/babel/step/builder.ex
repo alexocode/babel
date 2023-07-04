@@ -23,10 +23,6 @@ defmodule Babel.Step.Builder do
     Step.new(name || {:get, path}, &Primitives.get(&1, path, default))
   end
 
-  @spec cast(:integer) :: Step.t(Babel.data(), integer)
-  @spec cast(:float) :: Step.t(Babel.data(), float)
-  @spec cast(:boolean) :: Step.t(Babel.data(), boolean)
-  @spec cast(Step.step_fun(input, output)) :: Step.t(input, output) when input: any, output: any
   @spec cast(name, :integer) :: Step.t(Babel.data(), integer)
   @spec cast(name, :float) :: Step.t(Babel.data(), float)
   @spec cast(name, :boolean) :: Step.t(Babel.data(), boolean)
@@ -42,7 +38,6 @@ defmodule Babel.Step.Builder do
     Step.new(name || :cast, function)
   end
 
-  @spec into(intoable) :: Step.t(any, intoable) when intoable: Babel.Intoable.t()
   @spec into(name, intoable) :: Step.t(any, intoable) when intoable: Babel.Intoable.t()
   def into(name \\ nil, intoable)
 
@@ -59,9 +54,6 @@ defmodule Babel.Step.Builder do
     Step.new(name || {:into, type}, &Babel.Intoable.into(intoable, &1))
   end
 
-  @spec map(mapper :: Babel.applicable(input, output)) ::
-          Step.t(Enumerable.t(input), list(output))
-        when input: any, output: any
   @spec map(name, mapper :: Babel.applicable(input, output)) ::
           Step.t(Enumerable.t(input), list(output))
         when input: any, output: any
@@ -69,9 +61,6 @@ defmodule Babel.Step.Builder do
     flat_map(name || :map, fn _ -> mapper end)
   end
 
-  @spec flat_map(mapper :: (input -> Babel.applicable(input, output))) ::
-          Step.t(Enumerable.t(input), list(output))
-        when input: any, output: any
   @spec flat_map(name, mapper :: (input -> Babel.applicable(input, output))) ::
           Step.t(Enumerable.t(input), list(output))
         when input: any, output: any
