@@ -12,6 +12,8 @@ defmodule Babel do
 
   @type applicable(input, output) :: Babel.Applicable.t(input, output)
 
+  @type result(type) :: Babel.Step.result(type)
+
   @type data :: Babel.Fetchable.t()
 
   @typedoc "Any term that describes a Babel operation (like a pipeline or step)"
@@ -74,6 +76,16 @@ defmodule Babel do
         when input: data, output: term
   def flat_map(babel \\ nil, name \\ nil, mapper) do
     chain(babel, Step.Builder.flat_map(name, mapper))
+  end
+
+  @spec then(
+          t(input) | nil,
+          name,
+          Step.step_fun(input, output)
+        ) :: t(output)
+        when input: data, output: term
+  def then(babel \\ nil, name \\ nil, function) do
+    chain(babel, Step.new(name, function))
   end
 
   @spec apply(Babel.Applicable.t(input, output), input) ::
