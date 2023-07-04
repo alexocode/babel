@@ -29,6 +29,10 @@ defmodule Babel.Step.Builder.Primitives do
     end
   end
 
+  def cast(:boolean, boolean) when is_boolean(boolean) do
+    {:ok, boolean}
+  end
+
   def cast(:boolean, binary) do
     binary
     |> String.trim()
@@ -45,6 +49,14 @@ defmodule Babel.Step.Builder.Primitives do
     end
   end
 
+  def cast(:float, float) when is_float(float) do
+    {:ok, float}
+  end
+
+  def cast(:float, integer) when is_integer(integer) do
+    {:ok, integer / 1}
+  end
+
   def cast(:float, binary) do
     case Float.parse(binary) do
       {float, ""} when is_float(float) ->
@@ -53,6 +65,14 @@ defmodule Babel.Step.Builder.Primitives do
       _other ->
         {:error, {:invalid_float, binary}}
     end
+  end
+
+  def cast(:integer, integer) when is_integer(integer) do
+    {:ok, integer}
+  end
+
+  def cast(:integer, float) when is_float(float) do
+    {:ok, trunc(float)}
   end
 
   def cast(:integer, binary) do
