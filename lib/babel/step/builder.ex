@@ -45,33 +45,11 @@ defmodule Babel.Step.Builder do
   def flat_map(name, mapper) when is_function(mapper, 1) do
     name = name || :flat_map
 
-    Step.new(name, fn data ->
-      {ok_or_error, list} =
-        Enum.reduce(data, {:ok, []}, fn element, {ok_or_error, list} ->
-          %Step{} = mapped_step = mapper.(element)
-
-          mapped_step
-          |> Step.apply(element)
-          |> case do
-            {^ok_or_error, value} ->
-              {ok_or_error, [value | list]}
-
-            {:error, error} when ok_or_error == :ok ->
-              {:error, [error]}
-
-            {:ok, _value} when ok_or_error == :error ->
-              {:error, list}
-          end
-        end)
-
-      {ok_or_error, Enum.reverse(list)}
-    end)
-  end
-
-  def flat_map(name, %Step{} = mapper) do
-    flat_map(
-      name || {:flat_map, mapper.name},
-      fn _ -> mapper end
+    Step.new(
+      name,
+      &Babel.Helper.map_and_collapse_results(&1, fn element ->
+        Step.apply(mapper.(element), element)
+      end)
     )
   end
 end
