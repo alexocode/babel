@@ -53,18 +53,20 @@ defmodule Babel.Step.Builder do
     Step.new(name || {:into, type}, &Babel.Intoable.into(intoable, &1))
   end
 
-  @spec map(mapper :: (input -> output)) :: Step.t(Enumerable.t(input), list(output))
-        when input: any, output: any
-  @spec map(name, mapper :: (input -> output)) :: Step.t(Enumerable.t(input), list(output))
-        when input: any, output: any
-  def map(name \\ nil, mapper) do
-    Step.new(name || :map, &Enum.map(&1, mapper))
-  end
-
-  @spec flat_map(mapper :: (input -> Step.t(input, output))) ::
+  @spec map(mapper :: Babel.applicable(input, output)) ::
           Step.t(Enumerable.t(input), list(output))
         when input: any, output: any
-  @spec flat_map(name, mapper :: (input -> Step.t(input, output))) ::
+  @spec map(name, mapper :: Babel.applicable(input, output)) ::
+          Step.t(Enumerable.t(input), list(output))
+        when input: any, output: any
+  def map(name \\ nil, mapper) do
+    flat_map(name || :map, fn _ -> mapper end)
+  end
+
+  @spec flat_map(mapper :: (input -> Babel.applicable(input, output))) ::
+          Step.t(Enumerable.t(input), list(output))
+        when input: any, output: any
+  @spec flat_map(name, mapper :: (input -> Babel.applicable(input, output))) ::
           Step.t(Enumerable.t(input), list(output))
         when input: any, output: any
   def flat_map(name \\ nil, mapper)
@@ -75,7 +77,7 @@ defmodule Babel.Step.Builder do
     Step.new(
       name,
       &Babel.Helper.map_and_collapse_results(&1, fn element ->
-        Step.apply(mapper.(element), element)
+        Babel.apply(mapper.(element), element)
       end)
     )
   end

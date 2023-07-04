@@ -10,6 +10,8 @@ defmodule Babel do
   @type pipeline() :: pipeline(term)
   @type pipeline(output) :: Babel.Pipeline.t(output)
 
+  @type applicable(input, output) :: Babel.Applicable.t(input, output)
+
   @type data :: Babel.Fetchable.t()
 
   @typedoc "Any term that describes a Babel operation (like a pipeline or step)"
@@ -57,7 +59,7 @@ defmodule Babel do
   @spec map(
           t(Enumerable.t(input)) | nil,
           name,
-          (input -> output)
+          applicable(input, output)
         ) :: t([output])
         when input: data, output: term
   def map(babel \\ nil, name \\ nil, mapper) do
@@ -67,7 +69,7 @@ defmodule Babel do
   @spec flat_map(
           t(Enumerable.t(input)) | nil,
           name,
-          mapper :: (input -> Step.t(input, output))
+          (input -> applicable(input, output))
         ) :: t([output])
         when input: data, output: term
   def flat_map(babel \\ nil, name \\ nil, mapper) do
