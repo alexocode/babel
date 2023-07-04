@@ -17,6 +17,10 @@ defimpl Babel.Fetchable, for: Any do
   def fetch(%_{} = struct, path) do
     Map.fetch(struct, path)
   end
+
+  def fetch(_other, _path) do
+    :error
+  end
 end
 
 defimpl Babel.Fetchable, for: Map do
