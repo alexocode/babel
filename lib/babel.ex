@@ -49,21 +49,6 @@ defmodule Babel do
     chain(babel, Step.Builder.cast(name, target))
   end
 
-  @spec chain(nil, next) :: next when next: t
-  @spec chain(t(input, in_between), next :: t(in_between, output)) :: Pipeline.t(input, output)
-        when input: any, in_between: term, output: term
-  def chain(nil, next), do: next
-
-  def chain(%Pipeline{} = pipeline, next) do
-    Pipeline.chain(pipeline, next)
-  end
-
-  def chain(%Step{} = step, next) do
-    pipeline = Pipeline.new(nil, [step])
-
-    chain(pipeline, next)
-  end
-
   @spec into(t | nil, name, intoable) :: t(intoable) when intoable: Babel.Intoable.t()
   def into(babel \\ nil, name \\ nil, intoable) do
     chain(babel, Step.Builder.into(name, intoable))
@@ -97,6 +82,31 @@ defmodule Babel do
         when input: data, output: term
   def then(babel \\ nil, name \\ nil, function) do
     chain(babel, Step.new(name, function))
+  end
+
+  @spec choice(
+          t(input) | nil,
+          name,
+          (input -> applicable(input, output))
+        ) :: t(output)
+        when input: data, output: term
+  def choice(babel \\ nil, name \\ nil, chooser) do
+    chain(babel, Step.Builder.choice(name, chooser))
+  end
+
+  @spec chain(nil, next) :: next when next: t
+  @spec chain(t(input, in_between), next :: t(in_between, output)) :: Pipeline.t(input, output)
+        when input: any, in_between: term, output: term
+  def chain(nil, next), do: next
+
+  def chain(%Pipeline{} = pipeline, next) do
+    Pipeline.chain(pipeline, next)
+  end
+
+  def chain(%Step{} = step, next) do
+    pipeline = Pipeline.new(nil, [step])
+
+    chain(pipeline, next)
   end
 
   @spec apply(Babel.Applicable.t(input, output), input) ::

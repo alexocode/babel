@@ -54,6 +54,17 @@ defmodule Babel.Step.Builder do
     Step.new(name || {:into, type}, &Babel.Intoable.into(intoable, &1))
   end
 
+  @spec choice(name, chooser :: (input -> Babel.applicable(input, output))) ::
+          Step.t(input, output)
+        when input: any, output: term
+  def choice(name \\ nil, chooser) when is_function(chooser, 1) do
+    Step.new(name || :choice, fn input ->
+      input
+      |> chooser.()
+      |> Babel.Applicable.apply(input)
+    end)
+  end
+
   @spec map(name, mapper :: Babel.applicable(input, output)) ::
           Step.t(Enumerable.t(input), list(output))
         when input: any, output: any
@@ -72,7 +83,7 @@ defmodule Babel.Step.Builder do
     Step.new(
       name,
       &Babel.Helper.map_and_collapse_results(&1, fn element ->
-        Babel.apply(mapper.(element), element)
+        Babel.Applicable.apply(mapper.(element), element)
       end)
     )
   end
