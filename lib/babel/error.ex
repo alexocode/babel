@@ -79,16 +79,38 @@ defmodule Babel.Error do
     end
   end
 
-  defp root_causes(%__MODULE__{reason: {:nested, nested}}) do
-    root_causes(nested)
+  @doc """
+  Reduces over a nested error. If the error isn't nested the reducer function is only called once.
+
+  Otherwise it will be called for this one and each nested error.
+  """
+  @spec reduce(t | list(t), accumulator, reducer :: (t, accumulator -> accumulator)) ::
+          accumulator
+        when accumulator: any
+
+  def reduce(%__MODULE__{} = error, accumulator, reducer) do
+    accumulator = reducer.(error, accumulator)
+
+    case error.reason do
+      {:nested, errors} ->
+        reduce(errors, accumulator, reducer)
+
+      _ ->
+        accumulator
+    end
   end
 
-  defp root_causes(%__MODULE__{} = root_cause) do
-    [root_cause]
+  def reduce([%__MODULE__{} | _] = errors, accumulator, reducer) do
+    Enum.reduce(errors, accumulator, &reduce(&1, &2, reducer))
   end
 
-  defp root_causes(errors) when is_list(errors) do
-    Enum.flat_map(errors, &root_causes/1)
+  defp root_causes(error) do
+    error
+    |> reduce([], fn
+      %{reason: {:nested, _}}, causes -> causes
+      %{} = cause, causes -> [cause | causes]
+    end)
+    |> Enum.reverse()
   end
 
   defp data(%{data: data}, indent: indent) do
