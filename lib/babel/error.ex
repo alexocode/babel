@@ -60,6 +60,17 @@ defmodule Babel.Error do
     Enum.reduce(errors, accumulator, &reduce(&1, &2, reducer))
   end
 
+  @doc "Returns the errors that actually caused the failure (no nested errors)."
+  @spec root_causes(t | list(t)) :: list(t)
+  def root_causes(error) do
+    error
+    |> reduce([], fn
+      %{reason: {:nested, _}}, causes -> causes
+      %{} = cause, causes -> [cause | causes]
+    end)
+    |> Enum.reverse()
+  end
+
   @impl true
   def message(%__MODULE__{reason: {:nested, nested}} = error) do
     root_causes = root_causes(nested)
@@ -101,15 +112,6 @@ defmodule Babel.Error do
     else
       inspect(name)
     end
-  end
-
-  defp root_causes(error) do
-    error
-    |> reduce([], fn
-      %{reason: {:nested, _}}, causes -> causes
-      %{} = cause, causes -> [cause | causes]
-    end)
-    |> Enum.reverse()
   end
 
   defp data(%{data: data}, indent: indent) do
