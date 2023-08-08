@@ -47,7 +47,7 @@ defmodule Babel.StepTest do
       assert %Babel.Error{} = error
       assert error.reason == ref
       assert error.data == :ignored
-      assert error.step == step
+      assert error.context == step
     end
   end
 end
