@@ -36,6 +36,30 @@ defmodule Babel.Error do
   defp determine_reason([%__MODULE__{} | _] = nested), do: {:nested, nested}
   defp determine_reason(other_reason), do: other_reason
 
+  @doc """
+  Reduces over a nested error. If the error isn't nested the reducer function is only called once.
+
+  Otherwise it will be called for this one and each nested error.
+  """
+  @spec reduce(t | list(t), accumulator, reducer :: (t, accumulator -> accumulator)) ::
+          accumulator
+        when accumulator: any
+  def reduce(%__MODULE__{} = error, accumulator, reducer) do
+    accumulator = reducer.(error, accumulator)
+
+    case error.reason do
+      {:nested, errors} ->
+        reduce(errors, accumulator, reducer)
+
+      _ ->
+        accumulator
+    end
+  end
+
+  def reduce([%__MODULE__{} | _] = errors, accumulator, reducer) do
+    Enum.reduce(errors, accumulator, &reduce(&1, &2, reducer))
+  end
+
   @impl true
   def message(%__MODULE__{reason: {:nested, nested}} = error) do
     root_causes = root_causes(nested)
@@ -77,31 +101,6 @@ defmodule Babel.Error do
     else
       inspect(name)
     end
-  end
-
-  @doc """
-  Reduces over a nested error. If the error isn't nested the reducer function is only called once.
-
-  Otherwise it will be called for this one and each nested error.
-  """
-  @spec reduce(t | list(t), accumulator, reducer :: (t, accumulator -> accumulator)) ::
-          accumulator
-        when accumulator: any
-
-  def reduce(%__MODULE__{} = error, accumulator, reducer) do
-    accumulator = reducer.(error, accumulator)
-
-    case error.reason do
-      {:nested, errors} ->
-        reduce(errors, accumulator, reducer)
-
-      _ ->
-        accumulator
-    end
-  end
-
-  def reduce([%__MODULE__{} | _] = errors, accumulator, reducer) do
-    Enum.reduce(errors, accumulator, &reduce(&1, &2, reducer))
   end
 
   defp root_causes(error) do
