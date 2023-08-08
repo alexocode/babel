@@ -57,7 +57,7 @@ defmodule Babel.Pipeline do
           {:cont, {:ok, result}}
 
         {:error, error} ->
-          {:halt, Babel.Error.wrap(error, data, pipeline)}
+          {:halt, {:error, Babel.Error.wrap(error, data, pipeline)}}
       end
     end)
   end
