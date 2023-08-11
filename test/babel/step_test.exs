@@ -49,5 +49,17 @@ defmodule Babel.StepTest do
       assert error.data == :ignored
       assert error.context == step
     end
+
+    test "rescues thrown exceptions and wraps them as reason in a Babel.Error" do
+      data = %{ref: make_ref()}
+      random_reason = "some reason (#{:rand.uniform(100_000)})"
+      step = step(fn _ -> raise random_reason end)
+
+      assert {:error, error} = Step.apply(step, data)
+      assert %Babel.Error{} = error
+      assert error.reason == %RuntimeError{message: random_reason}
+      assert error.data == data
+      assert error.context == step
+    end
   end
 end

@@ -53,6 +53,9 @@ defmodule Babel.Step do
       data ->
         {:ok, data}
     end
+  rescue
+    error ->
+      {:error, Babel.Error.wrap(error, data, step)}
   end
 
   defimpl Babel.Applicable do
