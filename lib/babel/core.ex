@@ -36,10 +36,6 @@ defmodule Babel.Core do
   @spec cast(:integer) :: Step.t(data, integer)
   @spec cast(:float) :: Step.t(data, float)
   @spec cast(:boolean) :: Step.t(data, boolean)
-  @spec cast(Step.step_fun(input, output)) :: Step.t(input, output)
-        when input: data, output: any
-  def cast(type_or_function)
-
   def cast(type) when type in [:boolean, :float, :integer] do
     cast({:cast, type}, &Primitives.cast(type, &1))
   end
