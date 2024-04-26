@@ -6,27 +6,28 @@ defmodule Babel.Step.Builder do
 
   require Step
 
+  @type data :: Babel.data()
   @type path :: term | list(term)
 
-  @spec fetch(path) :: Step.t(Babel.data())
+  @spec fetch(path) :: Step.t(data)
   def fetch(path) do
     path = List.wrap(path)
 
     Step.new({:fetch, path}, &Primitives.fetch(&1, path))
   end
 
-  @spec get(path, default) :: Step.t(Babel.data(), any | default) when default: any
+  @spec get(path, default) :: Step.t(data, any | default) when default: any
   def get(path, default) do
     path = List.wrap(path)
 
     Step.new({:get, path}, &Primitives.get(&1, path, default))
   end
 
-  @spec cast(:integer) :: Step.t(Babel.data(), integer)
-  @spec cast(:float) :: Step.t(Babel.data(), float)
-  @spec cast(:boolean) :: Step.t(Babel.data(), boolean)
+  @spec cast(:integer) :: Step.t(data, integer)
+  @spec cast(:float) :: Step.t(data, float)
+  @spec cast(:boolean) :: Step.t(data, boolean)
   @spec cast(Step.step_fun(input, output)) :: Step.t(input, output)
-        when input: any, output: any
+        when input: data, output: any
   def cast(type_or_function)
 
   def cast(type) when type in [:boolean, :float, :integer] do
@@ -37,7 +38,7 @@ defmodule Babel.Step.Builder do
     Step.new(name, function)
   end
 
-  @spec into(intoable) :: Step.t(any, intoable) when intoable: Babel.Intoable.t()
+  @spec into(intoable) :: Step.t(data, intoable) when intoable: Babel.Intoable.t()
   def into(intoable)
 
   def into(intoable) do
@@ -53,9 +54,8 @@ defmodule Babel.Step.Builder do
     Step.new({:into, type}, &Babel.Intoable.into(intoable, &1))
   end
 
-  @spec choice(chooser :: (input -> Babel.applicable(input, output))) ::
-          Step.t(input, output)
-        when input: any, output: term
+  @spec choice(chooser :: (input -> Babel.applicable(input, output))) :: Step.t(input, output)
+        when input: data, output: any
   def choice(chooser) when is_function(chooser, 1) do
     Step.new(:choice, fn input ->
       input
@@ -66,7 +66,7 @@ defmodule Babel.Step.Builder do
 
   @spec map(mapper :: Babel.applicable(input, output)) ::
           Step.t(Enumerable.t(input), list(output))
-        when input: any, output: any
+        when input: data, output: any
   def map(mapper) do
     do_flat_map(:map, fn _ -> mapper end)
   end

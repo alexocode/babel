@@ -3,7 +3,7 @@ defmodule Babel.Step do
   import Kernel, except: [apply: 2]
 
   @type t :: t()
-  @type t(input) :: t(input, any)
+  @type t(output) :: t(term, output)
   @type t(input, output) :: %__MODULE__{
           name: name(),
           function: step_fun(input, output)

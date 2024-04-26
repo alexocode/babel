@@ -3,21 +3,26 @@ defmodule Babel do
 
   alias Babel.{Pipeline, Step}
 
-  @type t :: t(term)
-  @type t(output) :: t(any, output)
-  @type t(input, output) :: Babel.Pipeline.t(input, output) | Babel.Step.t(input, output)
+  @type t :: pipeline() | step()
+  @type t(output) :: pipeline(output) | step(output)
+  @type t(input, output) :: pipeline(input, output) | step(input, output)
 
   @type pipeline() :: pipeline(term)
   @type pipeline(output) :: Babel.Pipeline.t(output)
+  @type pipeline(input, output) :: Babel.Pipeline.t(input, output)
+
+  @type step :: Babel.Step.t()
+  @type step(output) :: Babel.Step.t(output)
+  @type step(input, output) :: Babel.Step.t(input, output)
 
   @type applicable(input, output) :: Babel.Applicable.t(input, output)
 
   @type result(type) :: Babel.Step.result(type)
 
-  @type data :: Babel.Fetchable.t()
+  @type data :: term
 
   @typedoc "Any term that describes a Babel operation (like a pipeline or step)"
-  @type name :: any
+  @type name :: term
 
   @typedoc "A term or list of terms describing like in `get_in/2`"
   @type path :: term | list(term)
