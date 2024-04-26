@@ -1,0 +1,11 @@
+☐ Babel.with_default/2 would be nice, how to do this?
+  `on_success` and `on_failure` functions in a step?
+☐ Better way to pass names without pipelines
+☐ Access properties from somewhere else in the object in nested cases (e.g. access top-level fields in a nested array)
+  Maybe a context being passed around, by default it's the current context?
+☐ JQ-syntax support, for example as a sigil? (`~jq'.[] | map(...)')
+☐ Make `Babel.pipeline` a macro that caches the finished one at compile-time?
+
+Developer Experience:
+  ☐ Cast: DateTime + Co
+  ☐ Error `explain/1` like `message/1` but for technical stakeholders (need to refactor error handling in general)
