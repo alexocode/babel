@@ -63,6 +63,6 @@ defmodule Babel.Pipeline do
   end
 
   defimpl Babel.Applicable do
-    def apply(pipeline, data), do: Babel.Pipeline.apply(pipeline, data)
+    defdelegate apply(pipeline, data), to: Babel.Pipeline
   end
 end

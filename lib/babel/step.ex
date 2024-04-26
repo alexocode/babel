@@ -47,6 +47,6 @@ defmodule Babel.Step do
   end
 
   defimpl Babel.Applicable do
-    def apply(step, data), do: Babel.Step.apply(step, data)
+    defdelegate apply(step, data), to: Babel.Step
   end
 end
