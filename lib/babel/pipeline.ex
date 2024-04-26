@@ -16,19 +16,35 @@ defmodule Babel.Pipeline do
   @type on_error :: on_error(term)
   @type on_error(output) :: (Babel.Error.t() -> Babel.result(output))
 
-  @spec new(name) :: t
-  @spec new(name, steps :: [step]) :: t
-  def new(name, steps \\ []) do
+  defguardp is_valid_on_error(value) when is_nil(value) or is_function(value, 1)
+
+  @spec new(step | [step]) :: t
+  @spec new(name, step | [step]) :: t
+  @spec new(name, on_error | nil, step | [step]) :: t
+  def new(name \\ nil, on_error \\ nil, step_or_steps)
+
+  def new(name, on_error, steps) when is_list(steps) and is_valid_on_error(on_error) do
     %__MODULE__{
       name: name,
+      on_error: on_error,
       steps_in_reverse_order: Enum.reverse(steps)
     }
   end
 
-  @spec from(pipeline) :: pipeline when pipeline: t
-  @spec from(step :: Babel.Step.t(input, output)) :: t(input, output) when input: any, output: any
-  def from(%__MODULE__{} = pipeline), do: pipeline
-  def from(%Babel.Step{} = step), do: %__MODULE__{steps_in_reverse_order: [step]}
+  # Reuse the given pipeline but only when name and error handling are the same (probably nil)
+  def new(name, on_error, %__MODULE__{name: name, on_error: on_error} = pipeline)
+      when is_valid_on_error(on_error) do
+    pipeline
+  end
+
+  def new(name, on_error, step) when is_valid_on_error(on_error) do
+    %__MODULE__{name: name, on_error: on_error, steps_in_reverse_order: [step]}
+  end
+
+  @spec named(t, name) :: t
+  def named(%__MODULE__{} = pipeline, name) when not is_nil(name) do
+    %__MODULE__{pipeline | name: name}
+  end
 
   @spec on_error(t, on_error) :: t
   def on_error(%__MODULE__{} = pipeline, on_error) when is_function(on_error, 1) do
