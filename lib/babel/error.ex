@@ -8,12 +8,10 @@ defmodule Babel.Error do
         }
   defexception [:reason, :data, :context]
 
-  @spec wrap_if_error(
-          {:error, reason} | other,
-          Babel.data(),
-          Babel.t()
-        ) :: {:error, t(reason)} | other
-        when reason: any, other: any
+  @spec wrap_if_error({:error, reason}, Babel.data(), Babel.t()) :: {:error, t(reason)}
+        when reason: any
+  @spec wrap_if_error(other, Babel.data(), Babel.t()) :: other
+        when other: any
   def wrap_if_error(maybe_error, data, context) do
     case maybe_error do
       :error -> {:error, wrap(maybe_error, data, context)}
