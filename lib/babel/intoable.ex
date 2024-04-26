@@ -9,7 +9,7 @@ end
 
 defmodule Babel.Intoable.Helper do
   def into_each(enum, data) do
-    Babel.Helper.map_and_collapse_results(enum, &Babel.Intoable.into(&1, data))
+    Babel.Core.Helper.map_and_collapse_results(enum, &Babel.Intoable.into(&1, data))
   end
 end
 

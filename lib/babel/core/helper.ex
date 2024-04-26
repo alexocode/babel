@@ -1,4 +1,4 @@
-defmodule Babel.Helper do
+defmodule Babel.Core.Helper do
   @moduledoc false
 
   @spec map_and_collapse_results(

@@ -1,8 +1,8 @@
-defmodule Babel.Step.Builder do
+defmodule Babel.Core do
   @moduledoc false
 
+  alias __MODULE__.Primitives
   alias Babel.Step
-  alias Babel.Step.Builder.Primitives
 
   require Step
 
@@ -81,7 +81,7 @@ defmodule Babel.Step.Builder do
   defp do_flat_map(name, mapper) do
     Step.new(
       name,
-      &Babel.Helper.map_and_collapse_results(&1, fn element ->
+      &__MODULE__.Helper.map_and_collapse_results(&1, fn element ->
         Babel.Applicable.apply(mapper.(element), element)
       end)
     )

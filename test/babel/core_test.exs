@@ -1,21 +1,15 @@
-defmodule Babel.Step.BuilderTest do
+defmodule Babel.CoreTest do
   use ExUnit.Case, async: true
 
   import Babel.Support.StepFactory
 
+  alias Babel.Core
   alias Babel.Step
-  alias Babel.Step.Builder
 
   describe "map/2" do
-    test "returns a step with the given name" do
-      step = Builder.map(:given_name, step())
-
-      assert step.name == :given_name
-    end
-
     test "returns a step that applies the given step to each element of an enumerable" do
       mapping_step = step(&{:mapped, &1})
-      step = Builder.map(mapping_step)
+      step = Core.map(mapping_step)
 
       assert {:ok, mapped} = Step.apply(step, [1, 2, 3])
 
@@ -30,7 +24,7 @@ defmodule Babel.Step.BuilderTest do
   describe "flat_map/2" do
     test "allows to pass a function that returns a step which gets evaluated immediately" do
       mapping_function = fn element -> step(&{:mapped, element, &1}) end
-      step = Builder.flat_map(mapping_function)
+      step = Core.flat_map(mapping_function)
 
       assert {:ok, mapped} = Step.apply(step, [1, 2, 3])
 

@@ -1,7 +1,9 @@
 defmodule Babel do
   import Kernel, except: [apply: 2]
 
-  alias Babel.{Pipeline, Step}
+  alias Babel.Core
+  alias Babel.Pipeline
+  alias Babel.Step
 
   @type t :: pipeline() | step()
   @type t(output) :: pipeline(output) | step(output)
@@ -37,43 +39,43 @@ defmodule Babel do
 
   @spec fetch(t | nil, path) :: t
   def fetch(babel \\ nil, path) do
-    chain(babel, Step.Builder.fetch(path))
+    chain(babel, Core.fetch(path))
   end
 
   @spec get(t | nil, path) :: t
   def get(babel \\ nil, path, default) do
-    chain(babel, Step.Builder.get(path, default))
+    chain(babel, Core.get(path, default))
   end
 
   @spec cast(t | nil, :boolean) :: t(boolean)
   @spec cast(t | nil, :integer) :: t(integer)
   @spec cast(t | nil, :float) :: t(float)
   def cast(babel \\ nil, target) do
-    chain(babel, Step.Builder.cast(target))
+    chain(babel, Core.cast(target))
   end
 
   @spec into(t | nil, intoable) :: t(intoable) when intoable: Babel.Intoable.t()
   def into(babel \\ nil, intoable) do
-    chain(babel, Step.Builder.into(intoable))
+    chain(babel, Core.into(intoable))
   end
 
   @spec map(t(Enumerable.t(input)) | nil, applicable(input, output)) :: t([output])
         when input: data, output: term
   def map(babel \\ nil, mapper) do
-    chain(babel, Step.Builder.map(mapper))
+    chain(babel, Core.map(mapper))
   end
 
   @spec flat_map(t(Enumerable.t(input)) | nil, (input -> applicable(input, output))) ::
           t([output])
         when input: data, output: term
   def flat_map(babel \\ nil, mapper) do
-    chain(babel, Step.Builder.flat_map(mapper))
+    chain(babel, Core.flat_map(mapper))
   end
 
   @spec choice(t(input) | nil, (input -> applicable(input, output))) :: t(output)
         when input: data, output: term
   def choice(babel \\ nil, chooser) do
-    chain(babel, Step.Builder.choice(chooser))
+    chain(babel, Core.choice(chooser))
   end
 
   @spec then(t(input) | nil, name, Step.step_fun(input, output)) :: t(output)
