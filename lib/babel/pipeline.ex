@@ -3,12 +3,12 @@ defmodule Babel.Pipeline do
   @type t(output) :: t(any, output)
   @type t(_input, output) :: %__MODULE__{
           name: name,
-          steps_in_reverse_order: [step],
-          on_error: nil | on_error(output)
+          on_error: nil | on_error(output),
+          steps_in_reversed_order: [step]
         }
   defstruct name: nil,
-            steps_in_reverse_order: [],
-            on_error: nil
+            on_error: nil,
+            steps_in_reversed_order: []
 
   @typedoc "A term describing what this pipeline does"
   @type name() :: Babel.name()
@@ -16,34 +16,28 @@ defmodule Babel.Pipeline do
   @type on_error :: on_error(term)
   @type on_error(output) :: (Babel.Error.t() -> Babel.Step.result(output))
 
-  defguardp is_valid_on_error(value) when is_nil(value) or is_function(value, 1)
-
   @spec new(step | [step]) :: t
-  @spec new(name, step | [step]) :: t
-  @spec new(name, on_error | nil, step | [step]) :: t
-  def new(name \\ nil, on_error \\ nil, step_or_steps)
+  def new(%__MODULE__{} = t), do: t
+  def new(steps), do: build(steps)
 
-  def new(name, on_error, steps) when is_list(steps) and is_valid_on_error(on_error) do
+  @spec new(name, step | [step]) :: t
+  def new(name, %__MODULE__{name: name} = t), do: t
+  def new(name, steps), do: build(name, steps)
+
+  @spec new(name, on_error, step | [step]) :: t
+  def new(name, on_error, %__MODULE__{name: name, on_error: on_error} = t), do: t
+  def new(name, on_error, %__MODULE__{name: name, on_error: nil} = t), do: on_error(t, on_error)
+  def new(name, on_error, steps), do: build(name, on_error, steps)
+
+  defp build(name \\ nil, on_error \\ nil, step_or_steps) do
     %__MODULE__{
       name: name,
       on_error: on_error,
-      steps_in_reverse_order: Enum.reverse(steps)
+      steps_in_reverse_order:
+        step_or_steps
+        |> List.wrap()
+        |> Enum.reverse()
     }
-  end
-
-  # Reuse the given pipeline but only when name and error handling are the same (probably nil)
-  def new(name, on_error, %__MODULE__{name: name, on_error: on_error} = pipeline)
-      when is_valid_on_error(on_error) do
-    pipeline
-  end
-
-  def new(name, on_error, step) when is_valid_on_error(on_error) do
-    %__MODULE__{name: name, on_error: on_error, steps_in_reverse_order: [step]}
-  end
-
-  @spec named(t, name) :: t
-  def named(%__MODULE__{} = pipeline, name) when not is_nil(name) do
-    %__MODULE__{pipeline | name: name}
   end
 
   @spec on_error(t, on_error) :: t
