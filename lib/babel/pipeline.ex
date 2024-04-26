@@ -16,8 +16,6 @@ defmodule Babel.Pipeline do
   @type on_error :: on_error(term)
   @type on_error(output) :: (Babel.Error.t() -> Babel.result(output))
 
-  @type chainable() :: t() | Babel.Applicable.t()
-
   @spec new(name) :: t
   @spec new(name, steps :: [step]) :: t
   def new(name, steps \\ []) do
