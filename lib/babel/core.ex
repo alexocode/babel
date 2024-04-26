@@ -37,11 +37,7 @@ defmodule Babel.Core do
   @spec cast(:float) :: Step.t(data, float)
   @spec cast(:boolean) :: Step.t(data, boolean)
   def cast(type) when type in [:boolean, :float, :integer] do
-    cast({:cast, type}, &Primitives.cast(type, &1))
-  end
-
-  defp cast(name, function) when is_function(function, 1) do
-    Step.new(name, function)
+    Step.new({:cast, type}, &Primitives.cast(type, &1))
   end
 
   @spec into(intoable) :: Step.t(data, intoable) when intoable: Babel.Intoable.t()
