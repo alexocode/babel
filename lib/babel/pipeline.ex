@@ -4,11 +4,11 @@ defmodule Babel.Pipeline do
   @type t(_input, output) :: %__MODULE__{
           name: name,
           on_error: nil | on_error(output),
-          steps_in_reversed_order: [step]
+          reversed_steps: [step]
         }
   defstruct name: nil,
             on_error: nil,
-            steps_in_reversed_order: []
+            reversed_steps: []
 
   @typedoc "A term describing what this pipeline does"
   @type name() :: Babel.name()
@@ -33,7 +33,7 @@ defmodule Babel.Pipeline do
     %__MODULE__{
       name: name,
       on_error: on_error,
-      steps_in_reverse_order:
+      reversed_steps:
         step_or_steps
         |> List.wrap()
         |> Enum.reverse()
@@ -51,8 +51,8 @@ defmodule Babel.Pipeline do
   def chain(%__MODULE__{} = left, %__MODULE__{name: nil, on_error: nil} = right) do
     Map.update!(
       left,
-      :steps_in_reverse_order,
-      &Enum.concat(right.steps_in_reverse_order, &1)
+      :reversed_steps,
+      &Enum.concat(right.reversed_steps, &1)
     )
   end
 
@@ -60,7 +60,7 @@ defmodule Babel.Pipeline do
   def chain(%__MODULE__{} = pipeline, steps) when is_list(steps) do
     Map.update!(
       pipeline,
-      :steps_in_reverse_order,
+      :reversed_steps,
       &Enum.concat(Enum.reverse(steps), &1)
     )
   end
@@ -69,7 +69,7 @@ defmodule Babel.Pipeline do
   def chain(%__MODULE__{} = pipeline, step) do
     Map.update!(
       pipeline,
-      :steps_in_reverse_order,
+      :reversed_steps,
       &[step | &1]
     )
   end
@@ -77,7 +77,7 @@ defmodule Babel.Pipeline do
   @spec apply(t(input, output), Babel.data()) :: {:ok, output} | {:error, Babel.Error.t()}
         when input: Babel.data(), output: any
   def apply(%__MODULE__{} = pipeline, data) do
-    pipeline.steps_in_reverse_order
+    pipeline.reversed_steps
     |> Enum.reverse()
     |> Enum.reduce_while({:ok, data}, fn applicable, {:ok, result} ->
       case Babel.Applicable.apply(applicable, result) do
