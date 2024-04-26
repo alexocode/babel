@@ -107,6 +107,13 @@ defmodule Babel do
     |> Pipeline.chain(next)
   end
 
+  @spec on_error(t(), Pipeline.on_error(output)) :: t(output) when output: any
+  def on_error(babel, function) do
+    babel
+    |> Pipeline.new()
+    |> Pipeline.on_error(function)
+  end
+
   @spec apply(t(output), data) :: {:ok, output} | {:error, Error.t()} when output: any
   def apply(babel, data) do
     Babel.Applicable.apply(babel, data)
