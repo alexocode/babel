@@ -5,7 +5,7 @@ defmodule Babel.StepTest do
 
   alias Babel.Step
 
-  describe "new/p" do
+  describe "new/2" do
     test "creates a step with the given name and function" do
       name = {:cool_name, make_ref()}
       function = fn _ -> name end
