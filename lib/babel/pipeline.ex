@@ -47,17 +47,21 @@ defmodule Babel.Pipeline do
     )
   end
 
-  @spec chain(t, step | [step]) :: t
-  def chain(%__MODULE__{} = pipeline, step_or_steps) do
-    reversed_steps =
-      step_or_steps
-      |> List.wrap()
-      |> Enum.reverse()
-
+  @spec chain(t, [step]) :: t
+  def chain(%__MODULE__{} = pipeline, steps) when is_list(steps) do
     Map.update!(
       pipeline,
       :steps_in_reverse_order,
-      &Enum.concat(reversed_steps, &1)
+      &Enum.concat(Enum.reverse(steps), &1)
+    )
+  end
+
+  @spec chain(t, step) :: t
+  def chain(%__MODULE__{} = pipeline, step) do
+    Map.update!(
+      pipeline,
+      :steps_in_reverse_order,
+      &[step | &1]
     )
   end
 
