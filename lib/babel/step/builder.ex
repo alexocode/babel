@@ -7,41 +7,40 @@ defmodule Babel.Step.Builder do
   require Step
 
   @type path :: term | list(term)
-  @type name :: Step.name()
 
-  @spec fetch(name, path) :: Step.t(Babel.data())
-  def fetch(name \\ nil, path) do
+  @spec fetch(path) :: Step.t(Babel.data())
+  def fetch(path) do
     path = List.wrap(path)
 
-    Step.new(name || {:fetch, path}, &Primitives.fetch(&1, path))
+    Step.new({:fetch, path}, &Primitives.fetch(&1, path))
   end
 
-  @spec get(name, path, default) :: Step.t(Babel.data(), any | default) when default: any
-  def get(name \\ nil, path, default) do
+  @spec get(path, default) :: Step.t(Babel.data(), any | default) when default: any
+  def get(path, default) do
     path = List.wrap(path)
 
-    Step.new(name || {:get, path}, &Primitives.get(&1, path, default))
+    Step.new({:get, path}, &Primitives.get(&1, path, default))
   end
 
-  @spec cast(name, :integer) :: Step.t(Babel.data(), integer)
-  @spec cast(name, :float) :: Step.t(Babel.data(), float)
-  @spec cast(name, :boolean) :: Step.t(Babel.data(), boolean)
-  @spec cast(name, Step.step_fun(input, output)) :: Step.t(input, output)
+  @spec cast(:integer) :: Step.t(Babel.data(), integer)
+  @spec cast(:float) :: Step.t(Babel.data(), float)
+  @spec cast(:boolean) :: Step.t(Babel.data(), boolean)
+  @spec cast(Step.step_fun(input, output)) :: Step.t(input, output)
         when input: any, output: any
-  def cast(name \\ nil, type_or_function)
+  def cast(type_or_function)
 
-  def cast(name, type) when type in [:boolean, :float, :integer] do
-    cast(name || {:cast, type}, &Primitives.cast(type, &1))
+  def cast(type) when type in [:boolean, :float, :integer] do
+    cast({:cast, type}, &Primitives.cast(type, &1))
   end
 
-  def cast(name, function) when is_function(function, 1) do
-    Step.new(name || :cast, function)
+  defp cast(name, function) when is_function(function, 1) do
+    Step.new(name, function)
   end
 
-  @spec into(name, intoable) :: Step.t(any, intoable) when intoable: Babel.Intoable.t()
-  def into(name \\ nil, intoable)
+  @spec into(intoable) :: Step.t(any, intoable) when intoable: Babel.Intoable.t()
+  def into(intoable)
 
-  def into(name, intoable) do
+  def into(intoable) do
     type =
       case intoable do
         %struct{} -> struct
@@ -51,40 +50,52 @@ defmodule Babel.Step.Builder do
         other -> other
       end
 
-    Step.new(name || {:into, type}, &Babel.Intoable.into(intoable, &1))
+    Step.new({:into, type}, &Babel.Intoable.into(intoable, &1))
   end
 
-  @spec choice(name, chooser :: (input -> Babel.applicable(input, output))) ::
+  @spec choice(chooser :: (input -> Babel.applicable(input, output))) ::
           Step.t(input, output)
         when input: any, output: term
-  def choice(name \\ nil, chooser) when is_function(chooser, 1) do
-    Step.new(name || :choice, fn input ->
+  def choice(chooser) when is_function(chooser, 1) do
+    Step.new(:choice, fn input ->
       input
       |> chooser.()
       |> Babel.Applicable.apply(input)
     end)
   end
 
-  @spec map(name, mapper :: Babel.applicable(input, output)) ::
+  @spec map(mapper :: Babel.applicable(input, output)) ::
           Step.t(Enumerable.t(input), list(output))
         when input: any, output: any
-  def map(name \\ nil, mapper) do
-    flat_map(name || :map, fn _ -> mapper end)
+  def map(mapper) do
+    do_flat_map(:map, fn _ -> mapper end)
   end
 
-  @spec flat_map(name, mapper :: (input -> Babel.applicable(input, output))) ::
+  @spec flat_map(mapper :: (input -> Babel.applicable(input, output))) ::
           Step.t(Enumerable.t(input), list(output))
         when input: any, output: any
-  def flat_map(name \\ nil, mapper)
+  def flat_map(mapper) when is_function(mapper, 1) do
+    do_flat_map(:flat_map, mapper)
+  end
 
-  def flat_map(name, mapper) when is_function(mapper, 1) do
-    name = name || :flat_map
-
+  defp do_flat_map(name, mapper) do
     Step.new(
       name,
       &Babel.Helper.map_and_collapse_results(&1, fn element ->
         Babel.Applicable.apply(mapper.(element), element)
       end)
     )
+  end
+
+  # TODO: Add docs
+  @spec wrap(module, function_name :: atom, args :: list) :: Step.t()
+  def wrap(module, function_name, args)
+      when is_atom(module) and is_atom(function_name) and is_list(args) do
+    unless function_exported?(module, function_name, 1 + length(args)) do
+      raise ArgumentError,
+            "Invalid function spec: `#{inspect(module)}.#{function_name}/#{1 + length(args)}` doesn't seem to exist"
+    end
+
+    Step.new({module, function_name}, &Kernel.apply(module, function_name, [&1 | args]))
   end
 end

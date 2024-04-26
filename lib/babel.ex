@@ -27,71 +27,54 @@ defmodule Babel do
   def begin(name \\ nil), do: Pipeline.new(name)
 
   @doc "Alias for `fetch/3`."
-  @spec at(t | nil, name, path) :: t
-  def at(babel \\ nil, name \\ nil, path) do
-    fetch(babel, name, path)
+  @spec at(t | nil, path) :: t
+  def at(babel \\ nil, path), do: fetch(babel, path)
+
+  @spec fetch(t | nil, path) :: t
+  def fetch(babel \\ nil, path) do
+    chain(babel, Step.Builder.fetch(path))
   end
 
-  @spec fetch(t | nil, name, path) :: t
-  def fetch(babel \\ nil, name \\ nil, path) do
-    chain(babel, Step.Builder.fetch(name, path))
+  @spec get(t | nil, path) :: t
+  def get(babel \\ nil, path, default) do
+    chain(babel, Step.Builder.get(path, default))
   end
 
-  @spec get(t | nil, name, path) :: t
-  def get(babel \\ nil, name \\ nil, path, default) do
-    chain(babel, Step.Builder.get(name, path, default))
+  @spec cast(t | nil, :boolean) :: t(boolean)
+  @spec cast(t | nil, :integer) :: t(integer)
+  @spec cast(t | nil, :float) :: t(float)
+  def cast(babel \\ nil, target) do
+    chain(babel, Step.Builder.cast(target))
   end
 
-  @spec cast(t | nil, name, :boolean) :: t(boolean)
-  @spec cast(t | nil, name, :integer) :: t(integer)
-  @spec cast(t | nil, name, :float) :: t(float)
-  def cast(babel \\ nil, name \\ nil, target) do
-    chain(babel, Step.Builder.cast(name, target))
+  @spec into(t | nil, intoable) :: t(intoable) when intoable: Babel.Intoable.t()
+  def into(babel \\ nil, intoable) do
+    chain(babel, Step.Builder.into(intoable))
   end
 
-  @spec into(t | nil, name, intoable) :: t(intoable) when intoable: Babel.Intoable.t()
-  def into(babel \\ nil, name \\ nil, intoable) do
-    chain(babel, Step.Builder.into(name, intoable))
-  end
-
-  @spec map(
-          t(Enumerable.t(input)) | nil,
-          name,
-          applicable(input, output)
-        ) :: t([output])
+  @spec map(t(Enumerable.t(input)) | nil, applicable(input, output)) :: t([output])
         when input: data, output: term
-  def map(babel \\ nil, name \\ nil, mapper) do
-    chain(babel, Step.Builder.map(name, mapper))
+  def map(babel \\ nil, mapper) do
+    chain(babel, Step.Builder.map(mapper))
   end
 
-  @spec flat_map(
-          t(Enumerable.t(input)) | nil,
-          name,
-          (input -> applicable(input, output))
-        ) :: t([output])
+  @spec flat_map(t(Enumerable.t(input)) | nil, (input -> applicable(input, output))) ::
+          t([output])
         when input: data, output: term
-  def flat_map(babel \\ nil, name \\ nil, mapper) do
-    chain(babel, Step.Builder.flat_map(name, mapper))
+  def flat_map(babel \\ nil, mapper) do
+    chain(babel, Step.Builder.flat_map(mapper))
   end
 
-  @spec then(
-          t(input) | nil,
-          name,
-          Step.step_fun(input, output)
-        ) :: t(output)
+  @spec choice(t(input) | nil, (input -> applicable(input, output))) :: t(output)
+        when input: data, output: term
+  def choice(babel \\ nil, chooser) do
+    chain(babel, Step.Builder.choice(chooser))
+  end
+
+  @spec then(t(input) | nil, name, Step.step_fun(input, output)) :: t(output)
         when input: data, output: term
   def then(babel \\ nil, name \\ nil, function) do
     chain(babel, Step.new(name, function))
-  end
-
-  @spec choice(
-          t(input) | nil,
-          name,
-          (input -> applicable(input, output))
-        ) :: t(output)
-        when input: data, output: term
-  def choice(babel \\ nil, name \\ nil, chooser) do
-    chain(babel, Step.Builder.choice(name, chooser))
   end
 
   @spec chain(nil, next) :: next when next: t
