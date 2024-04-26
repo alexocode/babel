@@ -91,6 +91,7 @@ defmodule Babel.Pipeline do
             if pipeline.on_error do
               wrapped_error
               |> pipeline.on_error.()
+              # TODO: Retain stack trace (somehow)
               |> Babel.Error.wrap_if_error(data, pipeline)
             else
               wrapped_error
