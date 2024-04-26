@@ -51,7 +51,7 @@ defmodule Babel.Lifting do
   @spec wrap_and_chain(Babel.t() | nil, {module, atom, list}) :: Babel.t()
   def wrap_and_chain(babel, {module, func_name, args})
       when is_atom(module) and is_atom(func_name) and is_list(args) do
-    wrapped = Babel.Step.new({module, func_name}, &apply(Elixir.Enum, func_name, [&1 | args]))
+    wrapped = Babel.Step.new({module, func_name}, &apply(module, func_name, [&1 | args]))
 
     Babel.chain(babel, wrapped)
   end
