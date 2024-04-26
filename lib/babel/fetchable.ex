@@ -24,9 +24,7 @@ defimpl Babel.Fetchable, for: Any do
 end
 
 defimpl Babel.Fetchable, for: Map do
-  def fetch(map, path) do
-    Map.fetch(map, path)
-  end
+  defdelegate fetch(map, path), to: Map
 end
 
 defimpl Babel.Fetchable, for: List do
