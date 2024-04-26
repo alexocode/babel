@@ -37,7 +37,8 @@ defmodule Babel.Pipeline do
     %__MODULE__{pipeline | on_error: on_error}
   end
 
-  @spec chain(t, t) :: t
+  @spec chain(t(input, in_between), t(in_between, output)) :: t(input, output)
+        when input: any, in_between: any, output: any
   # Minor optimization: merge unnamed pipelines without error handling into the current pipeline
   def chain(%__MODULE__{} = left, %__MODULE__{name: nil, on_error: nil} = right) do
     Map.update!(
