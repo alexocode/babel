@@ -9,6 +9,16 @@ defmodule Babel.Core do
   @type data :: Babel.data()
   @type path :: term | list(term)
 
+  @spec id() :: Step.t(input, input) when input: any
+  def id do
+    Step.new(:id, & &1)
+  end
+
+  @spec const(value) :: Step.t(value) when value: any
+  def const(value) do
+    Step.new({:const, value}, fn _ -> value end)
+  end
+
   @spec fetch(path) :: Step.t(data)
   def fetch(path) do
     path = List.wrap(path)
