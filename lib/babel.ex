@@ -40,6 +40,16 @@ defmodule Babel do
   @spec begin(name) :: Pipeline.t()
   def begin(name \\ nil), do: Pipeline.new(name, [])
 
+  @doc "Alias for `id/0`."
+  @spec noop() :: Step.t(input, input) when input: any
+  def noop, do: id()
+
+  @spec id() :: Step.t(input, input) when input: any
+  defdelegate id, to: Core
+
+  @spec const(value) :: Step.t(value) when value: any
+  defdelegate const(value), to: Core
+
   @doc "Alias for `fetch/2`."
   @spec at(t | nil, path) :: t
   def at(babel \\ nil, path), do: fetch(babel, path)
