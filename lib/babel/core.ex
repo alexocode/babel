@@ -11,7 +11,7 @@ defmodule Babel.Core do
 
   @spec id() :: Step.t(input, input) when input: any
   def id do
-    Step.new(:id, & &1)
+    Step.new(:id, &Function.identity/1)
   end
 
   @spec const(value) :: Step.t(value) when value: any
