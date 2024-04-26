@@ -56,6 +56,20 @@ defmodule Babel.Core do
     Step.new({:into, type}, &Babel.Intoable.into(intoable, &1))
   end
 
+  @spec call(module, function_name :: atom, extra_args :: list) :: Step.t()
+  def call(module, function_name, extra_args)
+      when is_atom(module) and is_atom(function_name) and is_list(extra_args) do
+    unless function_exported?(module, function_name, 1 + length(extra_args)) do
+      raise ArgumentError,
+            "cannot call missing function `#{inspect(module)}.#{function_name}/#{1 + length(extra_args)}`"
+    end
+
+    Step.new(
+      {module, function_name, extra_args},
+      &Kernel.apply(module, function_name, [&1 | extra_args])
+    )
+  end
+
   @spec choice(chooser :: (input -> Babel.applicable(input, output))) :: Step.t(input, output)
         when input: data, output: any
   def choice(chooser) when is_function(chooser, 1) do
@@ -87,17 +101,5 @@ defmodule Babel.Core do
         Babel.Applicable.apply(mapper.(element), element)
       end)
     )
-  end
-
-  # TODO: Add docs
-  @spec wrap(module, function_name :: atom, args :: list) :: Step.t()
-  def wrap(module, function_name, args)
-      when is_atom(module) and is_atom(function_name) and is_list(args) do
-    unless function_exported?(module, function_name, 1 + length(args)) do
-      raise ArgumentError,
-            "Invalid function spec: `#{inspect(module)}.#{function_name}/#{1 + length(args)}` doesn't seem to exist"
-    end
-
-    Step.new({module, function_name}, &Kernel.apply(module, function_name, [&1 | args]))
   end
 end

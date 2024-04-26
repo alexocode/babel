@@ -71,6 +71,12 @@ defmodule Babel do
     chain(babel, Step.new(name, function))
   end
 
+  @spec call(t | nil, module, function_name :: atom) :: t
+  @spec call(t | nil, module, function_name :: atom, extra_args :: list) :: t
+  def call(babel \\ nil, module, function_name, extra_args \\ []) do
+    chain(babel, Core.call(module, function_name, extra_args))
+  end
+
   @spec choice(t(input) | nil, (input -> t(input, output))) :: t(output)
         when input: data, output: term
   def choice(babel \\ nil, chooser) do
