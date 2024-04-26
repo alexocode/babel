@@ -30,7 +30,7 @@ defmodule Babel.Core do
   def get(path, default) do
     path = List.wrap(path)
 
-    Step.new({:get, path}, &Primitives.get(&1, path, default))
+    Step.new({:get, path, default}, &Primitives.get(&1, path, default))
   end
 
   @spec cast(:integer) :: Step.t(data, integer)
