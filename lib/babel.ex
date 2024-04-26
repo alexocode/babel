@@ -29,14 +29,14 @@ defmodule Babel do
   @typedoc "A term or list of terms describing like in `get_in/2`"
   @type path :: term | list(term)
 
-  defmacro pipeline(name, ast) do
-    case ast do
-      [do: do_block] ->
+  defmacro pipeline(name, [{:do, do_block} | maybe_else]) do
+    case maybe_else do
+      [] ->
         quote do
           Babel.Pipeline.new(unquote(name), unquote(do_block))
         end
 
-      [do: do_block, else: else_block] ->
+      [else: else_block] ->
         on_error = {:fn, [], else_block}
 
         quote do
