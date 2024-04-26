@@ -94,7 +94,7 @@ defmodule Babel do
     chain(babel, Core.choice(chooser))
   end
 
-  @spec then(t(input) | nil, name, Step.step_fun(input, output)) :: t(output)
+  @spec then(t(input) | nil, name, Step.fun(input, output)) :: t(output)
         when input: data, output: term
   def then(babel \\ nil, name \\ nil, function) do
     chain(babel, Step.new(name, function))

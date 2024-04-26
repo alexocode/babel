@@ -6,21 +6,21 @@ defmodule Babel.Step do
   @type t(output) :: t(term, output)
   @type t(input, output) :: %__MODULE__{
           name: name(),
-          function: step_fun(input, output)
+          function: fun(input, output)
         }
   defstruct [:function, :name]
 
   @typedoc "A term describing what this step does"
   @type name :: Babel.name()
 
-  @type step_fun :: step_fun(any, any)
-  @type step_fun(input, output) :: (input -> result(output))
+  @type fun :: fun(any, any)
+  @type fun(input, output) :: (input -> result(output))
 
   @type result(output) :: output | {:ok, output} | :error | {:error, reason :: any}
 
   defguard is_step_function(function) when is_function(function, 1)
 
-  @spec new(name, step_fun(input, output)) :: t(input, output) when input: any, output: any
+  @spec new(name, fun(input, output)) :: t(input, output) when input: any, output: any
   def new(name, function) when is_function(function, 1) do
     %__MODULE__{name: name, function: function}
   end
