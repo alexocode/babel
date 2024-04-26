@@ -3,6 +3,7 @@ defmodule Babel do
 
   alias Babel.Applicable
   alias Babel.Core
+  alias Babel.Error
   alias Babel.Pipeline
   alias Babel.Step
 
@@ -106,7 +107,7 @@ defmodule Babel do
     |> Pipeline.chain(next)
   end
 
-  @spec apply(t(output), data) :: {:ok, output} | {:error, Babel.Error.t()} when output: any
+  @spec apply(t(output), data) :: {:ok, output} | {:error, Error.t()} when output: any
   def apply(babel, data) do
     Babel.Applicable.apply(babel, data)
   end
@@ -117,7 +118,7 @@ defmodule Babel do
       {:ok, output} ->
         output
 
-      {:error, %Babel.Error{} = error} ->
+      {:error, %Error{} = error} ->
         raise error
     end
   end
