@@ -5,7 +5,7 @@ defmodule Babel do
 
   @type t :: t(term)
   @type t(output) :: t(any, output)
-  @type t(input, output) :: Babel.Pipeline.t(input, output) | Babel.Step.t(output)
+  @type t(input, output) :: Babel.Pipeline.t(input, output) | Babel.Step.t(input, output)
 
   @type pipeline() :: pipeline(term)
   @type pipeline(output) :: Babel.Pipeline.t(output)
