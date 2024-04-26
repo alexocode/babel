@@ -1,33 +1,23 @@
 defmodule Babel do
   import Kernel, except: [apply: 2]
 
+  alias Babel.Applicable
   alias Babel.Core
   alias Babel.Pipeline
   alias Babel.Step
 
-  @type t :: pipeline() | step()
-  @type t(output) :: pipeline(output) | step(output)
-  @type t(input, output) :: pipeline(input, output) | step(input, output)
+  @type t :: Applicable.t()
+  @type t(output) :: Applicable.t(output)
+  @type t(input, output) :: Applicable.t(input, output)
 
-  @type pipeline() :: pipeline(term)
-  @type pipeline(output) :: Babel.Pipeline.t(output)
-  @type pipeline(input, output) :: Babel.Pipeline.t(input, output)
-
-  @type step :: Babel.Step.t()
-  @type step(output) :: Babel.Step.t(output)
-  @type step(input, output) :: Babel.Step.t(input, output)
-
-  @type applicable(input, output) :: Babel.Applicable.t(input, output)
-
-  @type result(type) :: Babel.Step.result(type)
-
+  @typedoc "Arbitrary data structure that ought to be transformed."
   @type data :: term
 
-  @typedoc "Any term that describes a Babel operation (like a pipeline or step)"
+  @typedoc "Arbitrary term describing a Babel step or pipeline."
   @type name :: term
 
-  @typedoc "A term or list of terms describing like in `get_in/2`"
-  @type path :: term | list(term)
+  @typedoc "TODO: Better docs"
+  @type path :: Core.path()
 
   defmacro pipeline(name, [{:do, do_block} | maybe_else]) do
     case maybe_else do
@@ -49,7 +39,7 @@ defmodule Babel do
   @spec begin(name) :: Pipeline.t()
   def begin(name \\ nil), do: Pipeline.new(name, [])
 
-  @doc "Alias for `fetch/3`."
+  @doc "Alias for `fetch/2`."
   @spec at(t | nil, path) :: t
   def at(babel \\ nil, path), do: fetch(babel, path)
 
@@ -75,55 +65,47 @@ defmodule Babel do
     chain(babel, Core.into(intoable))
   end
 
-  @spec map(t(Enumerable.t(input)) | nil, applicable(input, output)) :: t([output])
-        when input: data, output: term
-  def map(babel \\ nil, mapper) do
-    chain(babel, Core.map(mapper))
-  end
-
-  @spec flat_map(t(Enumerable.t(input)) | nil, (input -> applicable(input, output))) ::
-          t([output])
-        when input: data, output: term
-  def flat_map(babel \\ nil, mapper) do
-    chain(babel, Core.flat_map(mapper))
-  end
-
-  @spec choice(t(input) | nil, (input -> applicable(input, output))) :: t(output)
-        when input: data, output: term
-  def choice(babel \\ nil, chooser) do
-    chain(babel, Core.choice(chooser))
-  end
-
   @spec then(t(input) | nil, name, Step.fun(input, output)) :: t(output)
         when input: data, output: term
   def then(babel \\ nil, name \\ nil, function) do
     chain(babel, Step.new(name, function))
   end
 
+  @spec choice(t(input) | nil, (input -> t(input, output))) :: t(output)
+        when input: data, output: term
+  def choice(babel \\ nil, chooser) do
+    chain(babel, Core.choice(chooser))
+  end
+
+  @spec map(t(Enumerable.t(input)) | nil, t(input, output)) :: t([output])
+        when input: data, output: term
+  def map(babel \\ nil, mapper) do
+    chain(babel, Core.map(mapper))
+  end
+
+  @spec flat_map(t(Enumerable.t(input)) | nil, (input -> t(input, output))) :: t([output])
+        when input: data, output: term
+  def flat_map(babel \\ nil, mapper) do
+    chain(babel, Core.flat_map(mapper))
+  end
+
   @spec chain(nil, next) :: next when next: t
   @spec chain(t(input, in_between), next :: t(in_between, output)) :: Pipeline.t(input, output)
-        when input: any, in_between: term, output: term
+        when input: any, in_between: any, output: any
   def chain(nil, next), do: next
 
-  def chain(%Pipeline{} = pipeline, next) do
-    Pipeline.chain(pipeline, next)
+  def chain(babel, next) do
+    babel
+    |> Pipeline.new()
+    |> Pipeline.chain(next)
   end
 
-  def chain(%Step{} = step, next) do
-    pipeline = Pipeline.new(nil, [step])
-
-    chain(pipeline, next)
-  end
-
-  @spec apply(Babel.Applicable.t(input, output), input) ::
-          {:ok, output} | {:error, Babel.Error.t()}
-        when input: Babel.data(), output: any
+  @spec apply(t(output), data) :: {:ok, output} | {:error, Babel.Error.t()} when output: any
   def apply(babel, data) do
     Babel.Applicable.apply(babel, data)
   end
 
-  @spec apply!(Babel.Applicable.t(input, output), input) :: output | no_return
-        when input: Babel.data(), output: any
+  @spec apply!(t(output), data) :: output | no_return when output: any
   def apply!(babel, data) do
     case apply(babel, data) do
       {:ok, output} ->
