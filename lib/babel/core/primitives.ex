@@ -22,13 +22,6 @@ defmodule Babel.Core.Primitives do
     end
   end
 
-  def get!(data, path) do
-    case fetch(data, path) do
-      {:ok, value} -> value
-      {:error, error} -> raise error
-    end
-  end
-
   def cast(:boolean, boolean) when is_boolean(boolean) do
     {:ok, boolean}
   end
