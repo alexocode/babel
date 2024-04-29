@@ -125,6 +125,15 @@ defmodule Babel.Core do
     Step.new(name, &__MODULE__.Try.call(applicables, &1))
   end
 
+  @spec try(Babel.t(output) | [Babel.t(output)], default) :: Step.t(output | default)
+        when output: any, default: any
+  def try(applicables, default) do
+    name = {:try, [applicables, default]}
+    applicables = List.wrap(applicables) ++ [const(default)]
+
+    Step.new(name, &__MODULE__.Try.call(applicables, &1))
+  end
+
   @spec then(custom_name :: nil | any, function :: Step.fun(input, output)) ::
           Step.t(input, output)
         when input: any, output: any

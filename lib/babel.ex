@@ -160,10 +160,21 @@ defmodule Babel do
         when output: any
   defdelegate try(applicables), to: Babel.Core
 
-  @spec try(t(input), t(input, output) | [t(input, output)]) :: t(input, output)
+  @spec try(applicables :: t(input), t(input, output) | [t(input, output)]) :: t(input, output)
         when input: any, output: any
-  def try(babel, applicables) do
-    chain(babel, Babel.try(applicables))
+  def try(babel, applicables) when is_babel(babel) do
+    chain(babel, __MODULE__.try(applicables))
+  end
+
+  @spec try(applicables :: t(output) | [t(output)], default) :: t(output | default)
+        when output: any, default: any
+  defdelegate try(applicables, default), to: Babel.Core
+
+  @spec try(t(input, output), applicables :: t(input, output) | [t(input, output)], default) ::
+          t(input, output | default)
+        when input: any, output: any, default: any
+  def try(babel, applicables, default) do
+    chain(babel, __MODULE__.try(applicables, default))
   end
 
   @spec then(Step.fun(input, output)) :: Step.t(output) when input: any, output: any

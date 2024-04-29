@@ -397,6 +397,24 @@ defmodule Babel.CoreTest do
     end
   end
 
+  describe "try/2" do
+    test "returns the given default value when all steps fail" do
+      fallback = make_ref()
+
+      step =
+        Core.try(
+          [
+            Core.fail(:some_error),
+            Core.fail(:another_error),
+            Core.fail(:third_error)
+          ],
+          fallback
+        )
+
+      assert apply!(step, nil) == fallback
+    end
+  end
+
   describe "then/2" do
     test "invokes the given function" do
       ref = make_ref()
