@@ -14,7 +14,7 @@ defmodule Babel.Core do
   @doc "Determines whether or not the step is a known core step."
   @spec is_core(any) :: boolean
   defguard is_core(step)
-           when is_struct(step, Babel.Step) and
+           when is_struct(step, Step) and
                   is_tuple(step.name) and tuple_size(step.name) == 2 and
                   elem(step.name, 0) in @core_names
 
