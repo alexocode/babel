@@ -3,6 +3,7 @@ defmodule Babel.Core do
 
   alias __MODULE__.Primitives
   alias Babel.Step
+  alias Babel.Trace
 
   require Step
 
@@ -74,9 +75,9 @@ defmodule Babel.Core do
         when input: data, output: any
   def choice(chooser) when is_function(chooser, 1) do
     Step.new(:choice, fn input ->
-      input
-      |> chooser.()
-      |> Babel.Applicable.apply(input)
+      trace = Trace.apply(chooser.(input), input)
+
+      {[trace], trace.result}
     end)
   end
 
@@ -97,8 +98,8 @@ defmodule Babel.Core do
   defp do_flat_map(name, mapper) do
     Step.new(
       name,
-      &__MODULE__.Helper.map_and_collapse_results(&1, fn element ->
-        Babel.Applicable.apply(mapper.(element), element)
+      &Babel.Utils.map_and_collapse_to_result(&1, fn element ->
+        Babel.Trace.apply(mapper.(element), element)
       end)
     )
   end
