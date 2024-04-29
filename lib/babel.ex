@@ -161,6 +161,16 @@ defmodule Babel do
     chain(babel, flat_map(mapper))
   end
 
+  @spec fail(reason_or_function :: reason | (input -> reason)) :: Step.t(no_return)
+        when input: any, reason: any
+  defdelegate fail(reason_or_function), to: Babel.Core
+
+  @spec fail(t(input), reason_or_function :: reason | (input -> reason)) :: Step.t(no_return)
+        when input: any, reason: any
+  def fail(babel, reason_or_function) do
+    chain(babel, fail(reason_or_function))
+  end
+
   @spec chain(nil, next) :: next when next: t
   def chain(nil, next), do: next
 

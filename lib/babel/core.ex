@@ -10,7 +10,7 @@ defmodule Babel.Core do
   @type data :: Babel.data()
   @type path :: term | list(term)
 
-  @core_names ~w[id const fetch get cast into call then choice map flat_map]a
+  @core_names ~w[id const fetch get cast into call then fail choice map flat_map]a
   @doc "Determines whether or not the step is a known core step."
   @spec is_core(any) :: boolean
   defguard is_core(step)
@@ -112,5 +112,16 @@ defmodule Babel.Core do
         Babel.Trace.apply(mapper.(element), element)
       end)
     )
+  end
+
+  @spec fail(reason_function :: (input -> reason)) :: Step.t(no_return)
+        when input: any, reason: any
+  def fail(reason_function) when is_function(reason_function, 1) do
+    Step.new({:fail, [reason_function]}, &{:error, reason_function.(&1)})
+  end
+
+  @spec fail(reason :: any) :: Step.t(no_return)
+  def fail(reason) do
+    Step.new({:fail, [reason]}, fn _ -> {:error, reason} end)
   end
 end

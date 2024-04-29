@@ -14,6 +14,7 @@ defmodule Babel.CoreTest do
       core_steps = [
         Core.id(),
         Core.const(:stuff),
+        Core.fail(:some_reason),
         Core.fetch("path"),
         Core.get("path", :default),
         Core.cast(:integer),
@@ -288,6 +289,24 @@ defmodule Babel.CoreTest do
 
       assert step == Core.then(nil, &Function.identity/1)
       assert step.name == {:then, [&Function.identity/1]}
+    end
+  end
+
+  describe "fail/1" do
+    test "always fails with the given reason" do
+      reason = {:some_reason, make_ref()}
+      step = Core.fail(reason)
+
+      assert apply(step, nil) == {:error, reason}
+      assert apply(step, %{}) == {:error, reason}
+    end
+
+    test "allows to pass a function to construct the error reason" do
+      ref = make_ref()
+      step = Core.fail(&{:some_reason, ref, &1})
+
+      assert apply(step, nil) == {:error, {:some_reason, ref, nil}}
+      assert apply(step, %{}) == {:error, {:some_reason, ref, %{}}}
     end
   end
 
