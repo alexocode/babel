@@ -14,7 +14,6 @@ defmodule Babel.CoreTest do
       core_steps = [
         Core.id(),
         Core.const(:stuff),
-        Core.fail(:some_reason),
         Core.fetch("path"),
         Core.get("path", :default),
         Core.cast(:integer),
@@ -22,10 +21,11 @@ defmodule Babel.CoreTest do
         Core.cast(:boolean),
         Core.into(%{}),
         Core.call(List, :to_string, []),
-        Core.then(:some_name, fn _ -> :value end),
         Core.choice(fn _ -> Core.id() end),
         Core.map(Core.id()),
-        Core.flat_map(fn _ -> Core.id() end)
+        Core.flat_map(fn _ -> Core.id() end),
+        Core.fail(:some_reason),
+        Core.then(:some_name, fn _ -> :value end)
       ]
 
       for step <- core_steps do
