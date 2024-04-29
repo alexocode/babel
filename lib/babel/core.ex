@@ -45,16 +45,7 @@ defmodule Babel.Core do
   def into(intoable)
 
   def into(intoable) do
-    type =
-      case intoable do
-        %struct{} -> struct
-        %{} -> :map
-        list when is_list(list) -> :list
-        tuple when is_tuple(tuple) -> :tuple
-        other -> other
-      end
-
-    Step.new({:into, type}, &Babel.Intoable.into(intoable, &1))
+    Step.new({:into, intoable}, &Babel.Intoable.into(intoable, &1))
   end
 
   @spec call(module, function_name :: atom, extra_args :: list) :: Step.t()
