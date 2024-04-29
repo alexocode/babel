@@ -1,30 +1,15 @@
 defmodule Babel.Error do
+  alias Babel.Trace
+
   @type t :: t({:nested, [t]} | any)
-  # TODO: Add some kind of "stacktrace"
-  @type t(reason) :: %__MODULE__{
-          reason: reason,
-          data: Babel.data(),
-          context: Babel.t()
-        }
-  defexception [:reason, :data, :context]
+  @type t(reason) :: %__MODULE__{reason: reason, trace: Trace.t()}
+  defexception [:reason, :trace]
 
-  @spec wrap_if_error({:error, reason}, Babel.data(), Babel.t()) :: {:error, t(reason)}
-        when reason: any
-  @spec wrap_if_error(other, Babel.data(), Babel.t()) :: other
-        when other: any
-  def wrap_if_error(maybe_error, data, context) do
-    case maybe_error do
-      :error -> {:error, wrap(maybe_error, data, context)}
-      {:error, _} -> {:error, wrap(maybe_error, data, context)}
-      other -> other
-    end
-  end
-
-  def wrap(error_or_reason, data, context) do
+  @spec new(Trace.t({:error, reason})) :: t(reason) when reason: any
+  def new(%Trace{} = trace) do
     %__MODULE__{
-      reason: determine_reason(error_or_reason),
-      data: data,
-      context: context
+      reason: determine_reason(trace.result),
+      trace: trace
     }
   end
 

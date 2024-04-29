@@ -1,6 +1,7 @@
 defmodule Babel.Step do
-  # module = inspect(__MODULE__)
   import Kernel, except: [apply: 2]
+
+  alias Babel.Utils
 
   @type t :: t()
   @type t(output) :: t(term, output)
@@ -14,7 +15,7 @@ defmodule Babel.Step do
   @type name :: Babel.name()
 
   @type fun :: fun(any, any)
-  @type fun(input, output) :: (input -> Babel.result(output))
+  @type fun(input, output) :: (input -> Babel.result(output) | Babel.Applicable.result(output))
 
   defguard is_step_function(function) when is_function(function, 1)
 
@@ -23,25 +24,18 @@ defmodule Babel.Step do
     %__MODULE__{name: name, function: function}
   end
 
-  @spec apply(t(input, output), Babel.data()) :: {:ok, output} | {:error, Babel.Error.t()}
+  @spec apply(t(input, output), Babel.data()) :: Babel.Applicable.result(output)
         when input: any, output: any
   def apply(%__MODULE__{} = step, data) do
-    data
-    |> step.function.()
-    |> Babel.Error.wrap_if_error(data, step)
-    |> case do
-      {:error, error} ->
-        {:error, error}
+    case step.function.(data) do
+      {traces, result} when is_list(traces) ->
+        {traces, Utils.resultify(result)}
 
-      {:ok, data} ->
-        {:ok, data}
-
-      data ->
-        {:ok, data}
+      result ->
+        {[], Utils.resultify(result)}
     end
   rescue
-    error ->
-      {:error, Babel.Error.wrap(error, data, step)}
+    exception -> {[], {:error, exception}}
   end
 
   defimpl Babel.Applicable do

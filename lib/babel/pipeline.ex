@@ -1,4 +1,7 @@
 defmodule Babel.Pipeline do
+  alias Babel.Error
+  alias Babel.Trace
+
   @type t() :: t(any, any)
   @type t(output) :: t(any, output)
   @type t(_input, output) :: %__MODULE__{
@@ -13,8 +16,9 @@ defmodule Babel.Pipeline do
   @typedoc "A term describing what this pipeline does"
   @type name() :: Babel.name()
   @type step() :: Babel.Applicable.t()
+  # TODO: Consider allowing to make this a Babel.Applicable?
   @type on_error :: on_error(term)
-  @type on_error(output) :: (Babel.Error.t() -> Babel.result(output))
+  @type on_error(output) :: (Error.t() -> Babel.result(output))
 
   @spec new(step | [step]) :: t
   def new(%__MODULE__{} = t), do: t
@@ -74,32 +78,33 @@ defmodule Babel.Pipeline do
     )
   end
 
-  @spec apply(t(input, output), Babel.data()) :: {:ok, output} | {:error, Babel.Error.t()}
+  @spec apply(t(input, output), Babel.data()) :: Babel.Applicable.result(output)
         when input: Babel.data(), output: any
   def apply(%__MODULE__{} = pipeline, data) do
-    pipeline.reversed_steps
-    |> Enum.reverse()
-    |> Enum.reduce_while({:ok, data}, fn applicable, {:ok, result} ->
-      case Babel.Applicable.apply(applicable, result) do
-        {:ok, result} ->
-          {:cont, {:ok, result}}
+    {reversed_traces, result} =
+      pipeline.reversed_steps
+      |> Enum.reverse()
+      |> Enum.reduce_while({[], {:ok, data}}, fn applicable, {traces, {:ok, data}} ->
+        trace = Trace.apply(applicable, data)
+        traces = [trace | traces]
 
-        {:error, error} ->
-          wrapped_error = Babel.Error.wrap(error, data, pipeline)
+        if Trace.ok?(trace) do
+          {:cont, {traces, trace.result}}
+        else
+          {:halt, {traces, try_to_recover(pipeline, trace)}}
+        end
+      end)
 
-          maybe_error =
-            if pipeline.on_error do
-              wrapped_error
-              |> pipeline.on_error.()
-              # TODO: Retain stack trace (somehow)
-              |> Babel.Error.wrap_if_error(data, pipeline)
-            else
-              wrapped_error
-            end
+    {Enum.reverse(reversed_traces), result}
+  end
 
-          {:halt, maybe_error}
-      end
-    end)
+  defp try_to_recover(%__MODULE__{on_error: nil}, %Trace{result: error}), do: error
+
+  defp try_to_recover(%__MODULE__{on_error: on_error}, %Trace{} = trace) do
+    trace
+    |> Error.new()
+    |> on_error.()
+    |> Babel.Utils.resultify()
   end
 
   defimpl Babel.Applicable do

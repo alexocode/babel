@@ -6,6 +6,7 @@ defmodule Babel do
   alias Babel.Error
   alias Babel.Pipeline
   alias Babel.Step
+  alias Babel.Trace
 
   @type t :: Applicable.t()
   @type t(output) :: Applicable.t(output)
@@ -128,7 +129,13 @@ defmodule Babel do
 
   @spec apply(t(output), data) :: {:ok, output} | {:error, Error.t()} when output: any
   def apply(babel, data) do
-    Babel.Applicable.apply(babel, data)
+    trace = trace(babel, data)
+
+    if Trace.ok?(trace) do
+      trace.result
+    else
+      {:error, Error.new(trace)}
+    end
   end
 
   @spec apply!(t(output), data) :: output | no_return when output: any
@@ -141,4 +148,7 @@ defmodule Babel do
         raise error
     end
   end
+
+  @spec trace(t(input, output), data) :: Trace.t(input, output) when input: any, output: any
+  defdelegate trace(babel, data), to: Trace, as: :apply
 end

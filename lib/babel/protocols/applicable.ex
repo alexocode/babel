@@ -3,8 +3,10 @@ defprotocol Babel.Applicable do
   @type t(output) :: t(any, output)
   @type t(_input, _output) :: any
 
-  # TODO: Add a <context> argument which should also be returned
-  @spec apply(t(input, output), Babel.data()) :: {:ok, output} | {:error, Babel.Error.t()}
+  @type result :: result(any)
+  @type result(output) :: {[Babel.Trace.t()], Babel.result(output)}
+
+  @spec apply(t(input, output), Babel.data()) :: result(output)
         when input: Babel.data(), output: any
   def apply(t, data)
 end
