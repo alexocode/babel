@@ -156,6 +156,16 @@ defmodule Babel do
     chain(babel, fail(reason_or_function))
   end
 
+  @spec try(applicables :: t(output) | [t(output)]) :: Step.t(output)
+        when output: any
+  defdelegate try(applicables), to: Babel.Core
+
+  @spec try(t(input), t(input, output) | [t(input, output)]) :: t(input, output)
+        when input: any, output: any
+  def try(babel, applicables) do
+    chain(babel, Babel.try(applicables))
+  end
+
   @spec then(Step.fun(input, output)) :: t(output) when input: any, output: any
   defdelegate then(function), to: Babel.Core
 

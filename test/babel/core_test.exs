@@ -5,6 +5,7 @@ defmodule Babel.CoreTest do
 
   alias Babel.Core
   alias Babel.Step
+  alias Babel.Trace
 
   require Babel.Core
   require NaiveDateTime
@@ -25,6 +26,7 @@ defmodule Babel.CoreTest do
         Core.map(Core.id()),
         Core.flat_map(fn _ -> Core.id() end),
         Core.fail(:some_reason),
+        Core.try([]),
         Core.then(:some_name, fn _ -> :value end)
       ]
 
@@ -326,6 +328,72 @@ defmodule Babel.CoreTest do
 
       assert apply(step, nil) == {:error, {:some_reason, ref, nil}}
       assert apply(step, %{}) == {:error, {:some_reason, ref, %{}}}
+    end
+  end
+
+  describe "try/1" do
+    test "returns the result from the first succeeding applicable" do
+      data = %{some: %{nested: "map"}}
+
+      step = Core.try(Core.const(42))
+      assert apply!(step, data) == 42
+
+      step = Core.try([Core.fail(:some_error), Core.const(42)])
+      assert apply!(step, data) == 42
+
+      step = Core.try([Core.fail(:some_error), Core.const(42)])
+      assert apply!(step, data) == 42
+
+      step = Core.try([Core.fail(:some_error), Core.const(42), Core.const(21)])
+      assert apply!(step, data) == 42
+    end
+
+    test "returns the accumulated errors of all failing applicables if none succeed" do
+      step =
+        Core.try([
+          Core.fail(:some_error),
+          Core.fail(:another_error),
+          Core.fail(:third_error)
+        ])
+
+      assert {:error, reason} = apply(step, nil)
+
+      assert reason == [
+               :some_error,
+               :another_error,
+               :third_error
+             ]
+    end
+
+    test "returns the accumulated traces regardless of success or failure" do
+      step1 = Core.fail(:some_error)
+      step2 = Core.fail(:another_error)
+      step3 = Core.id()
+      try_step = Core.try([step1, step2, step3])
+
+      data = {:ok, 42}
+      assert {traces, data} = Step.apply(try_step, data)
+
+      assert traces == [
+               Trace.apply(step1, data),
+               Trace.apply(step2, data),
+               Trace.apply(step3, data)
+             ]
+
+      data = {:error, :random_reason}
+      assert {traces, {:error, reasons}} = Step.apply(try_step, data)
+
+      assert traces == [
+               Trace.apply(step1, data),
+               Trace.apply(step2, data),
+               Trace.apply(step3, data)
+             ]
+
+      assert reasons == [
+               :some_error,
+               :another_error,
+               :random_reason
+             ]
     end
   end
 
