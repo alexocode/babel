@@ -82,7 +82,7 @@ defmodule Babel do
   @spec then(t(input) | nil, name, Step.fun(input, output)) :: t(output)
         when input: data, output: term
   def then(babel \\ nil, name \\ nil, function) do
-    chain(babel, Step.new(name, function))
+    chain(babel, Core.then(name, function))
   end
 
   @spec call(t | nil, module, function_name :: atom) :: t

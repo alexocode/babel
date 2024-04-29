@@ -62,6 +62,13 @@ defmodule Babel.Core do
     )
   end
 
+  @spec then(custom_name :: nil | any, function :: Step.fun(input, output)) ::
+          Step.t(input, output)
+        when input: any, output: any
+  def then(custom_name, function) do
+    Step.new({:then, custom_name || function}, function)
+  end
+
   @spec choice(chooser :: (input -> Babel.applicable(input, output))) :: Step.t(input, output)
         when input: data, output: any
   def choice(chooser) when is_function(chooser, 1) do
