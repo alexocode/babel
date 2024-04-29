@@ -40,7 +40,8 @@ defmodule Babel.Step do
         {[], Utils.resultify(result)}
     end
   rescue
-    exception -> {[], {:error, exception}}
+    error in [Babel.Error] -> {[error.trace], error.trace.result}
+    other -> {[], {:error, other}}
   end
 
   defimpl Babel.Applicable do

@@ -74,5 +74,15 @@ defmodule Babel.StepTest do
       assert traces == [%Babel.Trace{babel: fail_step, data: data, result: {:error, :some_error}}]
       assert reason == :some_error
     end
+
+    test "forwards nested traces from a raised Babel.Error" do
+      fail_step = Babel.fail(:some_error)
+      step = step(&Babel.apply!(fail_step, &1))
+      data = %{value: make_ref()}
+
+      assert {traces, {:error, reason}} = Step.apply(step, data)
+      assert traces == [%Babel.Trace{babel: fail_step, data: data, result: {:error, :some_error}}]
+      assert reason == :some_error
+    end
   end
 end
