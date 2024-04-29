@@ -101,7 +101,7 @@ defmodule Babel do
   end
 
   @spec then(Step.fun(input, output)) :: t(output) when input: any, output: any
-  def then(function), do: then(nil, function)
+  defdelegate then(function), to: Babel.Core
 
   @spec then(t(input), Step.fun(input, output)) :: t(output)
         when input: data, output: term
@@ -119,7 +119,7 @@ defmodule Babel do
   end
 
   @spec call(module, function_name :: atom) :: t
-  def call(module, function_name), do: call(module, function_name, [])
+  defdelegate call(module, function_name), to: Babel.Core
 
   @spec call(t, module, function_name :: atom) :: t
   def call(babel, module, function_name) when is_babel(babel) do

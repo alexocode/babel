@@ -51,7 +51,7 @@ defmodule Babel.Utils do
         {:error, list}
 
       {:error, errors} when is_list(errors) ->
-        {:error, Enum.reverse(errors) ++ errors}
+        {:error, Enum.reverse(errors) ++ list}
 
       {:error, error} ->
         {:error, [error | list]}

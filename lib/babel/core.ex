@@ -54,14 +54,12 @@ defmodule Babel.Core do
   end
 
   @spec into(intoable) :: Step.t(data, intoable) when intoable: Babel.Intoable.t()
-  def into(intoable)
-
   def into(intoable) do
     Step.new({:into, [intoable]}, &Babel.Intoable.into(intoable, &1))
   end
 
   @spec call(module, function_name :: atom, extra_args :: list) :: Step.t()
-  def call(module, function_name, extra_args)
+  def call(module, function_name, extra_args \\ [])
       when is_atom(module) and is_atom(function_name) and is_list(extra_args) do
     unless function_exported?(module, function_name, 1 + length(extra_args)) do
       raise ArgumentError,
@@ -77,7 +75,7 @@ defmodule Babel.Core do
   @spec then(custom_name :: nil | any, function :: Step.fun(input, output)) ::
           Step.t(input, output)
         when input: any, output: any
-  def then(custom_name, function) do
+  def then(custom_name \\ nil, function) do
     full_name = Enum.reject([custom_name, function], &is_nil/1)
 
     Step.new({:then, full_name}, function)
