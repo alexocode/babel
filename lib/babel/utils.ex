@@ -18,17 +18,22 @@ defmodule Babel.Utils do
   def map_and_collapse_to_result(data, mapper) when is_function(mapper, 1) do
     {traces, {ok_or_error, list}} =
       Enum.reduce(data, {[], {:ok, []}}, fn element, {traces, {ok_or_error, list}} ->
-        trace = mapper.(element)
+        {nested_traces, result} =
+          element
+          |> mapper.()
+          |> traces_and_result()
 
         {
-          [trace | traces],
-          collapse_to_result(list, ok_or_error, trace.result)
+          Enum.reverse(nested_traces) ++ traces,
+          collapse_to_result(list, ok_or_error, result)
         }
       end)
 
-    # We deliberately wrap the traces in another list, to retain that this originated from a list
-    {[Enum.reverse(traces)], {ok_or_error, Enum.reverse(list)}}
+    {Enum.reverse(traces), {ok_or_error, Enum.reverse(list)}}
   end
+
+  defp traces_and_result(%Trace{} = trace), do: {[trace], trace.result}
+  defp traces_and_result({traces, result}), do: {traces, result}
 
   defp collapse_to_result(list, :ok, result) do
     case result do

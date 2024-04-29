@@ -29,25 +29,22 @@ defmodule Babel.StepTest do
 
       step = step(fn %{some: %{nested: [value]}} -> {:ok, value} end)
 
-      assert Step.apply(step, data) == {:ok, "values"}
+      assert Step.apply(step, data) == {[], {:ok, "values"}}
     end
 
     test "returns {:ok, <value>} when the function only returns a bare value" do
       ref = make_ref()
       step = step(fn _ -> ref end)
 
-      assert Step.apply(step, :ignored) == {:ok, ref}
+      assert Step.apply(step, :ignored) == {[], {:ok, ref}}
     end
 
     test "wraps the error reason in a Babel.Error and includes the data" do
       ref = make_ref()
       step = step(fn _ -> {:error, ref} end)
 
-      assert {:error, error} = Step.apply(step, :ignored)
-      assert %Babel.Error{} = error
-      assert error.reason == ref
-      assert error.data == :ignored
-      assert error.context == step
+      assert {[], {:error, error}} = Step.apply(step, :ignored)
+      assert error == ref
     end
 
     test "rescues thrown exceptions and wraps them as reason in a Babel.Error" do
@@ -55,11 +52,8 @@ defmodule Babel.StepTest do
       random_reason = "some reason (#{:rand.uniform(100_000)})"
       step = step(fn _ -> raise random_reason end)
 
-      assert {:error, error} = Step.apply(step, data)
-      assert %Babel.Error{} = error
-      assert error.reason == %RuntimeError{message: random_reason}
-      assert error.data == data
-      assert error.context == step
+      assert {[], {:error, error}} = Step.apply(step, data)
+      assert error == %RuntimeError{message: random_reason}
     end
   end
 end

@@ -7,38 +7,41 @@ defprotocol Babel.Intoable do
   def into(t, data)
 end
 
-defmodule Babel.Intoable.Helper do
+defmodule Babel.Intoable.Utils do
   def into_each(enum, data) do
     Babel.Utils.map_and_collapse_to_result(enum, &Babel.Intoable.into(&1, data))
   end
 end
 
 defimpl Babel.Intoable, for: Any do
-  def into(%Babel.Pipeline{} = pipeline, data) do
-    Babel.Pipeline.apply(pipeline, data)
-  end
-
-  def into(%Babel.Step{} = step, data) do
-    Babel.Step.apply(step, data)
+  # Faster than doing Babel.Applicable.impl_for/1
+  def into(%struct{} = babel, data) when struct in [Babel.Pipeline, Babel.Step] do
+    trace(babel, data)
   end
 
   def into(%_{} = struct, data) do
-    if is_applicable(struct) do
-      Babel.Applicable.apply(struct, data)
+    if applicable?(struct) do
+      trace(struct, data)
     else
       into_struct(struct, data)
     end
   end
 
   def into(t, data) do
-    if is_applicable(t) do
-      Babel.Applicable.apply(t, data)
+    if applicable?(t) do
+      trace(t, data)
     else
       {[], {:ok, t}}
     end
   end
 
-  defp is_applicable(t) do
+  defp trace(babel, data) do
+    trace = Babel.Trace.apply(babel, data)
+
+    {[trace], trace.result}
+  end
+
+  defp applicable?(t) do
     not is_nil(Babel.Applicable.impl_for(t))
   end
 
@@ -53,7 +56,7 @@ end
 
 defimpl Babel.Intoable, for: Map do
   def into(map, data) do
-    with {traces, {:ok, list}} <- Babel.Intoable.Helper.into_each(map, data) do
+    with {traces, {:ok, list}} <- Babel.Intoable.Utils.into_each(map, data) do
       {traces, {:ok, Map.new(list)}}
     end
   end
@@ -61,7 +64,7 @@ end
 
 defimpl Babel.Intoable, for: List do
   def into(list, data) do
-    Babel.Intoable.Helper.into_each(list, data)
+    Babel.Intoable.Utils.into_each(list, data)
   end
 end
 
@@ -81,7 +84,7 @@ defimpl Babel.Intoable, for: Tuple do
     {t2_traces, t2_result} = _into(t2, data)
 
     {
-      [t1_traces, t2_traces],
+      Enum.concat([t1_traces, t2_traces]),
       case {t1_result, t2_result} do
         {{:ok, t1}, {:ok, t2}} -> {:ok, {t1, t2}}
         {{:error, t1_error}, {:ok, _}} -> {:error, [t1_error]}
@@ -97,7 +100,7 @@ defimpl Babel.Intoable, for: Tuple do
     {t3_traces, t3_result} = _into(t3, data)
 
     {
-      [t1_traces, t2_traces, t3_traces],
+      Enum.concat([t1_traces, t2_traces, t3_traces]),
       case {t1_result, t2_result, t3_result} do
         {{:ok, t1}, {:ok, t2}, {:ok, t3}} ->
           {:ok, {t1, t2, t3}}
@@ -129,7 +132,7 @@ defimpl Babel.Intoable, for: Tuple do
   def into(tuple, data) do
     list = Tuple.to_list(tuple)
 
-    with {traces, {:ok, list}} <- Babel.Intoable.Helper.into_each(list, data) do
+    with {traces, {:ok, list}} <- Babel.Intoable.Utils.into_each(list, data) do
       {traces, {:ok, List.to_tuple(list)}}
     end
   end

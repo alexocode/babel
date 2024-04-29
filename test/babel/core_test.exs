@@ -11,7 +11,7 @@ defmodule Babel.CoreTest do
       mapping_step = step(&{:mapped, &1})
       step = Core.map(mapping_step)
 
-      assert {:ok, mapped} = Step.apply(step, [1, 2, 3])
+      assert {_traces, {:ok, mapped}} = Step.apply(step, [1, 2, 3])
 
       assert mapped == [
                {:mapped, 1},
@@ -26,7 +26,7 @@ defmodule Babel.CoreTest do
       mapping_function = fn element -> step(&{:mapped, element, &1}) end
       step = Core.flat_map(mapping_function)
 
-      assert {:ok, mapped} = Step.apply(step, [1, 2, 3])
+      assert {_traces, {:ok, mapped}} = Step.apply(step, [1, 2, 3])
 
       assert mapped == [
                {:mapped, 1, 1},

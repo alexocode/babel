@@ -1,8 +1,6 @@
 defmodule BabelTest do
   use ExUnit.Case, async: true
 
-  import Babel.Sigils
-
   require Babel
 
   describe "typical pipelines" do
@@ -29,9 +27,12 @@ defmodule BabelTest do
     test "with an else clause" do
       ref = make_ref()
 
+      step =
+        Babel.fetch(["does", "not", "exist"])
+
       pipeline =
         Babel.pipeline :foobar do
-          Babel.fetch(["does", "not", "exist"])
+          step
         else
           error ->
             send self(), {:error, ref, error}
@@ -41,9 +42,14 @@ defmodule BabelTest do
 
       data = %{"some_data" => make_ref()}
 
-      assert Babel.apply(pipeline, data) == {:my_return_value, ref}
+      assert Babel.apply(pipeline, data) == {:ok, {:my_return_value, ref}}
       assert_received {:error, ^ref, %Babel.Error{} = error}
-      assert error.data == data
+
+      assert error.trace == %Babel.Trace{
+               babel: step,
+               data: data,
+               result: {:error, {:not_found, "does"}}
+             }
     end
   end
 end
