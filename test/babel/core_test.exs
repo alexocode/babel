@@ -268,48 +268,6 @@ defmodule Babel.CoreTest do
     end
   end
 
-  describe "then/2" do
-    test "invokes the given function" do
-      ref = make_ref()
-      step = Core.then(:custom_name, &{ref, &1})
-      data = %{value: make_ref()}
-
-      assert apply!(step, data) == {ref, data}
-    end
-
-    test "sets the given name on the created step" do
-      ref = make_ref()
-      step = Core.then({:my_cool_name, ref}, &Function.identity/1)
-
-      assert step.name == {:then, [{:my_cool_name, ref}, &Function.identity/1]}
-    end
-
-    test "omits a nil name from the generated step name" do
-      step = Core.then(&Function.identity/1)
-
-      assert step == Core.then(nil, &Function.identity/1)
-      assert step.name == {:then, [&Function.identity/1]}
-    end
-  end
-
-  describe "fail/1" do
-    test "always fails with the given reason" do
-      reason = {:some_reason, make_ref()}
-      step = Core.fail(reason)
-
-      assert apply(step, nil) == {:error, reason}
-      assert apply(step, %{}) == {:error, reason}
-    end
-
-    test "allows to pass a function to construct the error reason" do
-      ref = make_ref()
-      step = Core.fail(&{:some_reason, ref, &1})
-
-      assert apply(step, nil) == {:error, {:some_reason, ref, nil}}
-      assert apply(step, %{}) == {:error, {:some_reason, ref, %{}}}
-    end
-  end
-
   describe "choice/1" do
     test "choses the expected applicable" do
       step =
@@ -350,6 +308,48 @@ defmodule Babel.CoreTest do
                {:mapped, 2, 2},
                {:mapped, 3, 3}
              ]
+    end
+  end
+
+  describe "fail/1" do
+    test "always fails with the given reason" do
+      reason = {:some_reason, make_ref()}
+      step = Core.fail(reason)
+
+      assert apply(step, nil) == {:error, reason}
+      assert apply(step, %{}) == {:error, reason}
+    end
+
+    test "allows to pass a function to construct the error reason" do
+      ref = make_ref()
+      step = Core.fail(&{:some_reason, ref, &1})
+
+      assert apply(step, nil) == {:error, {:some_reason, ref, nil}}
+      assert apply(step, %{}) == {:error, {:some_reason, ref, %{}}}
+    end
+  end
+
+  describe "then/2" do
+    test "invokes the given function" do
+      ref = make_ref()
+      step = Core.then(:custom_name, &{ref, &1})
+      data = %{value: make_ref()}
+
+      assert apply!(step, data) == {ref, data}
+    end
+
+    test "sets the given name on the created step" do
+      ref = make_ref()
+      step = Core.then({:my_cool_name, ref}, &Function.identity/1)
+
+      assert step.name == {:then, [{:my_cool_name, ref}, &Function.identity/1]}
+    end
+
+    test "omits a nil name from the generated step name" do
+      step = Core.then(&Function.identity/1)
+
+      assert step == Core.then(nil, &Function.identity/1)
+      assert step.name == {:then, [&Function.identity/1]}
     end
   end
 
