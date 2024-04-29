@@ -72,7 +72,7 @@ defmodule Babel.Core do
     )
   end
 
-  @spec choice(chooser :: (input -> Babel.applicable(input, output))) :: Step.t(input, output)
+  @spec choice(chooser :: (input -> Babel.t(input, output))) :: Step.t(input, output)
         when input: data, output: any
   def choice(chooser) when is_function(chooser, 1) do
     Step.new({:choice, [chooser]}, fn input ->
@@ -82,14 +82,14 @@ defmodule Babel.Core do
     end)
   end
 
-  @spec map(mapper :: Babel.applicable(input, output)) ::
+  @spec map(mapper :: Babel.t(input, output)) ::
           Step.t(Enumerable.t(input), list(output))
         when input: data, output: any
   def map(mapper) do
     do_flat_map({:map, [mapper]}, fn _ -> mapper end)
   end
 
-  @spec flat_map(mapper :: (input -> Babel.applicable(input, output))) ::
+  @spec flat_map(mapper :: (input -> Babel.t(input, output))) ::
           Step.t(Enumerable.t(input), list(output))
         when input: any, output: any
   def flat_map(mapper) when is_function(mapper, 1) do
@@ -116,7 +116,8 @@ defmodule Babel.Core do
     Step.new({:fail, [reason]}, fn _ -> {:error, reason} end)
   end
 
-  @spec try(Babel.applicable() | [Babel.applicable()]) :: Step.t()
+  @spec try(Babel.t(output) | [Babel.t(output)]) :: Step.t(output)
+        when output: any
   def try(applicables) do
     name = {:try, [applicables]}
     applicables = List.wrap(applicables)
