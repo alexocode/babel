@@ -1,7 +1,6 @@
 defmodule Babel.Core do
   @moduledoc false
 
-  alias __MODULE__.Primitives
   alias Babel.Step
   alias Babel.Trace
 
@@ -36,21 +35,21 @@ defmodule Babel.Core do
   def fetch(path) do
     path_as_list = List.wrap(path)
 
-    Step.new({:fetch, [path]}, &Primitives.fetch(&1, path_as_list))
+    Step.new({:fetch, [path]}, &__MODULE__.Fetch.call(&1, path_as_list))
   end
 
   @spec get(path, default) :: Step.t(data, any | default) when default: any
-  def get(path, default) do
+  def get(path, default \\ nil) do
     path_as_list = List.wrap(path)
 
-    Step.new({:get, [path, default]}, &Primitives.get(&1, path_as_list, default))
+    Step.new({:get, [path, default]}, &__MODULE__.Get.call(&1, path_as_list, default))
   end
 
   @spec cast(:integer) :: Step.t(data, integer)
   @spec cast(:float) :: Step.t(data, float)
   @spec cast(:boolean) :: Step.t(data, boolean)
   def cast(type) when type in [:boolean, :float, :integer] do
-    Step.new({:cast, [type]}, &Primitives.cast(type, &1))
+    Step.new({:cast, [type]}, &__MODULE__.Cast.call(type, &1))
   end
 
   @spec into(intoable) :: Step.t(data, intoable) when intoable: Babel.Intoable.t()

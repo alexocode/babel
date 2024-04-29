@@ -72,6 +72,9 @@ defmodule Babel do
     chain(babel, fetch(path))
   end
 
+  @spec get(path) :: t
+  defdelegate get(path), to: Babel.Core
+
   @spec get(path, default :: any) :: t
   defdelegate get(path, default), to: Babel.Core
 
