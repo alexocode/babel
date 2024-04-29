@@ -1,7 +1,7 @@
 defmodule Babel.Utils do
   @moduledoc false
 
-  alias Babel.Trace
+  @type result_or_trace(output) :: Babel.Applicable.result(output) | Babel.Trace.t(output)
 
   @spec resultify(:error) :: {:error, :unknown}
   def resultify(:error), do: {:error, :unknown}
@@ -12,30 +12,40 @@ defmodule Babel.Utils do
   @spec resultify(value) :: {:ok, value} when value: any
   def resultify(value), do: {:ok, value}
 
-  @spec map_and_collapse_to_result(Babel.data(), mapper :: (any -> Trace.t(output))) ::
-          Babel.Applicable.result([output])
-        when output: term
+  @spec map_and_collapse_to_result(
+          data :: Enum.t(),
+          mapper :: (any -> result_or_trace(output))
+        ) :: Babel.Applicable.result([output])
+        when output: any
   def map_and_collapse_to_result(data, mapper) when is_function(mapper, 1) do
     {traces, {ok_or_error, list}} =
-      Enum.reduce(data, {[], {:ok, []}}, fn element, {traces, {ok_or_error, list}} ->
-        {nested_traces, result} =
-          element
-          |> mapper.()
-          |> traces_and_result()
-
-        {
-          Enum.reverse(nested_traces) ++ traces,
-          collapse_to_result(list, ok_or_error, result)
-        }
+      Enum.reduce(data, {[], {:ok, []}}, fn element, accumulated_result ->
+        element
+        |> mapper.()
+        |> collapse_to_result(accumulated_result)
       end)
 
     {Enum.reverse(traces), {ok_or_error, Enum.reverse(list)}}
   end
 
-  defp traces_and_result(%Trace{} = trace), do: {[trace], trace.result}
+  @spec collapse_to_result(
+          result :: result_or_trace(output),
+          accumulated :: Babel.Applicable.result([output])
+        ) :: Babel.Applicable.result([output])
+        when output: any
+  def collapse_to_result(result, {traces, {ok_or_error, list}}) do
+    {nested_traces, result} = traces_and_result(result)
+
+    {
+      Enum.reverse(nested_traces) ++ traces,
+      accumulate_result(list, ok_or_error, result)
+    }
+  end
+
+  defp traces_and_result(%Babel.Trace{} = trace), do: {[trace], trace.result}
   defp traces_and_result({traces, result}), do: {traces, result}
 
-  defp collapse_to_result(list, :ok, result) do
+  defp accumulate_result(list, :ok, result) do
     case result do
       {:ok, value} ->
         {:ok, [value | list]}
@@ -45,7 +55,7 @@ defmodule Babel.Utils do
     end
   end
 
-  defp collapse_to_result(list, :error, result) do
+  defp accumulate_result(list, :error, result) do
     case result do
       {:ok, _} ->
         {:error, list}

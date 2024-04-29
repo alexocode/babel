@@ -3,6 +3,7 @@ defmodule Babel.Core do
 
   alias Babel.Step
   alias Babel.Trace
+  alias Babel.Utils
 
   require Step
 
@@ -98,8 +99,8 @@ defmodule Babel.Core do
   defp do_flat_map(name, mapper) do
     Step.new(
       name,
-      &Babel.Utils.map_and_collapse_to_result(&1, fn element ->
-        Babel.Trace.apply(mapper.(element), element)
+      &Utils.map_and_collapse_to_result(&1, fn element ->
+        Trace.apply(mapper.(element), element)
       end)
     )
   end
