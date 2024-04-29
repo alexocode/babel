@@ -14,7 +14,7 @@ defmodule Babel.Pipeline do
   @type name() :: Babel.name()
   @type step() :: Babel.Applicable.t()
   @type on_error :: on_error(term)
-  @type on_error(output) :: (Babel.Error.t() -> Babel.Step.result(output))
+  @type on_error(output) :: (Babel.Error.t() -> Babel.result(output))
 
   @spec new(step | [step]) :: t
   def new(%__MODULE__{} = t), do: t

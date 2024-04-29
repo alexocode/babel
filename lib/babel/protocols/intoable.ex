@@ -3,7 +3,7 @@ defprotocol Babel.Intoable do
 
   @type t :: any
 
-  @spec into(t, Babel.data()) :: Babel.Step.result(t)
+  @spec into(t, Babel.data()) :: Babel.result(t)
   def into(t, data)
 end
 

@@ -11,6 +11,8 @@ defmodule Babel do
   @type t(output) :: Applicable.t(output)
   @type t(input, output) :: Applicable.t(input, output)
 
+  @type result(output) :: output | {:ok, output} | :error | {:error, reason :: any}
+
   @typedoc "Arbitrary data structure that ought to be transformed."
   @type data :: term
 
