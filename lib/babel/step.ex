@@ -31,6 +31,11 @@ defmodule Babel.Step do
       {traces, result} when is_list(traces) ->
         {traces, Utils.resultify(result)}
 
+      # People might do a `Babel.apply/2` inside of a step;
+      # this ensures trace information gets retained in these cases
+      {:error, %Babel.Error{trace: trace}} ->
+        {[trace], trace.result}
+
       result ->
         {[], Utils.resultify(result)}
     end
