@@ -55,5 +55,14 @@ defmodule Babel.StepTest do
       assert {[], {:error, error}} = Step.apply(step, data)
       assert error == %RuntimeError{message: random_reason}
     end
+
+    test "forwards nested traces" do
+      traces = [%Babel.Trace{}]
+      step = step(&{traces, &1})
+      data = %{value: make_ref()}
+
+      assert Step.apply(step, {:ok, data}) == {traces, {:ok, data}}
+      assert Step.apply(step, {:error, data}) == {traces, {:error, data}}
+    end
   end
 end
