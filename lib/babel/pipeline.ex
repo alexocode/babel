@@ -21,19 +21,25 @@ defmodule Babel.Pipeline do
   @type on_error(output) :: (Error.t() -> Babel.result(output))
 
   @spec new(step | [step]) :: t
-  def new(%__MODULE__{} = t), do: t
-  def new(steps), do: build(steps)
-
   @spec new(name, step | [step]) :: t
-  def new(name, %__MODULE__{name: name} = t), do: t
-  def new(name, steps), do: build(name, steps)
-
   @spec new(name, on_error, step | [step]) :: t
-  def new(name, on_error, %__MODULE__{name: name, on_error: on_error} = t), do: t
-  def new(name, on_error, %__MODULE__{name: name, on_error: nil} = t), do: on_error(t, on_error)
-  def new(name, on_error, steps), do: build(name, on_error, steps)
+  def new(name \\ nil, on_error \\ nil, step_or_steps)
 
-  defp build(name \\ nil, on_error \\ nil, step_or_steps) do
+  def new(nil, nil, %__MODULE__{} = t), do: t
+
+  def new(name, on_error, %__MODULE__{} = t) do
+    case t do
+      %{name: ^name, on_error: ^on_error} -> t
+      %{name: nil, on_error: ^on_error} -> %{t | name: name}
+      %{name: ^name, on_error: nil} -> %{t | on_error: on_error}
+      %{name: nil, on_error: nil} -> %{t | name: name, on_error: on_error}
+      _ -> build(name, on_error, t)
+    end
+  end
+
+  def new(name, on_error, step_or_steps), do: build(name, on_error, step_or_steps)
+
+  defp build(name, on_error, step_or_steps) do
     %__MODULE__{
       name: name,
       on_error: on_error,
