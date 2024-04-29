@@ -100,24 +100,6 @@ defmodule Babel do
     chain(babel, into(intoable))
   end
 
-  @spec then(Step.fun(input, output)) :: t(output) when input: any, output: any
-  defdelegate then(function), to: Babel.Core
-
-  @spec then(t(input), Step.fun(input, output)) :: t(output)
-        when input: data, output: term
-  def then(babel, function) when is_babel(babel) do
-    chain(babel, then(function))
-  end
-
-  @spec then(name, Step.fun(input, output)) :: t(output) when input: any, output: any
-  defdelegate then(descriptive_name, function), to: Babel.Core
-
-  @spec then(t(input), name, Step.fun(input, output)) :: t(output)
-        when input: data, output: term
-  def then(babel, descriptive_name, function) when is_babel(babel) do
-    chain(babel, then(descriptive_name, function))
-  end
-
   @spec call(module, function_name :: atom) :: t
   defdelegate call(module, function_name), to: Babel.Core
 
@@ -169,6 +151,24 @@ defmodule Babel do
         when input: any, reason: any
   def fail(babel, reason_or_function) do
     chain(babel, fail(reason_or_function))
+  end
+
+  @spec then(Step.fun(input, output)) :: t(output) when input: any, output: any
+  defdelegate then(function), to: Babel.Core
+
+  @spec then(t(input), Step.fun(input, output)) :: t(output)
+        when input: data, output: term
+  def then(babel, function) when is_babel(babel) do
+    chain(babel, then(function))
+  end
+
+  @spec then(name, Step.fun(input, output)) :: t(output) when input: any, output: any
+  defdelegate then(descriptive_name, function), to: Babel.Core
+
+  @spec then(t(input), name, Step.fun(input, output)) :: t(output)
+        when input: data, output: term
+  def then(babel, descriptive_name, function) when is_babel(babel) do
+    chain(babel, then(descriptive_name, function))
   end
 
   @spec chain(nil, next) :: next when next: t
