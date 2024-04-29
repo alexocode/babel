@@ -1,25 +1,11 @@
-defmodule Babel.Support.StepFactory do
+defmodule Babel.Test.StepFactory do
   alias Babel.Step
 
   def step do
-    step({:test, make_ref()})
+    step(&Function.identity/1)
   end
 
-  def step(function) when is_function(function, 1) do
-    step({:test, make_ref()}, function)
-  end
-
-  def step(name) do
-    # To make the step functions different
-    ref = make_ref()
-
-    step(name, fn _ -> {name, ref} end)
-  end
-
-  def step(name, function) do
-    %Step{
-      name: name,
-      function: function
-    }
+  def step(name \\ {:test, make_ref()}, function) do
+    Step.new(name, function)
   end
 end
