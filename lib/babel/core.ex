@@ -86,19 +86,20 @@ defmodule Babel.Core do
           Step.t(Enumerable.t(input), list(output))
         when input: data, output: any
   def map(mapper) do
-    do_flat_map({:map, [mapper]}, fn _ -> mapper end)
+    Step.new(
+      {:map, [mapper]},
+      &Utils.map_and_collapse_to_result(&1, fn element ->
+        Trace.apply(mapper, element)
+      end)
+    )
   end
 
   @spec flat_map(mapper :: (input -> Babel.t(input, output))) ::
           Step.t(Enumerable.t(input), list(output))
         when input: any, output: any
   def flat_map(mapper) when is_function(mapper, 1) do
-    do_flat_map({:flat_map, [mapper]}, mapper)
-  end
-
-  defp do_flat_map(name, mapper) do
     Step.new(
-      name,
+      {:flat_map, [mapper]},
       &Utils.map_and_collapse_to_result(&1, fn element ->
         Trace.apply(mapper.(element), element)
       end)
