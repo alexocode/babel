@@ -22,7 +22,7 @@ defmodule Babel do
   @typedoc "TODO: Better docs"
   @type path :: Core.path()
 
-  defguard is_babel(babel) when is_struct(babel, Babel.Pipeline) or is_struct(babel, Babel.Step)
+  defguard is_babel(babel) when is_struct(babel, Pipeline) or is_struct(babel, Step)
 
   defmacro pipeline(name, [{:do, do_block} | maybe_else]) do
     case maybe_else do
