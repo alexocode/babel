@@ -1,6 +1,8 @@
 defmodule BabelTest do
   use ExUnit.Case, async: true
 
+  alias Babel.Core
+
   require Babel
 
   describe "typical pipelines" do
@@ -52,4 +54,156 @@ defmodule BabelTest do
              }
     end
   end
+
+  describe "shortcuts" do
+    test "returns the expected core steps" do
+      assert Babel.noop() == Core.id()
+      assert Babel.id() == Core.id()
+
+      assert Babel.const(:some_value) == Core.const(:some_value)
+
+      assert Babel.at(["some", "path"]) == Core.fetch(["some", "path"])
+      assert Babel.fetch(["some", "path"]) == Core.fetch(["some", "path"])
+
+      assert Babel.get(["some", "path"], :default) == Core.get(["some", "path"], :default)
+
+      assert Babel.cast(:boolean) == Core.cast(:boolean)
+      assert Babel.cast(:float) == Core.cast(:float)
+      assert Babel.cast(:integer) == Core.cast(:integer)
+
+      assert Babel.into({:some, %{value: "!"}}) == Core.into({:some, %{value: "!"}})
+
+      assert Babel.call(List, :to_string) == Core.call(List, :to_string)
+
+      chooser = fn _ -> unique_step() end
+      assert Babel.choice(chooser) == Core.choice(chooser)
+
+      mapper = unique_step()
+      assert Babel.map(mapper) == Core.map(mapper)
+
+      mapper = fn _ -> unique_step() end
+      assert Babel.flat_map(mapper) == Core.flat_map(mapper)
+
+      assert Babel.fail(:some_reason) == Core.fail(:some_reason)
+
+      applicables = [Babel.fail(:some_reason), unique_step()]
+      assert Babel.try(applicables) == Core.try(applicables)
+      assert Babel.try(applicables, :default) == Core.try(applicables, :default)
+
+      function = fn _ -> :do_the_thing end
+      assert Babel.then(function) == Core.then(function)
+      assert Babel.then(:my_name, function) == Core.then(:my_name, function)
+    end
+  end
+
+  describe "composition" do
+    test "most core steps have a composing version" do
+      assert composes(Babel, :at, [["some", "path"]])
+      assert composes(Babel, :fetch, [["some", "path"]])
+      assert composes(Babel, :get, [["some", "path"], :default])
+      assert composes(Babel, :cast, [:boolean])
+      assert composes(Babel, :cast, [:float])
+      assert composes(Babel, :cast, [:integer])
+      assert composes(Babel, :into, [{:some, %{value: unique_step()}}])
+      assert composes(Babel, :call, [List, :to_string])
+      assert composes(Babel, :choice, [fn _ -> unique_step() end])
+      assert composes(Babel, :map, [unique_step()])
+      assert composes(Babel, :flat_map, [fn _ -> unique_step() end])
+      assert composes(Babel, :fail, [:some_error])
+      assert composes(Babel, :try, [[Babel.fail(:some_reason), unique_step()]])
+      assert composes(Babel, :then, [fn _ -> :do_the_thing end])
+    end
+
+    test "chain/2 returns the right value when the left is nil" do
+      right_step = unique_step()
+
+      assert Babel.chain(nil, right_step) == right_step
+    end
+
+    test "chain/2 composes both values into a pipeline" do
+      left_step = unique_step()
+      right_step = unique_step()
+
+      assert Babel.chain(left_step, right_step) == Babel.Pipeline.new([left_step, right_step])
+    end
+  end
+
+  describe "on_error/2" do
+    test "wraps a step in a pipeline and set it's on_error handler" do
+      step = unique_step()
+      on_error = fn _ -> :handle_the_error end
+
+      assert %Babel.Pipeline{on_error: ^on_error, reversed_steps: [^step]} =
+               Babel.on_error(step, on_error)
+    end
+
+    test "sets a pipeline's on_error handler" do
+      pipeline = Babel.begin(make_ref())
+      on_error = fn _ -> :handle_the_error end
+
+      assert Babel.on_error(pipeline, on_error) == %Babel.Pipeline{pipeline | on_error: on_error}
+    end
+
+    test "overrides a pipeline's existing on_error handler" do
+      pipeline = Babel.Pipeline.new(make_ref(), fn _ -> :different_on_error end, [])
+      on_error = fn _ -> :handle_the_error end
+
+      assert Babel.on_error(pipeline, on_error) == %Babel.Pipeline{pipeline | on_error: on_error}
+    end
+  end
+
+  describe "apply/2" do
+    test "returns {:ok, <result>} when everything is fine" do
+      step = Babel.id()
+      data = %{value: make_ref()}
+
+      assert Babel.apply(step, data) == {:ok, data}
+    end
+
+    test "returns {:error, Babel.Error.t} when something goes wrong" do
+      step = Babel.then(fn _ -> {:error, :something_is_wrong} end)
+      data = %{value: make_ref()}
+
+      assert {:error, %Babel.Error{} = error} = Babel.apply(step, data)
+      assert error.reason == :something_is_wrong
+      assert error.trace == Babel.trace(step, data)
+    end
+  end
+
+  describe "apply!/2" do
+    test "returns <result> when everything is fine" do
+      step = Babel.id()
+      data = %{value: make_ref()}
+
+      assert Babel.apply!(step, data) == data
+    end
+
+    test "returns {:error, Babel.Error.t} when something goes wrong" do
+      step = Babel.then(fn _ -> {:error, :something_is_wrong} end)
+      data = %{value: make_ref()}
+
+      error = assert_raise Babel.Error, fn -> Babel.apply!(step, data) end
+      assert error.reason == :something_is_wrong
+      assert error.trace == Babel.trace(step, data)
+    end
+  end
+
+  describe "trace/2" do
+    test "delegates to Babel.Trace.apply/2" do
+      step = Babel.id()
+      data = %{value: make_ref()}
+
+      assert Babel.trace(step, data) == Babel.Trace.apply(step, data)
+    end
+  end
+
+  defp composes(module, function, args) do
+    pipeline = Babel.begin(make_ref())
+    step = apply(module, function, args)
+    composed = apply(module, function, [pipeline | args])
+
+    assert composed == %Babel.Pipeline{pipeline | reversed_steps: [step]}
+  end
+
+  defp unique_step, do: Babel.const(make_ref())
 end
