@@ -5,7 +5,7 @@ defimpl Inspect, for: Babel.Pipeline do
     name =
       if pipeline.name do
         concat([
-          Inspect.inspect(pipeline.name, opts),
+          to_doc(pipeline.name, opts),
           line(),
           "|> "
         ])
@@ -16,7 +16,7 @@ defimpl Inspect, for: Babel.Pipeline do
     concat(
       [
         name,
-        "Babel.begin()"
+        color("Babel.begin()", :call, opts)
       ] ++ steps(pipeline, opts) ++ on_error(pipeline, opts)
     )
   end
@@ -24,13 +24,13 @@ defimpl Inspect, for: Babel.Pipeline do
   defp steps(%Babel.Pipeline{reversed_steps: reversed_steps}, opts) do
     Enum.reduce(reversed_steps, [], fn
       %Babel.Step{} = step, list ->
-        inspected_step = Inspect.inspect(step, opts)
+        inspected_step = to_doc(step, opts)
 
         pipeline_step =
           if Babel.Core.core?(step) do
             inspected_step
           else
-            concat(["chain(", inspected_step, ")"])
+            color(concat(["chain(", inspected_step, ")"]), :call, opts)
           end
 
         [concat([line(), "|> ", pipeline_step]) | list]
@@ -62,7 +62,7 @@ defimpl Inspect, for: Babel.Step do
   import Inspect.Algebra
 
   def inspect(%Babel.Step{} = step, opts) do
-    concat(["Babel.", call(step, opts)])
+    color(concat(["Babel.", call(step, opts)]), :call, opts)
   end
 
   defp call(%Babel.Step{} = step, opts) do
@@ -71,20 +71,119 @@ defimpl Inspect, for: Babel.Step do
 
       concat(to_string(action), arguments(args, opts))
     else
-      concat([
-        "Step.new(",
-        break(""),
-        Inspect.inspect(step.name, opts),
-        ",",
-        break(),
-        Inspect.inspect(step.function, opts),
-        break(""),
-        ")"
-      ])
+      color(
+        concat([
+          "Step.new(",
+          break(""),
+          to_doc(step.name, opts),
+          ",",
+          break(),
+          to_doc(step.function, opts),
+          break(""),
+          ")"
+        ]),
+        :call,
+        opts
+      )
     end
   end
 
   defp arguments(args, opts) do
-    container_doc("(", List.wrap(args), ")", opts, &Inspect.inspect(&1, &2))
+    container_doc("(", List.wrap(args), ")", opts, &to_doc(&1, &2))
+  end
+end
+
+defimpl Inspect, for: Babel.Trace do
+  import Inspect.Algebra
+
+  def inspect(%Babel.Trace{} = trace, opts) do
+    concat([
+      trace(trace, opts),
+      nest(properties(trace, opts), 2)
+    ])
+  end
+
+  defp trace(trace, opts) do
+    status =
+      if Babel.Trace.ok?(trace) do
+        :ok
+      else
+        :error
+      end
+
+    group(
+      concat([
+        color(string("Babel.Trace"), :atom, opts),
+        "<",
+        to_doc(status, opts),
+        ">"
+      ])
+    )
+  end
+
+  defp properties(trace, opts) do
+    concat([
+      line(),
+      data(trace, opts),
+      line(),
+      line(),
+      babel(trace, opts),
+      line(),
+      nested(trace, opts),
+      line(),
+      result(trace, opts)
+    ])
+  end
+
+  defp data(%{data: data}, opts) do
+    group(nest(glue("data:", to_doc(data, opts)), 2))
+  end
+
+  defp babel(%Babel.Trace{babel: babel}, opts), do: babel(babel, opts)
+
+  defp babel(%Babel.Pipeline{name: name}, opts) do
+    group(concat([color("Babel.Pipeline", :atom, opts), "<", to_string(name), ">"]))
+  end
+
+  defp babel(%Babel.Step{} = step, opts) do
+    Inspect.Babel.Step.inspect(step, opts)
+  end
+
+  defp nested(%{nested: []}, _opts), do: empty()
+
+  defp nested(%{nested: nested}, opts) do
+    nested
+    |> lines_for_nested(opts)
+    |> Enum.intersperse(line())
+    |> concat()
+    |> group()
+  end
+
+  defp lines_for_nested([], _opts), do: []
+
+  defp lines_for_nested(traces, opts) do
+    [
+      "",
+      for trace <- traces do
+        [
+          no_limit(babel(trace.babel, opts)),
+          lines_for_nested(trace.nested, opts),
+          result(trace, opts),
+          ""
+        ]
+      end
+    ]
+    |> List.flatten()
+    |> Enum.map(&concat("| ", &1))
+  end
+
+  defp result(%{result: result}, opts) do
+    value =
+      case result do
+        {:ok, value} -> value
+        {:error, reason} -> {:error, reason}
+      end
+
+    group(concat("|=> ", to_doc(value, opts)))
   end
 end

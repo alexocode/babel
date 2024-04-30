@@ -154,7 +154,95 @@ defmodule Babel.InspectTest do
     end
   end
 
-  defp assert_inspects_as(thing, string) do
+  describe "Inspect, for: Babel.Trace" do
+    test "renders the step and the result for the given data" do
+      step = Babel.into(%{nested: %{map: Babel.fetch("value1")}})
+      data = %{"value1" => :super_cool}
+      trace = Babel.Trace.apply(step, data)
+
+      assert_inspects_as(trace, [
+        "Babel.Trace<:ok>",
+        "  data: #{inspect(data)}",
+        "  ",
+        "  Babel.into(%{nested: %{map: Babel.fetch(\"value1\")}})",
+        "  | ",
+        "  | Babel.fetch(\"value1\")",
+        "  | |=> :super_cool",
+        "  | ",
+        "  |=> %{nested: %{map: :super_cool}}"
+      ])
+    end
+
+    test "renders a pipeline by rendering all nested steps and their results" do
+      pipeline =
+        Babel.begin()
+        |> Babel.fetch(["foo", 0, "bar"])
+        |> Babel.into(%{
+          atom_key1: Babel.fetch("key1"),
+          atom_key2: Babel.fetch("key2")
+        })
+        |> Babel.on_error(fn _error -> :do_the_thing end)
+
+      data = %{
+        "foo" => [
+          %{"bar" => %{"key1" => :value1, "key2" => :value2}},
+          %{"something" => :else}
+        ]
+      }
+
+      trace = Babel.Trace.apply(pipeline, data)
+
+      assert_inspects_as(trace, [
+        "Babel.Trace<:ok>",
+        "  data: #{inspect(data)}",
+        "  ",
+        "  Babel.Pipeline<>",
+        "  | ",
+        "  | Babel.fetch([\"foo\", 0, \"bar\"])",
+        "  | |=> #{inspect(%{"key1" => :value1, "key2" => :value2})}",
+        "  | ",
+        "  | Babel.into(#{inspect(%{atom_key1: Babel.fetch("key1"), atom_key2: Babel.fetch("key2")})})",
+        "  | | ",
+        "  | | Babel.fetch(\"key1\")",
+        "  | | |=> :value1",
+        "  | | ",
+        "  | | Babel.fetch(\"key2\")",
+        "  | | |=> :value2",
+        "  | | ",
+        "  | |=> #{inspect(%{atom_key1: :value1, atom_key2: :value2})}",
+        "  | ",
+        "  |=> #{inspect(%{atom_key1: :value1, atom_key2: :value2})}"
+      ])
+    end
+
+    test "includes a pipelines on_error handling when relevant" do
+      pipeline =
+        :my_error_handling_pipeline
+        |> Babel.begin()
+        |> Babel.fetch("key1")
+        |> Babel.on_error(fn _error -> :recovered_value end)
+
+      data = {:invalid, "data"}
+
+      trace = Babel.Trace.apply(pipeline, data)
+
+      assert_inspects_as(trace, [
+        "Babel.Trace<:ok>",
+        "  data: #{inspect(data)}",
+        "  ",
+        "  Babel.Pipeline<:my_error_handling_pipeline>",
+        "  | ",
+        "  | Babel.fetch(\"key1\")",
+        "  | |=> {:error, {:not_found, \"key1\"}}"
+      ])
+    end
+  end
+
+  defp assert_inspects_as(thing, lines) when is_list(lines) do
+    assert String.split(inspect(thing), "\n") == lines
+  end
+
+  defp assert_inspects_as(thing, string) when is_binary(string) do
     assert inspect(thing) == String.trim(string)
   end
 end
