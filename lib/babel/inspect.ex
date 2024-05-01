@@ -16,7 +16,7 @@ defimpl Inspect, for: Babel.Pipeline do
     concat(
       [
         name,
-        color("Babel.begin()", :call, opts)
+        color(concat([color("Babel", :atom, opts), ".begin()"]), :call, opts)
       ] ++ steps(pipeline, opts) ++ on_error(pipeline, opts)
     )
   end
