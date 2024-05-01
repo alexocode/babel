@@ -161,15 +161,16 @@ defmodule Babel.InspectTest do
       trace = Babel.Trace.apply(step, data)
 
       assert_inspects_as(trace, [
-        "Babel.Trace<:ok>",
-        "  data: #{inspect(data)}",
+        "Babel.Trace<:ok>{",
+        "  data = #{inspect(data)}",
         "  ",
         "  Babel.into(%{nested: %{map: Babel.fetch(\"value1\")}})",
         "  | ",
         "  | Babel.fetch(\"value1\")",
         "  | |=> :super_cool",
         "  | ",
-        "  |=> %{nested: %{map: :super_cool}}"
+        "  |=> %{nested: %{map: :super_cool}}",
+        "}"
       ])
     end
 
@@ -193,8 +194,8 @@ defmodule Babel.InspectTest do
       trace = Babel.Trace.apply(pipeline, data)
 
       assert_inspects_as(trace, [
-        "Babel.Trace<:ok>",
-        "  data: #{inspect(data)}",
+        "Babel.Trace<:ok>{",
+        "  data = #{inspect(data)}",
         "  ",
         "  Babel.Pipeline<>",
         "  | ",
@@ -211,7 +212,8 @@ defmodule Babel.InspectTest do
         "  | | ",
         "  | |=> #{inspect(%{atom_key1: :value1, atom_key2: :value2})}",
         "  | ",
-        "  |=> #{inspect(%{atom_key1: :value1, atom_key2: :value2})}"
+        "  |=> #{inspect(%{atom_key1: :value1, atom_key2: :value2})}",
+        "}"
       ])
     end
 
@@ -229,8 +231,8 @@ defmodule Babel.InspectTest do
       trace = Babel.Trace.apply(pipeline, data)
 
       assert_inspects_as(trace, [
-        "Babel.Trace<:ok>",
-        "  data: #{inspect(data)}",
+        "Babel.Trace<:ok>{",
+        "  data = #{inspect(data)}",
         "  ",
         "  Babel.Pipeline<:my_error_handling_pipeline>",
         "  | ",
@@ -240,7 +242,8 @@ defmodule Babel.InspectTest do
         "  | Babel.on_error(#{inspect(on_error)})",
         "  | |=> :recovered_value",
         "  | ",
-        "  |=> :recovered_value"
+        "  |=> :recovered_value",
+        "}"
       ])
     end
   end

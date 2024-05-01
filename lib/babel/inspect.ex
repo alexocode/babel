@@ -111,7 +111,10 @@ defimpl Inspect, for: Babel.Trace do
   def inspect(%Babel.Trace{} = trace, opts) do
     concat([
       trace(trace, opts),
-      nest(properties(trace, opts), 2)
+      "{",
+      nest(properties(trace, opts), 2),
+      line(),
+      "}"
     ])
   end
 
@@ -148,7 +151,7 @@ defimpl Inspect, for: Babel.Trace do
   end
 
   defp data(%{data: data}, opts) do
-    group(nest(glue("data:", to_doc(data, opts)), 2))
+    group(nest(glue(concat([color("data", :variable, opts), " ="]), to_doc(data, opts)), 2))
   end
 
   defp babel(%Babel.Trace{babel: babel}, opts), do: babel(babel, opts)
