@@ -28,13 +28,9 @@ defmodule Babel.Pipeline do
   def new(nil, nil, %__MODULE__{} = t), do: t
 
   def new(name, on_error, %__MODULE__{} = t) do
-    case t do
-      %{name: ^name, on_error: %OnError{handler: ^on_error}} -> t
-      %{name: nil, on_error: %OnError{handler: ^on_error}} -> %{t | name: name}
-      %{name: ^name, on_error: nil} -> %{t | on_error: OnError.new(on_error)}
-      %{name: nil, on_error: nil} -> %{t | name: name, on_error: OnError.new(on_error)}
-      _ -> build(name, on_error, t)
-    end
+    name
+    |> build(on_error, [])
+    |> chain(t)
   end
 
   def new(name, on_error, step_or_steps), do: build(name, on_error, step_or_steps)
@@ -57,13 +53,12 @@ defmodule Babel.Pipeline do
 
   @spec chain(t(input, in_between), t(in_between, output)) :: t(input, output)
         when input: any, in_between: any, output: any
-  # Minor optimization: merge unnamed pipelines without error handling into the current pipeline
-  def chain(%__MODULE__{} = left, %__MODULE__{name: nil, on_error: nil} = right) do
-    Map.update!(
-      left,
-      :reversed_steps,
-      &Enum.concat(right.reversed_steps, &1)
-    )
+  def chain(%__MODULE__{} = left, %__MODULE__{} = right) do
+    if merge?(left, right) do
+      merge(left, right)
+    else
+      Map.update!(left, :reversed_steps, &[right | &1])
+    end
   end
 
   @spec chain(t, [step]) :: t
@@ -82,6 +77,23 @@ defmodule Babel.Pipeline do
       :reversed_steps,
       &[step | &1]
     )
+  end
+
+  defp merge?(%__MODULE__{} = left, %__MODULE__{} = right) do
+    equal_or_any_nil?(left.name, right.name) and
+      equal_or_any_nil?(left.on_error, right.on_error)
+  end
+
+  defp equal_or_any_nil?(left, right) do
+    left == right or is_nil(left) or is_nil(right)
+  end
+
+  defp merge(%__MODULE__{} = left, %__MODULE__{} = right) do
+    %__MODULE__{
+      name: left.name || right.name,
+      on_error: left.on_error || right.on_error,
+      reversed_steps: right.reversed_steps ++ left.reversed_steps
+    }
   end
 
   @spec apply(t(input, output), Babel.data()) :: Babel.Applicable.result(output)
