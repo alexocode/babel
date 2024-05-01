@@ -145,7 +145,6 @@ defimpl Inspect, for: Babel.Trace do
       babel(trace, opts),
       line(),
       nested(trace, opts),
-      line(),
       result(trace, opts)
     ])
   end
@@ -180,7 +179,7 @@ defimpl Inspect, for: Babel.Trace do
   defp nested(%{nested: nested}, opts) do
     nested
     |> lines_for_nested(opts)
-    |> Enum.intersperse(line())
+    |> Enum.flat_map(&[&1, line()])
     |> concat()
     |> group()
   end
