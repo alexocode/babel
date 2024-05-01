@@ -40,179 +40,6 @@ defmodule Babel do
     end
   end
 
-  @doc "Begin a new `Babel.Pipeline`."
-  @spec begin(name) :: Pipeline.t()
-  def begin(name \\ nil), do: Pipeline.new(name, [])
-
-  @doc "Alias for `id/0`."
-  @spec noop() :: Step.t(input, input) when input: any
-  def noop, do: id()
-
-  @spec id() :: Step.t(input, input) when input: any
-  defdelegate id, to: Babel.Core
-
-  @spec const(value) :: Step.t(value) when value: any
-  defdelegate const(value), to: Babel.Core
-
-  @doc "Alias for `fetch/1`."
-  @spec at(path) :: Step.t()
-  def at(path), do: fetch(path)
-
-  @doc "Alias for `fetch/2`."
-  @spec at(t, path) :: t
-  def at(babel, path) do
-    fetch(babel, path)
-  end
-
-  @spec fetch(path) :: Step.t()
-  defdelegate fetch(path), to: Babel.Core
-
-  @spec fetch(t(), path) :: t
-  def fetch(babel, path) do
-    chain(babel, fetch(path))
-  end
-
-  @spec get(path) :: Step.t()
-  defdelegate get(path), to: Babel.Core
-
-  @spec get(path, default :: any) :: Step.t()
-  defdelegate get(path, default), to: Babel.Core
-
-  @spec get(t(), path, default :: any) :: t
-  def get(babel, path, default) do
-    chain(babel, get(path, default))
-  end
-
-  @spec cast(:boolean) :: Step.t(boolean)
-  @spec cast(:integer) :: Step.t(integer)
-  @spec cast(:float) :: Step.t(float)
-  defdelegate cast(type), to: Babel.Core
-
-  @spec cast(t(), :boolean) :: t(boolean)
-  @spec cast(t(), :integer) :: t(integer)
-  @spec cast(t(), :float) :: t(float)
-  def cast(babel, target) do
-    chain(babel, cast(target))
-  end
-
-  @spec into(intoable) :: Step.t(intoable) when intoable: Babel.Intoable.t()
-  defdelegate into(intoable), to: Babel.Core
-
-  @spec into(t(), intoable) :: t(intoable) when intoable: Babel.Intoable.t()
-  def into(babel, intoable) do
-    chain(babel, into(intoable))
-  end
-
-  @spec call(module, function_name :: atom) :: Step.t()
-  defdelegate call(module, function_name), to: Babel.Core
-
-  @spec call(t, module, function_name :: atom) :: t
-  def call(babel, module, function_name) when is_babel(babel) do
-    chain(babel, call(module, function_name))
-  end
-
-  @spec call(module, function_name :: atom, extra_args :: list) :: Step.t()
-  defdelegate call(module, function_name, extra_args), to: Babel.Core
-
-  @spec call(t, module, function_name :: atom, extra_args :: list) :: t
-  def call(babel, module, function_name, extra_args) do
-    chain(babel, call(module, function_name, extra_args))
-  end
-
-  @spec choice((input -> t(input, output))) :: Step.t(output) when input: data, output: term
-  defdelegate choice(chooser), to: Babel.Core
-
-  @spec choice(t(), (input -> t(input, output))) :: t(output)
-        when input: data, output: term
-  def choice(babel, chooser) do
-    chain(babel, choice(chooser))
-  end
-
-  @spec map(t(input, output)) :: Step.t([output]) when input: data, output: term
-  defdelegate map(mapper), to: Babel.Core
-
-  @spec map(Pipeline.t(Enumerable.t(input)), t(input, output)) :: t([output])
-        when input: data, output: term
-  def map(babel, mapper) do
-    chain(babel, map(mapper))
-  end
-
-  @spec flat_map((input -> t(input, output))) :: Step.t([output]) when input: data, output: term
-  defdelegate flat_map(mapper), to: Babel.Core
-
-  @spec flat_map(Pipeline.t(Enumerable.t(input)), (input -> t(input, output))) :: t([output])
-        when input: data, output: term
-  def flat_map(babel, mapper) do
-    chain(babel, flat_map(mapper))
-  end
-
-  @spec fail(reason_or_function :: reason | (input -> reason)) :: Step.t(no_return)
-        when input: any, reason: any
-  defdelegate fail(reason_or_function), to: Babel.Core
-
-  @spec fail(t(input), reason_or_function :: reason | (input -> reason)) :: t(no_return)
-        when input: any, reason: any
-  def fail(babel, reason_or_function) do
-    chain(babel, fail(reason_or_function))
-  end
-
-  @spec try(applicables :: t(output) | [t(output)]) :: Step.t(output)
-        when output: any
-  defdelegate try(applicables), to: Babel.Core
-
-  @spec try(applicables :: t(input), t(input, output) | [t(input, output)]) :: t(input, output)
-        when input: any, output: any
-  def try(babel, applicables) when is_babel(babel) do
-    chain(babel, __MODULE__.try(applicables))
-  end
-
-  @spec try(applicables :: t(output) | [t(output)], default) :: t(output | default)
-        when output: any, default: any
-  defdelegate try(applicables, default), to: Babel.Core
-
-  @spec try(t(input, output), applicables :: t(input, output) | [t(input, output)], default) ::
-          t(input, output | default)
-        when input: any, output: any, default: any
-  def try(babel, applicables, default) do
-    chain(babel, __MODULE__.try(applicables, default))
-  end
-
-  @spec then(Step.fun(input, output)) :: Step.t(output) when input: any, output: any
-  defdelegate then(function), to: Babel.Core
-
-  @spec then(t(input), Step.fun(input, output)) :: t(output)
-        when input: data, output: term
-  def then(babel, function) when is_babel(babel) do
-    chain(babel, then(function))
-  end
-
-  @spec then(name, Step.fun(input, output)) :: Step.t(output) when input: any, output: any
-  defdelegate then(descriptive_name, function), to: Babel.Core
-
-  @spec then(t(input), name, Step.fun(input, output)) :: t(output)
-        when input: data, output: term
-  def then(babel, descriptive_name, function) when is_babel(babel) do
-    chain(babel, then(descriptive_name, function))
-  end
-
-  @spec chain(nil, next) :: next when next: t
-  def chain(nil, next), do: next
-
-  @spec chain(t(input, in_between), next :: t(in_between, output)) :: Pipeline.t(input, output)
-        when input: any, in_between: any, output: any
-  def chain(babel, next) do
-    babel
-    |> Pipeline.new()
-    |> Pipeline.chain(next)
-  end
-
-  @spec on_error(t(), Pipeline.on_error(output)) :: t(output) when output: any
-  def on_error(babel, function) do
-    babel
-    |> Pipeline.new()
-    |> Pipeline.on_error(function)
-  end
-
   @spec apply(t(output), data) :: {:ok, output} | {:error, Error.t()} when output: any
   def apply(babel, data) do
     trace = trace(babel, data)
@@ -235,6 +62,173 @@ defmodule Babel do
     end
   end
 
+  @doc "Alias for `fetch/1`."
+  @spec at(path) :: Step.t()
+  def at(path), do: fetch(path)
+
+  @doc "Alias for `fetch/2`."
+  @spec at(t, path) :: t
+  def at(babel, path) do
+    fetch(babel, path)
+  end
+
+  @doc "Begin a new `Babel.Pipeline`."
+  @spec begin(name) :: Pipeline.t()
+  def begin(name \\ nil), do: Pipeline.new(name, [])
+
+  @spec call(module, function_name :: atom) :: Step.t()
+  defdelegate call(module, function_name), to: Babel.Core
+
+  @spec call(t, module, function_name :: atom) :: t
+  def call(babel, module, function_name) when is_babel(babel) do
+    chain(babel, call(module, function_name))
+  end
+
+  @spec call(module, function_name :: atom, extra_args :: list) :: Step.t()
+  defdelegate call(module, function_name, extra_args), to: Babel.Core
+
+  @spec call(t, module, function_name :: atom, extra_args :: list) :: t
+  def call(babel, module, function_name, extra_args) do
+    chain(babel, call(module, function_name, extra_args))
+  end
+
+  @spec cast(:boolean) :: Step.t(boolean)
+  @spec cast(:integer) :: Step.t(integer)
+  @spec cast(:float) :: Step.t(float)
+  defdelegate cast(type), to: Babel.Core
+
+  @spec cast(t(), :boolean) :: t(boolean)
+  @spec cast(t(), :integer) :: t(integer)
+  @spec cast(t(), :float) :: t(float)
+  def cast(babel, target) do
+    chain(babel, cast(target))
+  end
+
+  @spec chain(nil, next) :: next when next: t
+  def chain(nil, next), do: next
+
+  @spec chain(t(input, in_between), next :: t(in_between, output)) :: Pipeline.t(input, output)
+        when input: any, in_between: any, output: any
+  def chain(babel, next) do
+    babel
+    |> Pipeline.new()
+    |> Pipeline.chain(next)
+  end
+
+  @spec choice((input -> t(input, output))) :: Step.t(output) when input: data, output: term
+  defdelegate choice(chooser), to: Babel.Core
+
+  @spec choice(t(), (input -> t(input, output))) :: t(output)
+        when input: data, output: term
+  def choice(babel, chooser) do
+    chain(babel, choice(chooser))
+  end
+
+  @spec const(value) :: Step.t(value) when value: any
+  defdelegate const(value), to: Babel.Core
+
+  @spec fail(reason_or_function :: reason | (input -> reason)) :: Step.t(no_return)
+        when input: any, reason: any
+  defdelegate fail(reason_or_function), to: Babel.Core
+
+  @spec fetch(path) :: Step.t()
+  defdelegate fetch(path), to: Babel.Core
+
+  @spec fetch(t(), path) :: t
+  def fetch(babel, path) do
+    chain(babel, fetch(path))
+  end
+
+  @spec flat_map((input -> t(input, output))) :: Step.t([output]) when input: data, output: term
+  defdelegate flat_map(mapper), to: Babel.Core
+
+  @spec flat_map(Pipeline.t(Enumerable.t(input)), (input -> t(input, output))) :: t([output])
+        when input: data, output: term
+  def flat_map(babel, mapper) do
+    chain(babel, flat_map(mapper))
+  end
+
+  @spec get(path) :: Step.t()
+  defdelegate get(path), to: Babel.Core
+
+  @spec get(path, default :: any) :: Step.t()
+  defdelegate get(path, default), to: Babel.Core
+
+  @spec get(t(), path, default :: any) :: t
+  def get(babel, path, default) do
+    chain(babel, get(path, default))
+  end
+
+  @spec id() :: Step.t(input, input) when input: any
+  defdelegate id, to: Babel.Core
+
+  @spec into(intoable) :: Step.t(intoable) when intoable: Babel.Intoable.t()
+  defdelegate into(intoable), to: Babel.Core
+
+  @spec into(t(), intoable) :: t(intoable) when intoable: Babel.Intoable.t()
+  def into(babel, intoable) do
+    chain(babel, into(intoable))
+  end
+
+  @spec map(t(input, output)) :: Step.t([output]) when input: data, output: term
+  defdelegate map(mapper), to: Babel.Core
+
+  @spec map(Pipeline.t(Enumerable.t(input)), t(input, output)) :: t([output])
+        when input: data, output: term
+  def map(babel, mapper) do
+    chain(babel, map(mapper))
+  end
+
+  @doc "Alias for `id/0`."
+  @spec noop() :: Step.t(input, input) when input: any
+  def noop, do: id()
+
+  @spec on_error(t(), Pipeline.on_error(output)) :: t(output) when output: any
+  def on_error(babel, function) do
+    babel
+    |> Pipeline.new()
+    |> Pipeline.on_error(function)
+  end
+
+  @spec then(Step.fun(input, output)) :: Step.t(output) when input: any, output: any
+  defdelegate then(function), to: Babel.Core
+
+  @spec then(t(input), Step.fun(input, output)) :: t(output)
+        when input: data, output: term
+  def then(babel, function) when is_babel(babel) do
+    chain(babel, then(function))
+  end
+
+  @spec then(name, Step.fun(input, output)) :: Step.t(output) when input: any, output: any
+  defdelegate then(descriptive_name, function), to: Babel.Core
+
+  @spec then(t(input), name, Step.fun(input, output)) :: t(output)
+        when input: data, output: term
+  def then(babel, descriptive_name, function) when is_babel(babel) do
+    chain(babel, then(descriptive_name, function))
+  end
+
   @spec trace(t(input, output), data) :: Trace.t(input, output) when input: any, output: any
   defdelegate trace(babel, data), to: Trace, as: :apply
+
+  @spec try(applicables :: t(output) | [t(output)]) :: Step.t(output)
+        when output: any
+  defdelegate try(applicables), to: Babel.Core
+
+  @spec try(applicables :: t(input), t(input, output) | [t(input, output)]) :: t(input, output)
+        when input: any, output: any
+  def try(babel, applicables) when is_babel(babel) do
+    chain(babel, __MODULE__.try(applicables))
+  end
+
+  @spec try(applicables :: t(output) | [t(output)], default) :: t(output | default)
+        when output: any, default: any
+  defdelegate try(applicables, default), to: Babel.Core
+
+  @spec try(t(input, output), applicables :: t(input, output) | [t(input, output)], default) ::
+          t(input, output | default)
+        when input: any, output: any, default: any
+  def try(babel, applicables, default) do
+    chain(babel, __MODULE__.try(applicables, default))
+  end
 end
