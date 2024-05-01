@@ -63,7 +63,11 @@ defimpl Inspect, for: Babel.Pipeline do
 
   defp on_error(%Babel.Pipeline{on_error: on_error}, opts) do
     if on_error do
-      [break(), "|> ", Inspect.Babel.Pipeline.OnError.inspect(on_error, opts)]
+      [
+        break(),
+        color("|> ", :operator, opts),
+        Inspect.Babel.Pipeline.OnError.inspect(on_error, opts)
+      ]
     else
       []
     end
@@ -75,7 +79,12 @@ defimpl Inspect, for: Babel.Pipeline.OnError do
 
   def inspect(%Babel.Pipeline.OnError{handler: handler}, opts) do
     color(
-      concat(["Babel.on_error(", Inspect.Function.inspect(handler, opts), ")"]),
+      concat([
+        color("Babel", :atom, opts),
+        ".on_error(",
+        Inspect.Function.inspect(handler, opts),
+        ")"
+      ]),
       :call,
       opts
     )
