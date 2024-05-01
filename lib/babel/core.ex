@@ -19,7 +19,7 @@ defmodule Babel.Core do
     fetch
     flat_map
     get
-    id
+    identity
     into
     map
     then
@@ -109,9 +109,9 @@ defmodule Babel.Core do
     Step.new({:get, [path, default]}, &__MODULE__.Get.call(&1, path_as_list, default))
   end
 
-  @spec id() :: Step.t(input, input) when input: any
-  def id do
-    Step.new({:id, []}, &Function.identity/1)
+  @spec identity() :: Step.t(input, input) when input: any
+  def identity do
+    Step.new({:identity, []}, &Function.identity/1)
   end
 
   @spec into(intoable) :: Step.t(data, intoable) when intoable: Babel.Intoable.t()

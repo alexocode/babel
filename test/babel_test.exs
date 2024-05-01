@@ -57,8 +57,8 @@ defmodule BabelTest do
 
   describe "shortcuts" do
     test "returns the expected core steps" do
-      assert Babel.noop() == Core.id()
-      assert Babel.id() == Core.id()
+      assert Babel.noop() == Core.identity()
+      assert Babel.identity() == Core.identity()
 
       assert Babel.const(:some_value) == Core.const(:some_value)
 
@@ -152,7 +152,7 @@ defmodule BabelTest do
 
   describe "apply/2" do
     test "returns {:ok, <result>} when everything is fine" do
-      step = Babel.id()
+      step = Babel.identity()
       data = %{value: make_ref()}
 
       assert Babel.apply(step, data) == {:ok, data}
@@ -170,7 +170,7 @@ defmodule BabelTest do
 
   describe "apply!/2" do
     test "returns <result> when everything is fine" do
-      step = Babel.id()
+      step = Babel.identity()
       data = %{value: make_ref()}
 
       assert Babel.apply!(step, data) == data
@@ -188,7 +188,7 @@ defmodule BabelTest do
 
   describe "trace/2" do
     test "delegates to Babel.Trace.apply/2" do
-      step = Babel.id()
+      step = Babel.identity()
       data = %{value: make_ref()}
 
       assert Babel.trace(step, data) == Babel.Trace.apply(step, data)

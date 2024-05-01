@@ -159,8 +159,8 @@ defmodule Babel do
     chain(babel, get(path, default))
   end
 
-  @spec id() :: Step.t(input, input) when input: any
-  defdelegate id, to: Babel.Core
+  @spec identity() :: Step.t(input, input) when input: any
+  defdelegate identity, to: Babel.Core
 
   @spec into(intoable) :: Step.t(intoable) when intoable: Babel.Intoable.t()
   defdelegate into(intoable), to: Babel.Core
@@ -179,9 +179,9 @@ defmodule Babel do
     chain(babel, map(mapper))
   end
 
-  @doc "Alias for `id/0`."
+  @doc "Alias for `identity/0`."
   @spec noop() :: Step.t(input, input) when input: any
-  def noop, do: id()
+  def noop, do: identity()
 
   @spec on_error(t(), Pipeline.on_error(output)) :: t(output) when output: any
   def on_error(babel, function) do

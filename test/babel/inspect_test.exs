@@ -6,7 +6,7 @@ defmodule Babel.InspectTest do
   describe "Inspect, for: Babel.Step" do
     test "from Babel.Core" do
       step_and_inspect = %{
-        Babel.id() => "Babel.id()",
+        Babel.identity() => "Babel.identity()",
         Babel.const(:value) => "Babel.const(:value)",
         Babel.fetch("foo") => "Babel.fetch(\"foo\")",
         Babel.fetch(["foo", :bar]) => "Babel.fetch([\"foo\", :bar])",
@@ -33,20 +33,20 @@ defmodule Babel.InspectTest do
     end
 
     test "Babel.choice" do
-      chooser = fn _ -> Babel.id() end
+      chooser = fn _ -> Babel.identity() end
       step = Babel.choice(chooser)
 
       assert_inspects_as(step, "Babel.choice(#{inspect(chooser)})")
     end
 
     test "Babel.map" do
-      step = Babel.map(Babel.id())
+      step = Babel.map(Babel.identity())
 
-      assert_inspects_as(step, "Babel.map(Babel.id())")
+      assert_inspects_as(step, "Babel.map(Babel.identity())")
     end
 
     test "Babel.flat_map" do
-      mapper = fn _ -> Babel.id() end
+      mapper = fn _ -> Babel.identity() end
       step = Babel.flat_map(mapper)
 
       assert_inspects_as(step, "Babel.flat_map(#{inspect(mapper)})")

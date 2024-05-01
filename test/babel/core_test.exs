@@ -13,7 +13,7 @@ defmodule Babel.CoreTest do
   describe "is_core/1" do
     test "returns true for all core steps" do
       core_steps = [
-        Core.id(),
+        Core.identity(),
         Core.const(:stuff),
         Core.fetch("path"),
         Core.get("path", :default),
@@ -22,9 +22,9 @@ defmodule Babel.CoreTest do
         Core.cast(:boolean),
         Core.into(%{}),
         Core.call(List, :to_string, []),
-        Core.choice(fn _ -> Core.id() end),
-        Core.map(Core.id()),
-        Core.flat_map(fn _ -> Core.id() end),
+        Core.choice(fn _ -> Core.identity() end),
+        Core.map(Core.identity()),
+        Core.flat_map(fn _ -> Core.identity() end),
         Core.fail(:some_reason),
         Core.try([Babel.fail(:foobar), Babel.const(:baz)]),
         Core.then(:some_name, fn _ -> :value end)
@@ -46,7 +46,7 @@ defmodule Babel.CoreTest do
 
   describe "id/0" do
     test "returns the value it's applied to" do
-      step = Core.id()
+      step = Core.identity()
       data = %{value: make_ref()}
 
       assert apply!(step, data) == data
@@ -368,7 +368,7 @@ defmodule Babel.CoreTest do
     test "returns the accumulated traces regardless of success or failure" do
       step1 = Core.fail(:some_error)
       step2 = Core.fail(:another_error)
-      step3 = Core.id()
+      step3 = Core.identity()
       try_step = Core.try([step1, step2, step3])
 
       data = {:ok, 42}
