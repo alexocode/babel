@@ -27,11 +27,11 @@ defimpl Inspect, for: Babel.Pipeline do
         inspected_step = to_doc(step, opts)
 
         pipeline_step =
-          if Babel.Core.core?(step) do
+          if chainable?(step) do
             inspected_step
           else
             color(
-              concat([color("Babel", :atom, opts), "chain(", inspected_step, ")"]),
+              concat([color("Babel", :atom, opts), ".chain(", inspected_step, ")"]),
               :call,
               opts
             )
@@ -60,6 +60,22 @@ defimpl Inspect, for: Babel.Pipeline do
         ]
     end)
   end
+
+  @chainable ~w[
+    call
+    cast
+    choice
+    const
+    fetch
+    flat_map
+    get
+    into
+    map
+    then
+    try
+  ]a
+  defp chainable?(%Babel.Step{name: {name, _args}}), do: name in @chainable
+  defp chainable?(_), do: false
 
   defp on_error(%Babel.Pipeline{on_error: on_error}, opts) do
     if on_error do
