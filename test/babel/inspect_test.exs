@@ -110,7 +110,7 @@ defmodule Babel.InspectTest do
       Babel.begin()
       |> Babel.fetch(["foo", 0, "bar"])
       |> Babel.into(%{atom_key1: Babel.fetch("key1"), atom_key2: Babel.fetch("key2")})
-      |> Babel.on_error(#{inspect(pipeline.on_error)})
+      |> Babel.on_error(#{inspect(pipeline.on_error.handler)})
       """)
     end
 
@@ -149,7 +149,7 @@ defmodule Babel.InspectTest do
       |> Babel.begin()
       |> Babel.fetch(["foo", 0, "bar"])
       |> Babel.into(%{atom_key1: Babel.fetch("key1"), atom_key2: Babel.fetch("key2")})
-      |> Babel.on_error(#{inspect(pipeline.on_error)})
+      |> Babel.on_error(#{inspect(pipeline.on_error.handler)})
       """)
     end
   end
@@ -216,11 +216,13 @@ defmodule Babel.InspectTest do
     end
 
     test "includes a pipelines on_error handling when relevant" do
+      on_error = fn _error -> :recovered_value end
+
       pipeline =
         :my_error_handling_pipeline
         |> Babel.begin()
         |> Babel.fetch("key1")
-        |> Babel.on_error(fn _error -> :recovered_value end)
+        |> Babel.on_error(on_error)
 
       data = {:invalid, "data"}
 
@@ -233,7 +235,12 @@ defmodule Babel.InspectTest do
         "  Babel.Pipeline<:my_error_handling_pipeline>",
         "  | ",
         "  | Babel.fetch(\"key1\")",
-        "  | |=> {:error, {:not_found, \"key1\"}}"
+        "  | |=> {:error, {:not_found, \"key1\"}}",
+        "  | ",
+        "  | Babel.on_error(#{inspect(on_error)})",
+        "  | |=> :recovered_value",
+        "  | ",
+        "  |=> :recovered_value"
       ])
     end
   end
@@ -243,6 +250,12 @@ defmodule Babel.InspectTest do
   end
 
   defp assert_inspects_as(thing, string) when is_binary(string) do
-    assert inspect(thing) == String.trim(string)
+    lines = String.split(string, "\n", trim: true)
+
+    if length(lines) > 1 do
+      assert_inspects_as(thing, lines)
+    else
+      assert inspect(thing) == String.trim(string)
+    end
   end
 end

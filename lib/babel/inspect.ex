@@ -51,10 +51,22 @@ defimpl Inspect, for: Babel.Pipeline do
 
   defp on_error(%Babel.Pipeline{on_error: on_error}, opts) do
     if on_error do
-      [line(), "|> Babel.on_error(", Inspect.Function.inspect(on_error, opts), ")"]
+      [line(), "|> ", Inspect.Babel.Pipeline.OnError.inspect(on_error, opts)]
     else
       []
     end
+  end
+end
+
+defimpl Inspect, for: Babel.Pipeline.OnError do
+  import Inspect.Algebra
+
+  def inspect(%Babel.Pipeline.OnError{handler: handler}, opts) do
+    color(
+      concat(["Babel.on_error(", Inspect.Function.inspect(handler, opts), ")"]),
+      :call,
+      opts
+    )
   end
 end
 
@@ -142,7 +154,18 @@ defimpl Inspect, for: Babel.Trace do
   defp babel(%Babel.Trace{babel: babel}, opts), do: babel(babel, opts)
 
   defp babel(%Babel.Pipeline{name: name}, opts) do
-    group(concat([color("Babel.Pipeline", :atom, opts), "<", to_string(name), ">"]))
+    name_doc =
+      if is_nil(name) do
+        empty()
+      else
+        to_doc(name, opts)
+      end
+
+    group(concat([color("Babel.Pipeline", :atom, opts), "<", name_doc, ">"]))
+  end
+
+  defp babel(%Babel.Pipeline.OnError{} = on_error, opts) do
+    Inspect.Babel.Pipeline.OnError.inspect(on_error, opts)
   end
 
   defp babel(%Babel.Step{} = step, opts) do
@@ -161,7 +184,7 @@ defimpl Inspect, for: Babel.Trace do
 
   defp lines_for_nested([], _opts), do: []
 
-  defp lines_for_nested(traces, opts) do
+  defp lines_for_nested(traces, opts) when is_list(traces) do
     [
       "",
       for trace <- traces do
@@ -177,13 +200,16 @@ defimpl Inspect, for: Babel.Trace do
     |> Enum.map(&concat("| ", &1))
   end
 
-  defp result(%{result: result}, opts) do
-    value =
-      case result do
-        {:ok, value} -> value
-        {:error, reason} -> {:error, reason}
-      end
+  defp result(trace, opts) do
+    group(concat("|=> ", raw_result(trace, opts)))
+  end
 
-    group(concat("|=> ", to_doc(value, opts)))
+  defp raw_result(%{result: result}, opts) do
+    result
+    |> case do
+      {:ok, value} -> value
+      {:error, reason} -> {:error, reason}
+    end
+    |> to_doc(opts)
   end
 end
