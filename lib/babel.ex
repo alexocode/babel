@@ -211,22 +211,25 @@ defmodule Babel do
   @spec trace(t(input, output), data) :: Trace.t(input, output) when input: any, output: any
   defdelegate trace(babel, data), to: Trace, as: :apply
 
-  @spec try(applicables :: t(output) | [t(output)]) :: Step.t(output)
+  @spec try(applicables :: nonempty_list(t(output))) :: Step.t(output)
         when output: any
   defdelegate try(applicables), to: Babel.Core
 
-  @spec try(applicables :: t(input), t(input, output) | [t(input, output)]) :: t(input, output)
+  @spec try(t(input), applicables :: nonempty_list(t(input, output))) :: t(input, output)
         when input: any, output: any
   def try(babel, applicables) when is_babel(babel) do
     chain(babel, __MODULE__.try(applicables))
   end
 
-  @spec try(applicables :: t(output) | [t(output)], default) :: t(output | default)
+  @spec try(applicables :: t(output) | nonempty_list(t(output)), default) :: t(output | default)
         when output: any, default: any
   defdelegate try(applicables, default), to: Babel.Core
 
-  @spec try(t(input, output), applicables :: t(input, output) | [t(input, output)], default) ::
-          t(input, output | default)
+  @spec try(
+          t(input, output),
+          applicables :: t(input, output) | nonempty_list(t(input, output)),
+          default
+        ) :: t(input, output | default)
         when input: any, output: any, default: any
   def try(babel, applicables, default) do
     chain(babel, __MODULE__.try(applicables, default))

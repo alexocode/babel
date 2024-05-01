@@ -140,8 +140,7 @@ defmodule Babel.Core do
     Step.new({:then, full_name}, function)
   end
 
-  @spec try(Babel.t(output) | [Babel.t(output)]) :: Step.t(output)
-        when output: any
+  @spec try(nonempty_list(Babel.t(output))) :: Step.t(output) when output: any
   def try(applicables) do
     name = {:try, [applicables]}
     applicables = List.wrap(applicables)
@@ -149,7 +148,7 @@ defmodule Babel.Core do
     Step.new(name, &__MODULE__.Try.call(applicables, &1))
   end
 
-  @spec try(Babel.t(output) | [Babel.t(output)], default) :: Step.t(output | default)
+  @spec try(Babel.t(output) | nonempty_list(Babel.t(output)), default) :: Step.t(output | default)
         when output: any, default: any
   def try(applicables, default) do
     name = {:try, [applicables, default]}
