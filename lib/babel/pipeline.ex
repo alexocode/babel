@@ -108,22 +108,22 @@ defmodule Babel.Pipeline do
 
         cond do
           Trace.ok?(trace) ->
-            {:cont, {traces, trace.result}}
+            {:cont, {traces, trace.output}}
 
           is_nil(pipeline.on_error) ->
-            {:halt, {traces, trace.result}}
+            {:halt, {traces, trace.output}}
 
           true ->
             {nested, result} = OnError.apply(pipeline.on_error, Error.new(trace))
 
             on_error_trace = %Trace{
               babel: pipeline.on_error,
-              data: trace.result,
-              result: result,
+              input: trace.output,
+              output: result,
               nested: nested
             }
 
-            {:halt, {[on_error_trace | traces], on_error_trace.result}}
+            {:halt, {[on_error_trace | traces], on_error_trace.output}}
         end
       end)
 

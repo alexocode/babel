@@ -63,7 +63,7 @@ defmodule Babel.Core do
     Step.new({:choice, [chooser]}, fn input ->
       trace = Trace.apply(chooser.(input), input)
 
-      {[trace], trace.result}
+      {[trace], trace.output}
     end)
   end
 

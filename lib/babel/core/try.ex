@@ -12,7 +12,7 @@ defmodule Babel.Core.Try do
     trace = Babel.Trace.apply(applicable, input)
     traces = [trace | traces]
 
-    case trace.result do
+    case trace.output do
       {:ok, value} ->
         {Enum.reverse(traces), {:ok, value}}
 

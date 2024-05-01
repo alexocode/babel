@@ -38,7 +38,7 @@ defimpl Babel.Intoable, for: Any do
   defp trace(babel, data) do
     trace = Babel.Trace.apply(babel, data)
 
-    {[trace], trace.result}
+    {[trace], trace.output}
   end
 
   defp applicable?(t) do

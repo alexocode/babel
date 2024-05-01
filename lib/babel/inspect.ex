@@ -236,11 +236,11 @@ defimpl Inspect, for: Babel.Trace do
       babel(trace, opts),
       line(),
       nested(trace, opts),
-      result(trace, opts)
+      output(trace, opts)
     ])
   end
 
-  defp data(%{data: data}, opts) do
+  defp data(%{input: data}, opts) do
     group(
       nest(
         flex_glue(
@@ -292,7 +292,7 @@ defimpl Inspect, for: Babel.Trace do
         no_breaks(babel(trace.babel, opts)),
         input(trace, opts),
         lines_for_nested(trace.nested, opts),
-        result(trace, opts),
+        output(trace, opts),
         ""
       ]
     end)
@@ -301,17 +301,17 @@ defimpl Inspect, for: Babel.Trace do
     |> Enum.map(&concat("| ", &1))
   end
 
-  defp input(%{data: data}, opts), do: input(data, opts)
+  defp input(%{input: input}, opts), do: input(input, opts)
 
-  defp input(data, opts) do
-    no_breaks(concat(["|=< ", to_doc(data, %{opts | limit: 5})]))
+  defp input(input, opts) do
+    no_breaks(concat(["|=< ", to_doc(input, %{opts | limit: 5})]))
   end
 
-  defp result(%{result: result}, opts), do: result(result, opts)
+  defp output(%{output: output}, opts), do: output(output, opts)
 
-  defp result(result, opts) do
+  defp output(output, opts) do
     value =
-      case result do
+      case output do
         {:ok, value} -> value
         {:error, reason} -> {:error, reason}
       end

@@ -4,6 +4,7 @@ defmodule Babel.StepTest do
   import Babel.Test.StepFactory
 
   alias Babel.Step
+  alias Babel.Trace
 
   describe "new/2" do
     test "creates a step with the given name and function" do
@@ -57,7 +58,7 @@ defmodule Babel.StepTest do
     end
 
     test "forwards nested traces" do
-      traces = [%Babel.Trace{}]
+      traces = [%Trace{}]
       step = step(&{traces, &1})
       data = %{value: make_ref()}
 
@@ -71,7 +72,7 @@ defmodule Babel.StepTest do
       data = %{value: make_ref()}
 
       assert {traces, {:error, reason}} = Step.apply(step, data)
-      assert traces == [%Babel.Trace{babel: fail_step, data: data, result: {:error, :some_error}}]
+      assert traces == [%Trace{babel: fail_step, input: data, output: {:error, :some_error}}]
       assert reason == :some_error
     end
 
@@ -81,7 +82,7 @@ defmodule Babel.StepTest do
       data = %{value: make_ref()}
 
       assert {traces, {:error, reason}} = Step.apply(step, data)
-      assert traces == [%Babel.Trace{babel: fail_step, data: data, result: {:error, :some_error}}]
+      assert traces == [%Trace{babel: fail_step, input: data, output: {:error, :some_error}}]
       assert reason == :some_error
     end
   end

@@ -17,7 +17,7 @@ defmodule Babel.Utils do
     }
   end
 
-  defp traces_and_result(%Babel.Trace{} = trace), do: {[trace], trace.result}
+  defp traces_and_result(%Babel.Trace{} = trace), do: {[trace], trace.output}
   defp traces_and_result({traces, result}), do: {traces, result}
 
   defp accumulate_result(list, :ok, result) do
@@ -70,13 +70,13 @@ defmodule Babel.Utils do
       # People might do a `Babel.apply/2` inside of the given function;
       # this ensures trace information gets retained in these cases
       {:error, %Babel.Error{trace: trace}} ->
-        {[trace], trace.result}
+        {[trace], trace.output}
 
       result ->
         {[], resultify(result)}
     end
   rescue
-    error in [Babel.Error] -> {[error.trace], error.trace.result}
+    error in [Babel.Error] -> {[error.trace], error.trace.output}
     other -> {[], {:error, other}}
   end
 

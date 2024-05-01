@@ -8,7 +8,7 @@ defmodule Babel.Error do
   @spec new(Trace.t({:error, reason})) :: t(reason) when reason: any
   def new(%Trace{} = trace) do
     %__MODULE__{
-      reason: determine_reason(trace.result),
+      reason: determine_reason(trace.output),
       trace: trace
     }
   end

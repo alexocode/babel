@@ -49,8 +49,8 @@ defmodule BabelTest do
 
       assert error.trace == %Babel.Trace{
                babel: step,
-               data: data,
-               result: {:error, {:not_found, "does"}}
+               input: data,
+               output: {:error, {:not_found, "does"}}
              }
     end
   end
@@ -187,7 +187,7 @@ defmodule BabelTest do
   end
 
   describe "trace/2" do
-    test "delegates to Babel.Trace.apply/2" do
+    test "delegates to BabelTrace.apply/2" do
       step = Babel.identity()
       data = %{value: make_ref()}
 

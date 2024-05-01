@@ -50,7 +50,7 @@ defmodule Babel do
     trace = trace(babel, data)
 
     if Trace.ok?(trace) do
-      trace.result
+      trace.output
     else
       {:error, Error.new(trace)}
     end
