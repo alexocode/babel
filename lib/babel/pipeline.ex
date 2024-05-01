@@ -114,7 +114,14 @@ defmodule Babel.Pipeline do
             {:halt, {traces, trace.result}}
 
           true ->
-            on_error_trace = Trace.apply(pipeline.on_error, Error.new(trace))
+            {nested, result} = OnError.apply(pipeline.on_error, Error.new(trace))
+
+            on_error_trace = %Trace{
+              babel: pipeline.on_error,
+              data: trace.result,
+              result: result,
+              nested: nested
+            }
 
             {:halt, {[on_error_trace | traces], on_error_trace.result}}
         end

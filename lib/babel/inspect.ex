@@ -1,3 +1,36 @@
+defmodule Babel.Inspect do
+  @moduledoc false
+
+  @doc false
+  def no_breaks(doc) do
+    case doc do
+      {:doc_break, "", _mode} ->
+        :doc_nil
+
+      {:doc_break, break, _mode} ->
+        break
+
+      {:doc_cons, left_doc, right_doc} ->
+        {:doc_cons, no_breaks(left_doc), no_breaks(right_doc)}
+
+      {:doc_nest, doc, indent, always_or_break} ->
+        {:doc_nest, no_breaks(doc), indent, always_or_break}
+
+      {type, doc, mode} when type in [:doc_group, :doc_fits] ->
+        {type, no_breaks(doc), mode}
+
+      {:doc_fits, doc} ->
+        {:doc_fits, no_breaks(doc)}
+
+      {:doc_color, doc, color} ->
+        {:doc_color, no_breaks(doc), color}
+
+      other_doc ->
+        other_doc
+    end
+  end
+end
+
 defimpl Inspect, for: Babel.Pipeline do
   import Inspect.Algebra
 
@@ -144,6 +177,7 @@ defimpl Inspect, for: Babel.Step do
 end
 
 defimpl Inspect, for: Babel.Trace do
+  import Babel.Inspect
   import Inspect.Algebra
 
   def inspect(%Babel.Trace{} = trace, opts) do
@@ -187,8 +221,10 @@ defimpl Inspect, for: Babel.Trace do
   # No colors means the output doesn't support colors
   defp force_color(doc, _color, %{syntax_colors: []}), do: doc
 
-  defp force_color(doc, color, _opts) do
-    concat([{:doc_color, doc, color}, {:doc_color, :doc_nil, :reset}])
+  defp force_color(doc, color, %{syntax_colors: syntax_colors}) do
+    postcolor = Keyword.get(syntax_colors, :reset, :reset)
+
+    concat([{:doc_color, doc, color}, {:doc_color, :doc_nil, postcolor}])
   end
 
   defp properties(trace, opts) do
@@ -250,31 +286,36 @@ defimpl Inspect, for: Babel.Trace do
   defp lines_for_nested([], _opts), do: []
 
   defp lines_for_nested(traces, opts) when is_list(traces) do
-    [
-      "",
-      for trace <- traces do
-        [
-          no_limit(babel(trace.babel, opts)),
-          lines_for_nested(trace.nested, opts),
-          result(trace, opts),
-          ""
-        ]
-      end
-    ]
+    traces
+    |> Enum.map(fn trace ->
+      [
+        no_breaks(babel(trace.babel, opts)),
+        input(trace, opts),
+        lines_for_nested(trace.nested, opts),
+        result(trace, opts),
+        ""
+      ]
+    end)
     |> List.flatten()
+    |> List.insert_at(0, "")
     |> Enum.map(&concat("| ", &1))
   end
 
-  defp result(trace, opts) do
-    group(concat("|=> ", raw_result(trace, opts)))
+  defp input(%{data: data}, opts), do: input(data, opts)
+
+  defp input(data, opts) do
+    no_breaks(concat(["|=< ", to_doc(data, %{opts | limit: 5})]))
   end
 
-  defp raw_result(%{result: result}, opts) do
-    result
-    |> case do
-      {:ok, value} -> value
-      {:error, reason} -> {:error, reason}
-    end
-    |> to_doc(opts)
+  defp result(%{result: result}, opts), do: result(result, opts)
+
+  defp result(result, opts) do
+    value =
+      case result do
+        {:ok, value} -> value
+        {:error, reason} -> {:error, reason}
+      end
+
+    no_breaks(concat("|=> ", to_doc(value, %{opts | limit: 5})))
   end
 end
