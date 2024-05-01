@@ -161,16 +161,16 @@ defmodule Babel.InspectTest do
       trace = Babel.Trace.apply(step, data)
 
       assert_inspects_as(trace, [
-        "Babel.Trace<OK>{",
-        "  data = #{i(data)}",
-        "  ",
-        "  Babel.into(%{nested: %{map: Babel.fetch(\"value1\")}})",
-        "  | ",
-        "  | Babel.fetch(\"value1\")",
-        "  | |=> :super_cool",
-        "  | ",
-        "  |=> %{nested: %{map: :super_cool}}",
-        "}"
+        ~s'Babel.Trace<OK>{',
+        ~s'  data = #{i(data)}',
+        ~s'  ',
+        ~s'  Babel.into(%{nested: %{map: Babel.fetch("value1")}})',
+        ~s'  | ',
+        ~s'  | Babel.fetch("value1")',
+        ~s'  | |=> :super_cool',
+        ~s'  | ',
+        ~s'  |=> %{nested: %{map: :super_cool}}',
+        ~s'}'
       ])
     end
 
@@ -211,27 +211,27 @@ defmodule Babel.InspectTest do
       assert_inspects_as(
         trace,
         [
-          "Babel.Trace<OK>{",
-          "  data =",
-          "    #{i(data, indent: 4)}",
-          "  ",
-          "  Babel.Pipeline<>",
-          "  | ",
-          "  | Babel.fetch([\"foo\", 0, \"bar\"])",
-          "  | |=> #{inspect(%{"key1" => :value1, "key2" => :value2})}",
-          "  | ",
-          "  | Babel.into(#{inspect(%{atom_key1: Babel.fetch("key1"), atom_key2: Babel.fetch("key2")})})",
-          "  | | ",
-          "  | | Babel.fetch(\"key1\")",
-          "  | | |=> :value1",
-          "  | | ",
-          "  | | Babel.fetch(\"key2\")",
-          "  | | |=> :value2",
-          "  | | ",
-          "  | |=> #{inspect(%{atom_key1: :value1, atom_key2: :value2})}",
-          "  | ",
-          "  |=> #{inspect(%{atom_key1: :value1, atom_key2: :value2})}",
-          "}"
+          ~s'Babel.Trace<OK>{',
+          ~s'  data =',
+          ~s'    #{i(data, indent: 4)}',
+          ~s'  ',
+          ~s'  Babel.Pipeline<>',
+          ~s'  | ',
+          ~s'  | Babel.fetch(["foo", 0, "bar"])',
+          ~s'  | |=> %{"key1" => :value1, "key2" => :value2}',
+          ~s'  | ',
+          ~s'  | Babel.into(%{atom_key1: Babel.fetch("key1"), atom_key2: Babel.fetch("key2")})',
+          ~s'  | | ',
+          ~s'  | | Babel.fetch("key1")',
+          ~s'  | | |=> :value1',
+          ~s'  | | ',
+          ~s'  | | Babel.fetch("key2")',
+          ~s'  | | |=> :value2',
+          ~s'  | | ',
+          ~s'  | |=> %{atom_key1: :value1, atom_key2: :value2}',
+          ~s'  | ',
+          ~s'  |=> %{atom_key1: :value1, atom_key2: :value2}',
+          ~s'}'
         ]
       )
     end
@@ -250,19 +250,19 @@ defmodule Babel.InspectTest do
       trace = Babel.Trace.apply(pipeline, data)
 
       assert_inspects_as(trace, [
-        "Babel.Trace<OK>{",
-        "  data = #{i(data)}",
-        "  ",
-        "  Babel.Pipeline<:my_error_handling_pipeline>",
-        "  | ",
-        "  | Babel.fetch(\"key1\")",
-        "  | |=> {:error, {:not_found, \"key1\"}}",
-        "  | ",
-        "  | Babel.on_error(#{inspect(on_error)})",
-        "  | |=> :recovered_value",
-        "  | ",
-        "  |=> :recovered_value",
-        "}"
+        ~s'Babel.Trace<OK>{',
+        ~s'  data = #{i(data)}',
+        ~s'  ',
+        ~s'  Babel.Pipeline<:my_error_handling_pipeline>',
+        ~s'  | ',
+        ~s'  | Babel.fetch("key1")',
+        ~s'  | |=> {:error, {:not_found, "key1"}}',
+        ~s'  | ',
+        ~s'  | Babel.on_error(#{inspect(on_error)})',
+        ~s'  | |=> :recovered_value',
+        ~s'  | ',
+        ~s'  |=> :recovered_value',
+        ~s'}'
       ])
     end
   end
