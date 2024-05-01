@@ -28,9 +28,7 @@ defmodule Babel.Pipeline do
   def new(nil, nil, %__MODULE__{} = t), do: t
 
   def new(name, on_error, %__MODULE__{} = t) do
-    name
-    |> build(on_error, [])
-    |> chain(t)
+    chain(build(name, on_error, []), t)
   end
 
   def new(name, on_error, step_or_steps), do: build(name, on_error, step_or_steps)
