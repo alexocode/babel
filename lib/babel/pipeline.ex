@@ -107,6 +107,7 @@ defmodule Babel.Pipeline do
   defp try_to_recover(%__MODULE__{on_error: nil}, %Trace{result: error}), do: error
 
   defp try_to_recover(%__MODULE__{on_error: on_error}, %Trace{} = trace) do
+    # TODO: Record error handling
     trace
     |> Error.new()
     |> on_error.()
