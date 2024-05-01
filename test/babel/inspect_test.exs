@@ -161,7 +161,7 @@ defmodule Babel.InspectTest do
       trace = Babel.Trace.apply(step, data)
 
       assert_inspects_as(trace, [
-        "Babel.Trace<:ok>{",
+        "Babel.Trace<OK>{",
         "  data = #{inspect(data)}",
         "  ",
         "  Babel.into(%{nested: %{map: Babel.fetch(\"value1\")}})",
@@ -170,6 +170,21 @@ defmodule Babel.InspectTest do
         "  | |=> :super_cool",
         "  | ",
         "  |=> %{nested: %{map: :super_cool}}",
+        "}"
+      ])
+    end
+
+    test "renders an ERROR state when the result is an error" do
+      step = Babel.fail(:some_reason)
+      data = %{}
+      trace = Babel.Trace.apply(step, data)
+
+      assert_inspects_as(trace, [
+        "Babel.Trace<ERROR>{",
+        "  data = #{inspect(data)}",
+        "  ",
+        "  Babel.fail(:some_reason)",
+        "  |=> {:error, :some_reason}",
         "}"
       ])
     end
@@ -194,7 +209,7 @@ defmodule Babel.InspectTest do
       trace = Babel.Trace.apply(pipeline, data)
 
       assert_inspects_as(trace, [
-        "Babel.Trace<:ok>{",
+        "Babel.Trace<OK>{",
         "  data = #{inspect(data)}",
         "  ",
         "  Babel.Pipeline<>",
@@ -231,7 +246,7 @@ defmodule Babel.InspectTest do
       trace = Babel.Trace.apply(pipeline, data)
 
       assert_inspects_as(trace, [
-        "Babel.Trace<:ok>{",
+        "Babel.Trace<OK>{",
         "  data = #{inspect(data)}",
         "  ",
         "  Babel.Pipeline<:my_error_handling_pipeline>",

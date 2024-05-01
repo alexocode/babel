@@ -120,21 +120,28 @@ defimpl Inspect, for: Babel.Trace do
   end
 
   defp trace(trace, opts) do
-    status =
+    {status, color} =
       if Babel.Trace.ok?(trace) do
-        :ok
+        {"OK", :green}
       else
-        :error
+        {"ERROR", :red}
       end
 
     group(
       concat([
         color("Babel.Trace", :atom, opts),
         "<",
-        to_doc(status, opts),
+        force_color(status, color, opts),
         ">"
       ])
     )
+  end
+
+  # No colors means the output doesn't support colors
+  defp force_color(doc, _color, %{syntax_colors: []}), do: doc
+
+  defp force_color(doc, color, _opts) do
+    concat([{:doc_color, doc, color}, {:doc_color, :doc_nil, :reset}])
   end
 
   defp properties(trace, opts) do
