@@ -26,7 +26,7 @@ defmodule Babel.CoreTest do
         Core.map(Core.id()),
         Core.flat_map(fn _ -> Core.id() end),
         Core.fail(:some_reason),
-        Core.try([]),
+        Core.try([Babel.fail(:foobar), Babel.const(:baz)]),
         Core.then(:some_name, fn _ -> :value end)
       ]
 
