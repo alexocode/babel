@@ -218,9 +218,9 @@ defmodule Babel.InspectTest do
           "  Babel.Pipeline<>",
           "  | ",
           "  | Babel.fetch([\"foo\", 0, \"bar\"])",
-          "  | |=> #{i(%{"key1" => :value1, "key2" => :value2})}",
+          "  | |=> #{inspect(%{"key1" => :value1, "key2" => :value2})}",
           "  | ",
-          "  | Babel.into(#{i(%{atom_key1: Babel.fetch("key1"), atom_key2: Babel.fetch("key2")})})",
+          "  | Babel.into(#{inspect(%{atom_key1: Babel.fetch("key1"), atom_key2: Babel.fetch("key2")})})",
           "  | | ",
           "  | | Babel.fetch(\"key1\")",
           "  | | |=> :value1",
@@ -228,9 +228,9 @@ defmodule Babel.InspectTest do
           "  | | Babel.fetch(\"key2\")",
           "  | | |=> :value2",
           "  | | ",
-          "  | |=> #{i(%{atom_key1: :value1, atom_key2: :value2})}",
+          "  | |=> #{inspect(%{atom_key1: :value1, atom_key2: :value2})}",
           "  | ",
-          "  |=> #{i(%{atom_key1: :value1, atom_key2: :value2})}",
+          "  |=> #{inspect(%{atom_key1: :value1, atom_key2: :value2})}",
           "}"
         ]
       )
@@ -258,7 +258,7 @@ defmodule Babel.InspectTest do
         "  | Babel.fetch(\"key1\")",
         "  | |=> {:error, {:not_found, \"key1\"}}",
         "  | ",
-        "  | Babel.on_error(#{i(on_error)})",
+        "  | Babel.on_error(#{inspect(on_error)})",
         "  | |=> :recovered_value",
         "  | ",
         "  |=> :recovered_value",
