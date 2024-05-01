@@ -110,14 +110,24 @@ defimpl Inspect, for: Babel.Trace do
   import Inspect.Algebra
 
   def inspect(%Babel.Trace{} = trace, opts) do
-    concat([
-      trace(trace, opts),
-      "{",
-      nest(properties(trace, opts), 2),
-      line(),
-      "}"
-    ])
+    level = Keyword.get(opts.custom_options, :indent, 0)
+
+    nest(
+      concat([
+        nesting(level),
+        trace(trace, opts),
+        "{",
+        nest(properties(trace, opts), 2),
+        line(),
+        "}"
+      ]),
+      level
+    )
   end
+
+  defp nesting(level, indent \\ [])
+  defp nesting(0, indent), do: concat(indent)
+  defp nesting(level, indent) when level > 0, do: nesting(level - 1, [" " | indent])
 
   defp trace(trace, opts) do
     {status, color} =

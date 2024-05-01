@@ -20,9 +20,22 @@ defmodule Babel.Error do
   @impl true
   def message(%__MODULE__{reason: reason, trace: trace}) do
     """
-    Failed to transform data: #{inspect(reason)}
+    #{babel(trace.babel)} failed to transform data: #{inspect(reason)}
 
-    #{inspect(trace)}
+    #{trace(trace)}
     """
+  end
+
+  defp babel(%struct{name: name}) do
+    "#{inspect(struct)}<#{name(name)}>"
+  end
+
+  defp babel(other), do: inspect(other)
+
+  defp name(nil), do: ""
+  defp name(term), do: inspect(term)
+
+  defp trace(%Babel.Trace{} = trace) do
+    inspect(trace, custom_options: [indent: 2])
   end
 end
