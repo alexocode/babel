@@ -162,7 +162,7 @@ defmodule Babel.InspectTest do
 
       assert_inspects_as(trace, [
         "Babel.Trace<OK>{",
-        "  data = #{inspect(data)}",
+        "  data = #{i(data)}",
         "  ",
         "  Babel.into(%{nested: %{map: Babel.fetch(\"value1\")}})",
         "  | ",
@@ -181,7 +181,7 @@ defmodule Babel.InspectTest do
 
       assert_inspects_as(trace, [
         "Babel.Trace<ERROR>{",
-        "  data = #{inspect(data)}",
+        "  data = #{i(data)}",
         "  ",
         "  Babel.fail(:some_reason)",
         "  |=> {:error, :some_reason}",
@@ -208,28 +208,32 @@ defmodule Babel.InspectTest do
 
       trace = Babel.Trace.apply(pipeline, data)
 
-      assert_inspects_as(trace, [
-        "Babel.Trace<OK>{",
-        "  data = #{inspect(data)}",
-        "  ",
-        "  Babel.Pipeline<>",
-        "  | ",
-        "  | Babel.fetch([\"foo\", 0, \"bar\"])",
-        "  | |=> #{inspect(%{"key1" => :value1, "key2" => :value2})}",
-        "  | ",
-        "  | Babel.into(#{inspect(%{atom_key1: Babel.fetch("key1"), atom_key2: Babel.fetch("key2")})})",
-        "  | | ",
-        "  | | Babel.fetch(\"key1\")",
-        "  | | |=> :value1",
-        "  | | ",
-        "  | | Babel.fetch(\"key2\")",
-        "  | | |=> :value2",
-        "  | | ",
-        "  | |=> #{inspect(%{atom_key1: :value1, atom_key2: :value2})}",
-        "  | ",
-        "  |=> #{inspect(%{atom_key1: :value1, atom_key2: :value2})}",
-        "}"
-      ])
+      assert_inspects_as(
+        trace,
+        [
+          "Babel.Trace<OK>{",
+          "  data =",
+          "    #{i(data, indent: 4)}",
+          "  ",
+          "  Babel.Pipeline<>",
+          "  | ",
+          "  | Babel.fetch([\"foo\", 0, \"bar\"])",
+          "  | |=> #{i(%{"key1" => :value1, "key2" => :value2})}",
+          "  | ",
+          "  | Babel.into(#{i(%{atom_key1: Babel.fetch("key1"), atom_key2: Babel.fetch("key2")})})",
+          "  | | ",
+          "  | | Babel.fetch(\"key1\")",
+          "  | | |=> :value1",
+          "  | | ",
+          "  | | Babel.fetch(\"key2\")",
+          "  | | |=> :value2",
+          "  | | ",
+          "  | |=> #{i(%{atom_key1: :value1, atom_key2: :value2})}",
+          "  | ",
+          "  |=> #{i(%{atom_key1: :value1, atom_key2: :value2})}",
+          "}"
+        ]
+      )
     end
 
     test "includes a pipelines on_error handling when relevant" do
@@ -247,14 +251,14 @@ defmodule Babel.InspectTest do
 
       assert_inspects_as(trace, [
         "Babel.Trace<OK>{",
-        "  data = #{inspect(data)}",
+        "  data = #{i(data)}",
         "  ",
         "  Babel.Pipeline<:my_error_handling_pipeline>",
         "  | ",
         "  | Babel.fetch(\"key1\")",
         "  | |=> {:error, {:not_found, \"key1\"}}",
         "  | ",
-        "  | Babel.on_error(#{inspect(on_error)})",
+        "  | Babel.on_error(#{i(on_error)})",
         "  | |=> :recovered_value",
         "  | ",
         "  |=> :recovered_value",
@@ -263,8 +267,11 @@ defmodule Babel.InspectTest do
     end
   end
 
-  defp assert_inspects_as(thing, lines) when is_list(lines) do
-    assert String.split(inspect(thing), "\n") == lines
+  defp assert_inspects_as(thing, expected_lines) when is_list(expected_lines) do
+    inspect_thing_lines = String.split(inspect(thing, pretty: true), "\n")
+    expected_lines = Enum.flat_map(expected_lines, &String.split(&1, "\n"))
+
+    assert inspect_thing_lines == expected_lines
   end
 
   defp assert_inspects_as(thing, string) when is_binary(string) do
@@ -276,4 +283,22 @@ defmodule Babel.InspectTest do
       assert inspect(thing) == String.trim(string)
     end
   end
+
+  defp i(thing, opts \\ []) do
+    {level, opts} = Keyword.pop(opts, :indent, 2)
+    indent = indent(level)
+
+    thing
+    |> inspect(Keyword.merge([pretty: true], opts))
+    |> String.split("\n")
+    |> case do
+      [line] -> [line]
+      [line | split] -> [line | Enum.map(split, &(indent <> &1))]
+    end
+    |> Enum.join("\n")
+  end
+
+  defp indent(level, indent \\ "")
+  defp indent(0, indent), do: indent
+  defp indent(level, indent) when level > 0, do: indent(level - 1, " " <> indent)
 end

@@ -6,8 +6,8 @@ defimpl Inspect, for: Babel.Pipeline do
       if pipeline.name do
         concat([
           to_doc(pipeline.name, opts),
-          line(),
-          "|> "
+          break(),
+          color("|> ", :operator, opts)
         ])
       else
         empty()
@@ -30,19 +30,31 @@ defimpl Inspect, for: Babel.Pipeline do
           if Babel.Core.core?(step) do
             inspected_step
           else
-            color(concat(["chain(", inspected_step, ")"]), :call, opts)
+            color(
+              concat([color("Babel", :atom, opts), "chain(", inspected_step, ")"]),
+              :call,
+              opts
+            )
           end
 
-        [concat([line(), "|> ", pipeline_step]) | list]
+        [concat([break(), color("|> ", :operator, opts), pipeline_step]) | list]
 
       %Babel.Pipeline{} = pipeline, list ->
         [
           concat([
-            line(),
-            "|> chain(",
-            nest(concat(break(""), Inspect.Babel.Pipeline.inspect(pipeline, opts)), 1),
-            break(""),
-            ")"
+            break(),
+            color("|> ", :operator, opts),
+            color(
+              concat([
+                color("Babel", :atom, opts),
+                ".chain(",
+                nest(concat(break(""), Inspect.Babel.Pipeline.inspect(pipeline, opts)), 2),
+                break(""),
+                ")"
+              ]),
+              :call,
+              opts
+            )
           ])
           | list
         ]
@@ -51,7 +63,7 @@ defimpl Inspect, for: Babel.Pipeline do
 
   defp on_error(%Babel.Pipeline{on_error: on_error}, opts) do
     if on_error do
-      [line(), "|> ", Inspect.Babel.Pipeline.OnError.inspect(on_error, opts)]
+      [break(), "|> ", Inspect.Babel.Pipeline.OnError.inspect(on_error, opts)]
     else
       []
     end
@@ -116,10 +128,10 @@ defimpl Inspect, for: Babel.Trace do
       concat([
         nesting(level),
         trace(trace, opts),
-        "{",
+        color("{", :operator, opts),
         nest(properties(trace, opts), 2),
         line(),
-        "}"
+        color("}", :operator, opts)
       ]),
       level
     )
@@ -140,9 +152,9 @@ defimpl Inspect, for: Babel.Trace do
     group(
       concat([
         color("Babel.Trace", :atom, opts),
-        "<",
+        color("<", :operator, opts),
         force_color(status, color, opts),
-        ">"
+        color(">", :operator, opts)
       ])
     )
   end
@@ -170,7 +182,7 @@ defimpl Inspect, for: Babel.Trace do
   defp data(%{data: data}, opts) do
     group(
       nest(
-        glue(
+        flex_glue(
           concat([color("data", :variable, opts), " ", color("=", :operator, opts)]),
           to_doc(data, opts)
         ),
