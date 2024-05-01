@@ -1,4 +1,9 @@
 defmodule Babel do
+  readme = "README.md"
+
+  @external_resource readme
+  @moduledoc Babel.Docs.massage_readme(readme, for: "Babel")
+
   import Kernel, except: [apply: 2, then: 2]
 
   alias Babel.Applicable
