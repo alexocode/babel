@@ -74,7 +74,7 @@ defimpl Inspect, for: Babel.Step do
   import Inspect.Algebra
 
   def inspect(%Babel.Step{} = step, opts) do
-    color(concat(["Babel.", call(step, opts)]), :call, opts)
+    color(concat([color("Babel", :atom, opts), ".", call(step, opts)]), :call, opts)
   end
 
   defp call(%Babel.Step{} = step, opts) do
@@ -85,7 +85,8 @@ defimpl Inspect, for: Babel.Step do
     else
       color(
         concat([
-          "Step.new(",
+          color("Step", :atom, opts),
+          ".new(",
           break(""),
           to_doc(step.name, opts),
           ",",
@@ -128,7 +129,7 @@ defimpl Inspect, for: Babel.Trace do
 
     group(
       concat([
-        color(string("Babel.Trace"), :atom, opts),
+        color("Babel.Trace", :atom, opts),
         "<",
         to_doc(status, opts),
         ">"
@@ -150,7 +151,15 @@ defimpl Inspect, for: Babel.Trace do
   end
 
   defp data(%{data: data}, opts) do
-    group(nest(glue(concat([color("data", :variable, opts), " ="]), to_doc(data, opts)), 2))
+    group(
+      nest(
+        glue(
+          concat([color("data", :variable, opts), " ", color("=", :operator, opts)]),
+          to_doc(data, opts)
+        ),
+        2
+      )
+    )
   end
 
   defp babel(%Babel.Trace{babel: babel}, opts), do: babel(babel, opts)
