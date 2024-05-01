@@ -99,19 +99,18 @@ defmodule BabelTest do
   describe "composition" do
     test "most core steps have a composing version" do
       assert composes(Babel, :at, [["some", "path"]])
-      assert composes(Babel, :fetch, [["some", "path"]])
-      assert composes(Babel, :get, [["some", "path"], :default])
+      assert composes(Babel, :call, [List, :to_string])
       assert composes(Babel, :cast, [:boolean])
       assert composes(Babel, :cast, [:float])
       assert composes(Babel, :cast, [:integer])
-      assert composes(Babel, :into, [{:some, %{value: unique_step()}}])
-      assert composes(Babel, :call, [List, :to_string])
       assert composes(Babel, :choice, [fn _ -> unique_step() end])
-      assert composes(Babel, :map, [unique_step()])
+      assert composes(Babel, :fetch, [["some", "path"]])
       assert composes(Babel, :flat_map, [fn _ -> unique_step() end])
-      assert composes(Babel, :fail, [:some_error])
-      assert composes(Babel, :try, [[Babel.fail(:some_reason), unique_step()]])
+      assert composes(Babel, :get, [["some", "path"], :default])
+      assert composes(Babel, :into, [{:some, %{value: unique_step()}}])
+      assert composes(Babel, :map, [unique_step()])
       assert composes(Babel, :then, [fn _ -> :do_the_thing end])
+      assert composes(Babel, :try, [[Babel.fail(:some_reason), unique_step()]])
     end
 
     test "chain/2 returns the right value when the left is nil" do
