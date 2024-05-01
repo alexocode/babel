@@ -133,22 +133,21 @@ defmodule BabelTest do
       step = unique_step()
       on_error = fn _ -> :handle_the_error end
 
-      assert %Babel.Pipeline{on_error: ^on_error, reversed_steps: [^step]} =
-               Babel.on_error(step, on_error)
+      assert Babel.on_error(step, on_error) == Babel.Pipeline.new(nil, on_error, step)
     end
 
     test "sets a pipeline's on_error handler" do
       pipeline = Babel.begin(make_ref())
       on_error = fn _ -> :handle_the_error end
 
-      assert Babel.on_error(pipeline, on_error) == %Babel.Pipeline{pipeline | on_error: on_error}
+      assert Babel.on_error(pipeline, on_error) == Babel.Pipeline.on_error(pipeline, on_error)
     end
 
     test "overrides a pipeline's existing on_error handler" do
       pipeline = Babel.Pipeline.new(make_ref(), fn _ -> :different_on_error end, [])
       on_error = fn _ -> :handle_the_error end
 
-      assert Babel.on_error(pipeline, on_error) == %Babel.Pipeline{pipeline | on_error: on_error}
+      assert Babel.on_error(pipeline, on_error) == Babel.Pipeline.on_error(pipeline, on_error)
     end
   end
 

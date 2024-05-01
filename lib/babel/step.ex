@@ -1,8 +1,6 @@
 defmodule Babel.Step do
   import Kernel, except: [apply: 2]
 
-  alias Babel.Utils
-
   @type t :: t()
   @type t(output) :: t(term, output)
   @type t(input, output) :: %__MODULE__{
@@ -26,22 +24,8 @@ defmodule Babel.Step do
 
   @spec apply(t(input, output), Babel.data()) :: Babel.Applicable.result(output)
         when input: any, output: any
-  def apply(%__MODULE__{} = step, data) do
-    case step.function.(data) do
-      {traces, result} when is_list(traces) ->
-        {traces, Utils.resultify(result)}
-
-      # People might do a `Babel.apply/2` inside of a step;
-      # this ensures trace information gets retained in these cases
-      {:error, %Babel.Error{trace: trace}} ->
-        {[trace], trace.result}
-
-      result ->
-        {[], Utils.resultify(result)}
-    end
-  rescue
-    error in [Babel.Error] -> {[error.trace], error.trace.result}
-    other -> {[], {:error, other}}
+  def apply(%__MODULE__{function: function}, data) do
+    Babel.Utils.safe_apply(function, data)
   end
 
   defimpl Babel.Applicable do

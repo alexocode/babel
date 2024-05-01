@@ -1,4 +1,5 @@
 defmodule Babel.Pipeline do
+  alias __MODULE__.OnError
   alias Babel.Error
   alias Babel.Trace
 
@@ -16,9 +17,8 @@ defmodule Babel.Pipeline do
   @typedoc "A term describing what this pipeline does"
   @type name() :: Babel.name()
   @type step() :: Babel.Applicable.t()
-  # TODO: Consider allowing to make this a Babel.Applicable?
   @type on_error :: on_error(term)
-  @type on_error(output) :: (Error.t() -> Babel.result(output))
+  @type on_error(output) :: Babel.Step.fun(Error.t(), output)
 
   @spec new(step | [step]) :: t
   @spec new(name, step | [step]) :: t
@@ -29,10 +29,10 @@ defmodule Babel.Pipeline do
 
   def new(name, on_error, %__MODULE__{} = t) do
     case t do
-      %{name: ^name, on_error: ^on_error} -> t
-      %{name: nil, on_error: ^on_error} -> %{t | name: name}
-      %{name: ^name, on_error: nil} -> %{t | on_error: on_error}
-      %{name: nil, on_error: nil} -> %{t | name: name, on_error: on_error}
+      %{name: ^name, on_error: %OnError{handler: ^on_error}} -> t
+      %{name: nil, on_error: %OnError{handler: ^on_error}} -> %{t | name: name}
+      %{name: ^name, on_error: nil} -> %{t | on_error: OnError.new(on_error)}
+      %{name: nil, on_error: nil} -> %{t | name: name, on_error: OnError.new(on_error)}
       _ -> build(name, on_error, t)
     end
   end
@@ -42,7 +42,7 @@ defmodule Babel.Pipeline do
   defp build(name, on_error, step_or_steps) do
     %__MODULE__{
       name: name,
-      on_error: on_error,
+      on_error: OnError.new(on_error),
       reversed_steps:
         step_or_steps
         |> List.wrap()
@@ -51,8 +51,8 @@ defmodule Babel.Pipeline do
   end
 
   @spec on_error(t, on_error) :: t
-  def on_error(%__MODULE__{} = pipeline, on_error) when is_function(on_error, 1) do
-    %__MODULE__{pipeline | on_error: on_error}
+  def on_error(%__MODULE__{} = pipeline, on_error) do
+    %__MODULE__{pipeline | on_error: OnError.new(on_error)}
   end
 
   @spec chain(t(input, in_between), t(in_between, output)) :: t(input, output)
@@ -94,24 +94,21 @@ defmodule Babel.Pipeline do
         trace = Trace.apply(applicable, data)
         traces = [trace | traces]
 
-        if Trace.ok?(trace) do
-          {:cont, {traces, trace.result}}
-        else
-          {:halt, {traces, try_to_recover(pipeline, trace)}}
+        cond do
+          Trace.ok?(trace) ->
+            {:cont, {traces, trace.result}}
+
+          is_nil(pipeline.on_error) ->
+            {:halt, {traces, trace.result}}
+
+          true ->
+            on_error_trace = Trace.apply(pipeline.on_error, Error.new(trace))
+
+            {:halt, {[on_error_trace | traces], on_error_trace.result}}
         end
       end)
 
     {Enum.reverse(reversed_traces), result}
-  end
-
-  defp try_to_recover(%__MODULE__{on_error: nil}, %Trace{result: error}), do: error
-
-  defp try_to_recover(%__MODULE__{on_error: on_error}, %Trace{} = trace) do
-    # TODO: Record error handling
-    trace
-    |> Error.new()
-    |> on_error.()
-    |> Babel.Utils.resultify()
   end
 
   defimpl Babel.Applicable do
