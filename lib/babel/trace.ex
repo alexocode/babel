@@ -1,5 +1,5 @@
 defmodule Babel.Trace do
-  require Babel.Core
+  require Babel.Builtin
   require Babel.Logger
 
   @type t() :: t(any, any)
@@ -35,7 +35,7 @@ defmodule Babel.Trace do
   def ok?(%__MODULE__{output: output}), do: match?({:ok, _}, output)
 
   @spec find(t, spec_or_path :: spec | nonempty_list(spec)) :: [t]
-        when spec: Babel.t() | Babel.Core.name_with_args() | Babel.Core.name()
+        when spec: Babel.t() | Babel.Builtin.name_with_args() | Babel.Builtin.name()
   def find(%__MODULE__{} = trace, spec_path) when is_list(spec_path) do
     Enum.reduce(spec_path, [trace], fn spec, traces ->
       Enum.flat_map(traces, &find(&1, spec))
@@ -43,7 +43,7 @@ defmodule Babel.Trace do
   end
 
   def find(%__MODULE__{} = trace, {atom, arg} = spec)
-      when Babel.Core.is_core_name(atom) and not is_list(arg) do
+      when Babel.Builtin.is_builtin_name(atom) and not is_list(arg) do
     case do_find(trace, spec) do
       [] ->
         Babel.Logger.warning(

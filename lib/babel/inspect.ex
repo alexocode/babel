@@ -148,7 +148,7 @@ defimpl Inspect, for: Babel.Step do
   end
 
   defp call(%Babel.Step{} = step, opts) do
-    if Babel.Core.core?(step) do
+    if Babel.Builtin.builtin?(step) do
       {action, args} = step.name
 
       concat(to_string(action), arguments(args, opts))

@@ -1,4 +1,4 @@
-defmodule Babel.Core do
+defmodule Babel.Builtin do
   @moduledoc false
 
   alias Babel.Step
@@ -7,7 +7,7 @@ defmodule Babel.Core do
 
   require Step
 
-  @core_names ~w[
+  @builtin_names ~w[
     call
     cast
     choice
@@ -23,7 +23,7 @@ defmodule Babel.Core do
     try
   ]a
 
-  @type name :: unquote(Enum.reduce(@core_names, &{:|, [], [&1, &2]}))
+  @type name :: unquote(Enum.reduce(@builtin_names, &{:|, [], [&1, &2]}))
   @type name_with_args :: {name, [arg :: term]}
 
   @type data :: Babel.data()
@@ -36,26 +36,26 @@ defmodule Babel.Core do
 
   ## Examples
 
-  #{Enum.map_join(@core_names, &"""
-      iex> Babel.Core.is_core_name(#{inspect(&1)})
+  #{Enum.map_join(@builtin_names, &"""
+      iex> Babel.Builtin.is_builtin_name(#{inspect(&1)})
       true
 
   """)}
 
       # The second argument NEEDS to be a list of arguments
-      iex> Babel.Core.is_core_name({:fetch, "foo"})
+      iex> Babel.Builtin.is_builtin_name({:fetch, "foo"})
       false
 
-      iex> Babel.Core.is_core_name({:fetch, [["foo", "bar"]]})
+      iex> Babel.Builtin.is_builtin_name({:fetch, [["foo", "bar"]]})
       true
 
-      iex> Babel.Core.is_core_name(:not_a_core_step)
+      iex> Babel.Builtin.is_builtin_name(:not_a_core_step)
       false
   """
-  @spec is_core_name(atom | tuple | any) :: boolean
-  defguard is_core_name(name)
-           when (is_atom(name) and name in @core_names) or
-                  (is_tuple(name) and tuple_size(name) == 2 and elem(name, 0) in @core_names and
+  @spec is_builtin_name(atom | tuple | any) :: boolean
+  defguard is_builtin_name(name)
+           when (is_atom(name) and name in @builtin_names) or
+                  (is_tuple(name) and tuple_size(name) == 2 and elem(name, 0) in @builtin_names and
                      is_list(elem(name, 1)))
 
   @doc """
@@ -63,21 +63,21 @@ defmodule Babel.Core do
 
   ## Examples
 
-      iex> Babel.Core.is_core_step(Babel.Core.identity())
+      iex> Babel.Builtin.is_builtin_step(Babel.Builtin.identity())
       true
 
-      iex> Babel.Core.is_core_step(Babel.Core.then(:custom_name, fn _ -> :do_stuff end))
+      iex> Babel.Builtin.is_builtin_step(Babel.Builtin.then(:custom_name, fn _ -> :do_stuff end))
       true
 
-      iex> Babel.Core.is_core_step(Babel.Step.new(:some_weird_name, fn _ -> :do_stuff end))
+      iex> Babel.Builtin.is_builtin_step(Babel.Step.new(:some_weird_name, fn _ -> :do_stuff end))
       false
   """
-  @spec is_core_step(Step.t() | any) :: boolean
-  defguard is_core_step(step) when is_struct(step, Step) and is_core_name(step.name)
+  @spec is_builtin_step(Step.t() | any) :: boolean
+  defguard is_builtin_step(step) when is_struct(step, Step) and is_builtin_name(step.name)
 
   @doc "Determines whether or not the step is a known core step."
-  @spec core?(any) :: boolean
-  def core?(thing), do: is_core_step(thing)
+  @spec builtin?(any) :: boolean
+  def builtin?(thing), do: is_builtin_step(thing)
 
   @spec call(module, function_name :: atom, extra_args :: list) :: Step.t()
   def call(module, function_name, extra_args \\ [])

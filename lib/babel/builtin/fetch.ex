@@ -1,4 +1,4 @@
-defmodule Babel.Core.Fetch do
+defmodule Babel.Builtin.Fetch do
   @moduledoc false
 
   def call(data, path) do

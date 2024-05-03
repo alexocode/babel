@@ -1,54 +1,54 @@
-defmodule Babel.CoreTest do
+defmodule Babel.BuiltinTest do
   use ExUnit.Case, async: true
 
   import Kernel, except: [apply: 2]
 
-  alias Babel.Core
+  alias Babel.Builtin
   alias Babel.Step
   alias Babel.Trace
 
-  require Babel.Core
+  require Babel.Builtin
   require NaiveDateTime
 
-  doctest Babel.Core
+  doctest Babel.Builtin
 
-  describe "is_core_step/1" do
+  describe "is_builtin_step/1" do
     test "returns true for all core steps" do
       core_steps = [
-        Core.identity(),
-        Core.const(:stuff),
-        Core.fetch("path"),
-        Core.get("path", :default),
-        Core.cast(:integer),
-        Core.cast(:float),
-        Core.cast(:boolean),
-        Core.into(%{}),
-        Core.call(List, :to_string, []),
-        Core.choice(fn _ -> Core.identity() end),
-        Core.map(Core.identity()),
-        Core.flat_map(fn _ -> Core.identity() end),
-        Core.fail(:some_reason),
-        Core.try([Babel.fail(:foobar), Babel.const(:baz)]),
-        Core.then(:some_name, fn _ -> :value end)
+        Builtin.identity(),
+        Builtin.const(:stuff),
+        Builtin.fetch("path"),
+        Builtin.get("path", :default),
+        Builtin.cast(:integer),
+        Builtin.cast(:float),
+        Builtin.cast(:boolean),
+        Builtin.into(%{}),
+        Builtin.call(List, :to_string, []),
+        Builtin.choice(fn _ -> Builtin.identity() end),
+        Builtin.map(Builtin.identity()),
+        Builtin.flat_map(fn _ -> Builtin.identity() end),
+        Builtin.fail(:some_reason),
+        Builtin.try([Babel.fail(:foobar), Babel.const(:baz)]),
+        Builtin.then(:some_name, fn _ -> :value end)
       ]
 
       for step <- core_steps do
-        assert Core.is_core_step(step)
-        assert Core.core?(step)
+        assert Builtin.is_builtin_step(step)
+        assert Builtin.builtin?(step)
       end
     end
 
     test "returns false for a custom step" do
       step = Step.new(:some_name, fn _ -> :value end)
 
-      refute Core.is_core_step(step)
-      refute Core.core?(step)
+      refute Builtin.is_builtin_step(step)
+      refute Builtin.builtin?(step)
     end
   end
 
   describe "id/0" do
     test "returns the value it's applied to" do
-      step = Core.identity()
+      step = Builtin.identity()
       data = %{value: make_ref()}
 
       assert apply!(step, data) == data
@@ -58,7 +58,7 @@ defmodule Babel.CoreTest do
   describe "const/1" do
     test "always returns the value given when creating" do
       value = make_ref()
-      step = Core.const(value)
+      step = Builtin.const(value)
       data = %{value: make_ref()}
 
       assert apply!(step, data) == value
@@ -68,17 +68,17 @@ defmodule Babel.CoreTest do
 
   describe "fetch/1" do
     test "returns the value at the given path" do
-      step = Core.fetch(:value)
+      step = Builtin.fetch(:value)
       data = %{value: make_ref()}
 
       assert apply!(step, data) == data.value
 
-      step = Core.fetch([:value, :nested])
+      step = Builtin.fetch([:value, :nested])
       data = %{value: %{nested: make_ref()}}
 
       assert apply!(step, data) == data.value.nested
 
-      step = Core.fetch([:value, 2, :nested])
+      step = Builtin.fetch([:value, 2, :nested])
 
       data = %{
         value: [
@@ -94,7 +94,7 @@ defmodule Babel.CoreTest do
     end
 
     test "returns an error when a key cannot be found" do
-      step = Core.fetch([:value, "nested"])
+      step = Builtin.fetch([:value, "nested"])
       data = %{value: %{nested: "nope"}}
 
       assert {:error, {:not_found, "nested"}} = apply(step, data)
@@ -103,17 +103,17 @@ defmodule Babel.CoreTest do
 
   describe "get/2" do
     test "returns the value at the given path" do
-      step = Core.get(:value, :default)
+      step = Builtin.get(:value, :default)
       data = %{value: make_ref()}
 
       assert apply!(step, data) == data.value
 
-      step = Core.get([:value, :nested], :default)
+      step = Builtin.get([:value, :nested], :default)
       data = %{value: %{nested: make_ref()}}
 
       assert apply!(step, data) == data.value.nested
 
-      step = Core.get([:value, 2, :nested], :default)
+      step = Builtin.get([:value, 2, :nested], :default)
 
       data = %{
         value: [
@@ -130,7 +130,7 @@ defmodule Babel.CoreTest do
 
     test "returns the given default a key cannot be found" do
       default = make_ref()
-      step = Core.get([:value, "nested"], default)
+      step = Builtin.get([:value, "nested"], default)
       data = %{value: %{nested: "nope"}}
 
       assert apply!(step, data) == default
@@ -139,74 +139,74 @@ defmodule Babel.CoreTest do
 
   describe "cast(:integer)" do
     test "succeeds when the value is an integer" do
-      assert apply!(Core.cast(:integer), 1) == 1
-      assert apply!(Core.cast(:integer), 42) == 42
-      assert apply!(Core.cast(:integer), -100) == -100
+      assert apply!(Builtin.cast(:integer), 1) == 1
+      assert apply!(Builtin.cast(:integer), 42) == 42
+      assert apply!(Builtin.cast(:integer), -100) == -100
     end
 
     test "succeeds when the value is the string representation of an integer" do
-      assert apply!(Core.cast(:integer), "1") == 1
-      assert apply!(Core.cast(:integer), "42") == 42
-      assert apply!(Core.cast(:integer), "-100") == -100
+      assert apply!(Builtin.cast(:integer), "1") == 1
+      assert apply!(Builtin.cast(:integer), "42") == 42
+      assert apply!(Builtin.cast(:integer), "-100") == -100
     end
 
     test "succeeds when the value is a float" do
-      assert apply!(Core.cast(:integer), 1.0) == 1
-      assert apply!(Core.cast(:integer), 42.2) == 42
-      assert apply!(Core.cast(:integer), -100.8) == -100
+      assert apply!(Builtin.cast(:integer), 1.0) == 1
+      assert apply!(Builtin.cast(:integer), 42.2) == 42
+      assert apply!(Builtin.cast(:integer), -100.8) == -100
     end
 
     test "fails when the value is a string without an integer" do
-      assert {:error, reason} = apply(Core.cast(:integer), "not an integer")
+      assert {:error, reason} = apply(Builtin.cast(:integer), "not an integer")
       assert reason == {:invalid, :integer, "not an integer"}
     end
   end
 
   describe "cast(:float)" do
     test "succeeds when the value is a float" do
-      assert apply!(Core.cast(:float), 1.0) == 1.0
-      assert apply!(Core.cast(:float), 42.2) == 42.2
-      assert apply!(Core.cast(:float), -100.8) == -100.8
+      assert apply!(Builtin.cast(:float), 1.0) == 1.0
+      assert apply!(Builtin.cast(:float), 42.2) == 42.2
+      assert apply!(Builtin.cast(:float), -100.8) == -100.8
     end
 
     test "succeeds when the value is the string representation of an float" do
-      assert apply!(Core.cast(:float), "1") == 1.0
-      assert apply!(Core.cast(:float), "1.0") == 1.0
-      assert apply!(Core.cast(:float), "42.2") == 42.2
-      assert apply!(Core.cast(:float), "-100.8") == -100.8
+      assert apply!(Builtin.cast(:float), "1") == 1.0
+      assert apply!(Builtin.cast(:float), "1.0") == 1.0
+      assert apply!(Builtin.cast(:float), "42.2") == 42.2
+      assert apply!(Builtin.cast(:float), "-100.8") == -100.8
     end
 
     test "succeeds when the value is an integer" do
-      assert apply!(Core.cast(:float), 1) == 1.0
-      assert apply!(Core.cast(:float), 42) == 42.0
-      assert apply!(Core.cast(:float), -100) == -100.0
+      assert apply!(Builtin.cast(:float), 1) == 1.0
+      assert apply!(Builtin.cast(:float), 42) == 42.0
+      assert apply!(Builtin.cast(:float), -100) == -100.0
     end
 
     test "fails when the value is a string without a float" do
-      assert {:error, reason} = apply(Core.cast(:float), "not a float")
+      assert {:error, reason} = apply(Builtin.cast(:float), "not a float")
       assert reason == {:invalid, :float, "not a float"}
     end
   end
 
   describe "cast(:boolean)" do
     test "succeeds when the value is a boolean" do
-      assert apply!(Core.cast(:boolean), true) == true
-      assert apply!(Core.cast(:boolean), false) == false
+      assert apply!(Builtin.cast(:boolean), true) == true
+      assert apply!(Builtin.cast(:boolean), false) == false
     end
 
     test "succeeds when the value is the string representation of an boolean" do
-      assert apply!(Core.cast(:boolean), "true") == true
-      assert apply!(Core.cast(:boolean), "yES") == true
-      assert apply!(Core.cast(:boolean), " yes ") == true
-      assert apply!(Core.cast(:boolean), "  FALSE") == false
-      assert apply!(Core.cast(:boolean), "no") == false
+      assert apply!(Builtin.cast(:boolean), "true") == true
+      assert apply!(Builtin.cast(:boolean), "yES") == true
+      assert apply!(Builtin.cast(:boolean), " yes ") == true
+      assert apply!(Builtin.cast(:boolean), "  FALSE") == false
+      assert apply!(Builtin.cast(:boolean), "no") == false
     end
 
     test "fails when the value is a string without a boolean" do
-      assert {:error, reason} = apply(Core.cast(:boolean), "not a boolean")
+      assert {:error, reason} = apply(Builtin.cast(:boolean), "not a boolean")
       assert reason == {:invalid, :boolean, "not a boolean"}
 
-      assert {:error, reason} = apply(Core.cast(:boolean), 1)
+      assert {:error, reason} = apply(Builtin.cast(:boolean), 1)
       assert reason == {:invalid, :boolean, 1}
     end
   end
@@ -216,9 +216,9 @@ defmodule Babel.CoreTest do
       data = %{value1: make_ref(), value2: make_ref(), value3: make_ref(), value4: make_ref()}
 
       step =
-        Core.into(%{
-          :some_key => Core.fetch(:value2),
-          Core.fetch(:value1) => :value1
+        Builtin.into(%{
+          :some_key => Builtin.fetch(:value2),
+          Builtin.fetch(:value1) => :value1
         })
 
       assert apply!(step, data) == %{
@@ -229,9 +229,9 @@ defmodule Babel.CoreTest do
 
     test "returns the collected errors when nested steps fail" do
       step =
-        Core.into(%{
-          :some_key => Core.fetch(:value2),
-          Core.fetch(:value1) => :value1
+        Builtin.into(%{
+          :some_key => Builtin.fetch(:value2),
+          Builtin.fetch(:value1) => :value1
         })
 
       assert {:error, reason} = apply(step, %{})
@@ -248,26 +248,26 @@ defmodule Babel.CoreTest do
       end
 
       returned = make_ref()
-      step = Core.call(MyCoolModule, :my_cool_function, [returned])
+      step = Builtin.call(MyCoolModule, :my_cool_function, [returned])
       data = %{value: make_ref()}
 
       assert apply!(step, data) == {data, returned}
     end
 
     test "returns whatever error the function returns" do
-      step = Core.call(Map, :fetch, [:something])
+      step = Builtin.call(Map, :fetch, [:something])
       assert {:error, :unknown} = apply(step, %{})
 
-      step = Core.call(NaiveDateTime, :from_iso8601, [])
+      step = Builtin.call(NaiveDateTime, :from_iso8601, [])
       assert {:error, :invalid_format} = apply(step, "not a date")
 
-      step = Core.call(Map, :fetch!, [:something])
+      step = Builtin.call(Map, :fetch!, [:something])
       assert {:error, %KeyError{key: :something}} = apply(step, %{})
     end
 
     test "raises an ArgumentError during construction if the given function doesn't exist" do
       assert_raise ArgumentError, "cannot call missing function `DoesNot.exist/1`", fn ->
-        Core.call(DoesNot, :exist, [])
+        Builtin.call(DoesNot, :exist, [])
       end
     end
   end
@@ -275,9 +275,9 @@ defmodule Babel.CoreTest do
   describe "choice/1" do
     test "choses the expected applicable" do
       step =
-        Core.choice(fn
-          1 -> Core.const(:value1)
-          2 -> Core.const(:value2)
+        Builtin.choice(fn
+          1 -> Builtin.const(:value1)
+          2 -> Builtin.const(:value2)
         end)
 
       assert apply!(step, 1) == :value1
@@ -287,8 +287,8 @@ defmodule Babel.CoreTest do
 
   describe "map/2" do
     test "returns a step that applies the given step to each element of an enumerable" do
-      mapping_step = Core.then(&{:mapped, &1})
-      step = Core.map(mapping_step)
+      mapping_step = Builtin.then(&{:mapped, &1})
+      step = Builtin.map(mapping_step)
 
       assert {_traces, {:ok, mapped}} = Step.apply(step, [1, 2, 3])
 
@@ -302,8 +302,8 @@ defmodule Babel.CoreTest do
 
   describe "flat_map/2" do
     test "allows to pass a function that returns a step which gets evaluated immediately" do
-      mapping_function = fn element -> Core.then(&{:mapped, element, &1}) end
-      step = Core.flat_map(mapping_function)
+      mapping_function = fn element -> Builtin.then(&{:mapped, element, &1}) end
+      step = Builtin.flat_map(mapping_function)
 
       assert {_traces, {:ok, mapped}} = Step.apply(step, [1, 2, 3])
 
@@ -318,7 +318,7 @@ defmodule Babel.CoreTest do
   describe "fail/1" do
     test "always fails with the given reason" do
       reason = {:some_reason, make_ref()}
-      step = Core.fail(reason)
+      step = Builtin.fail(reason)
 
       assert apply(step, nil) == {:error, reason}
       assert apply(step, %{}) == {:error, reason}
@@ -326,7 +326,7 @@ defmodule Babel.CoreTest do
 
     test "allows to pass a function to construct the error reason" do
       ref = make_ref()
-      step = Core.fail(&{:some_reason, ref, &1})
+      step = Builtin.fail(&{:some_reason, ref, &1})
 
       assert apply(step, nil) == {:error, {:some_reason, ref, nil}}
       assert apply(step, %{}) == {:error, {:some_reason, ref, %{}}}
@@ -337,25 +337,25 @@ defmodule Babel.CoreTest do
     test "returns the result from the first succeeding applicable" do
       data = %{some: %{nested: "map"}}
 
-      step = Core.try(Core.const(42))
+      step = Builtin.try(Builtin.const(42))
       assert apply!(step, data) == 42
 
-      step = Core.try([Core.fail(:some_error), Core.const(42)])
+      step = Builtin.try([Builtin.fail(:some_error), Builtin.const(42)])
       assert apply!(step, data) == 42
 
-      step = Core.try([Core.fail(:some_error), Core.const(42)])
+      step = Builtin.try([Builtin.fail(:some_error), Builtin.const(42)])
       assert apply!(step, data) == 42
 
-      step = Core.try([Core.fail(:some_error), Core.const(42), Core.const(21)])
+      step = Builtin.try([Builtin.fail(:some_error), Builtin.const(42), Builtin.const(21)])
       assert apply!(step, data) == 42
     end
 
     test "returns the accumulated errors of all failing applicables if none succeed" do
       step =
-        Core.try([
-          Core.fail(:some_error),
-          Core.fail(:another_error),
-          Core.fail(:third_error)
+        Builtin.try([
+          Builtin.fail(:some_error),
+          Builtin.fail(:another_error),
+          Builtin.fail(:third_error)
         ])
 
       assert {:error, reason} = apply(step, nil)
@@ -368,10 +368,10 @@ defmodule Babel.CoreTest do
     end
 
     test "returns the accumulated traces regardless of success or failure" do
-      step1 = Core.fail(:some_error)
-      step2 = Core.fail(:another_error)
-      step3 = Core.identity()
-      try_step = Core.try([step1, step2, step3])
+      step1 = Builtin.fail(:some_error)
+      step2 = Builtin.fail(:another_error)
+      step3 = Builtin.identity()
+      try_step = Builtin.try([step1, step2, step3])
 
       data = {:ok, 42}
       assert {traces, data} = Step.apply(try_step, data)
@@ -404,11 +404,11 @@ defmodule Babel.CoreTest do
       fallback = make_ref()
 
       step =
-        Core.try(
+        Builtin.try(
           [
-            Core.fail(:some_error),
-            Core.fail(:another_error),
-            Core.fail(:third_error)
+            Builtin.fail(:some_error),
+            Builtin.fail(:another_error),
+            Builtin.fail(:third_error)
           ],
           fallback
         )
@@ -420,7 +420,7 @@ defmodule Babel.CoreTest do
   describe "then/2" do
     test "invokes the given function" do
       ref = make_ref()
-      step = Core.then(:custom_name, &{ref, &1})
+      step = Builtin.then(:custom_name, &{ref, &1})
       data = %{value: make_ref()}
 
       assert apply!(step, data) == {ref, data}
@@ -428,15 +428,15 @@ defmodule Babel.CoreTest do
 
     test "sets the given name on the created step" do
       ref = make_ref()
-      step = Core.then({:my_cool_name, ref}, &Function.identity/1)
+      step = Builtin.then({:my_cool_name, ref}, &Function.identity/1)
 
       assert step.name == {:then, [{:my_cool_name, ref}, &Function.identity/1]}
     end
 
     test "omits a nil name from the generated step name" do
-      step = Core.then(&Function.identity/1)
+      step = Builtin.then(&Function.identity/1)
 
-      assert step == Core.then(nil, &Function.identity/1)
+      assert step == Builtin.then(nil, &Function.identity/1)
       assert step.name == {:then, [&Function.identity/1]}
     end
   end

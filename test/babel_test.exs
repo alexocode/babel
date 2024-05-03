@@ -1,7 +1,7 @@
 defmodule BabelTest do
   use ExUnit.Case, async: true
 
-  alias Babel.Core
+  alias Babel.Builtin
 
   require Babel
 
@@ -57,42 +57,42 @@ defmodule BabelTest do
 
   describe "shortcuts" do
     test "returns the expected core steps" do
-      assert Babel.noop() == Core.identity()
-      assert Babel.identity() == Core.identity()
+      assert Babel.noop() == Builtin.identity()
+      assert Babel.identity() == Builtin.identity()
 
-      assert Babel.const(:some_value) == Core.const(:some_value)
+      assert Babel.const(:some_value) == Builtin.const(:some_value)
 
-      assert Babel.at(["some", "path"]) == Core.fetch(["some", "path"])
-      assert Babel.fetch(["some", "path"]) == Core.fetch(["some", "path"])
+      assert Babel.at(["some", "path"]) == Builtin.fetch(["some", "path"])
+      assert Babel.fetch(["some", "path"]) == Builtin.fetch(["some", "path"])
 
-      assert Babel.get(["some", "path"], :default) == Core.get(["some", "path"], :default)
+      assert Babel.get(["some", "path"], :default) == Builtin.get(["some", "path"], :default)
 
-      assert Babel.cast(:boolean) == Core.cast(:boolean)
-      assert Babel.cast(:float) == Core.cast(:float)
-      assert Babel.cast(:integer) == Core.cast(:integer)
+      assert Babel.cast(:boolean) == Builtin.cast(:boolean)
+      assert Babel.cast(:float) == Builtin.cast(:float)
+      assert Babel.cast(:integer) == Builtin.cast(:integer)
 
-      assert Babel.into({:some, %{value: "!"}}) == Core.into({:some, %{value: "!"}})
+      assert Babel.into({:some, %{value: "!"}}) == Builtin.into({:some, %{value: "!"}})
 
-      assert Babel.call(List, :to_string) == Core.call(List, :to_string)
+      assert Babel.call(List, :to_string) == Builtin.call(List, :to_string)
 
       chooser = fn _ -> unique_step() end
-      assert Babel.choice(chooser) == Core.choice(chooser)
+      assert Babel.choice(chooser) == Builtin.choice(chooser)
 
       mapper = unique_step()
-      assert Babel.map(mapper) == Core.map(mapper)
+      assert Babel.map(mapper) == Builtin.map(mapper)
 
       mapper = fn _ -> unique_step() end
-      assert Babel.flat_map(mapper) == Core.flat_map(mapper)
+      assert Babel.flat_map(mapper) == Builtin.flat_map(mapper)
 
-      assert Babel.fail(:some_reason) == Core.fail(:some_reason)
+      assert Babel.fail(:some_reason) == Builtin.fail(:some_reason)
 
       applicables = [Babel.fail(:some_reason), unique_step()]
-      assert Babel.try(applicables) == Core.try(applicables)
-      assert Babel.try(applicables, :default) == Core.try(applicables, :default)
+      assert Babel.try(applicables) == Builtin.try(applicables)
+      assert Babel.try(applicables, :default) == Builtin.try(applicables, :default)
 
       function = fn _ -> :do_the_thing end
-      assert Babel.then(function) == Core.then(function)
-      assert Babel.then(:my_name, function) == Core.then(:my_name, function)
+      assert Babel.then(function) == Builtin.then(function)
+      assert Babel.then(:my_name, function) == Builtin.then(:my_name, function)
     end
   end
 

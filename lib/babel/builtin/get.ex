@@ -1,7 +1,7 @@
-defmodule Babel.Core.Get do
+defmodule Babel.Builtin.Get do
   @moduledoc false
 
-  alias Babel.Core.Fetch
+  alias Babel.Builtin.Fetch
 
   def call(data, path, default) do
     case Fetch.call(data, path) do

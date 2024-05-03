@@ -1,4 +1,4 @@
-defmodule Babel.Core.Cast do
+defmodule Babel.Builtin.Cast do
   @moduledoc false
 
   def call(:boolean, boolean) when is_boolean(boolean) do

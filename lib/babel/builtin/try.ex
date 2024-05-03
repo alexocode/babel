@@ -1,4 +1,4 @@
-defmodule Babel.Core.Try do
+defmodule Babel.Builtin.Try do
   @moduledoc false
 
   def call([], input), do: {:ok, input}

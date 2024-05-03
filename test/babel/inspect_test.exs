@@ -4,7 +4,7 @@ defmodule Babel.InspectTest do
   require Babel
 
   describe "Inspect, for: Babel.Step" do
-    test "from Babel.Core" do
+    test "from Babel.Builtin" do
       step_and_inspect = %{
         Babel.identity() => "Babel.identity()",
         Babel.const(:value) => "Babel.const(:value)",

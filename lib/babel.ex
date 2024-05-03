@@ -25,7 +25,7 @@ defmodule Babel do
   @type name :: term
 
   @typedoc "TODO: Better docs"
-  @type path :: Core.path()
+  @type path :: Builtin.path()
 
   defguard is_babel(babel) when is_struct(babel, Pipeline) or is_struct(babel, Step)
 
@@ -82,7 +82,7 @@ defmodule Babel do
   def begin(name \\ nil), do: Pipeline.new(name, [])
 
   @spec call(module, function_name :: atom) :: Step.t()
-  defdelegate call(module, function_name), to: Babel.Core
+  defdelegate call(module, function_name), to: Babel.Builtin
 
   @spec call(t, module, function_name :: atom) :: t
   def call(babel, module, function_name) when is_babel(babel) do
@@ -90,7 +90,7 @@ defmodule Babel do
   end
 
   @spec call(module, function_name :: atom, extra_args :: list) :: Step.t()
-  defdelegate call(module, function_name, extra_args), to: Babel.Core
+  defdelegate call(module, function_name, extra_args), to: Babel.Builtin
 
   @spec call(t, module, function_name :: atom, extra_args :: list) :: t
   def call(babel, module, function_name, extra_args) do
@@ -100,7 +100,7 @@ defmodule Babel do
   @spec cast(:boolean) :: Step.t(boolean)
   @spec cast(:integer) :: Step.t(integer)
   @spec cast(:float) :: Step.t(float)
-  defdelegate cast(type), to: Babel.Core
+  defdelegate cast(type), to: Babel.Builtin
 
   @spec cast(t(), :boolean) :: t(boolean)
   @spec cast(t(), :integer) :: t(integer)
@@ -121,7 +121,7 @@ defmodule Babel do
   end
 
   @spec choice((input -> t(input, output))) :: Step.t(output) when input: data, output: term
-  defdelegate choice(chooser), to: Babel.Core
+  defdelegate choice(chooser), to: Babel.Builtin
 
   @spec choice(t(), (input -> t(input, output))) :: t(output)
         when input: data, output: term
@@ -130,14 +130,14 @@ defmodule Babel do
   end
 
   @spec const(value) :: Step.t(value) when value: any
-  defdelegate const(value), to: Babel.Core
+  defdelegate const(value), to: Babel.Builtin
 
   @spec fail(reason_or_function :: reason | (input -> reason)) :: Step.t(no_return)
         when input: any, reason: any
-  defdelegate fail(reason_or_function), to: Babel.Core
+  defdelegate fail(reason_or_function), to: Babel.Builtin
 
   @spec fetch(path) :: Step.t()
-  defdelegate fetch(path), to: Babel.Core
+  defdelegate fetch(path), to: Babel.Builtin
 
   @spec fetch(t(), path) :: t
   def fetch(babel, path) do
@@ -145,7 +145,7 @@ defmodule Babel do
   end
 
   @spec flat_map((input -> t(input, output))) :: Step.t([output]) when input: data, output: term
-  defdelegate flat_map(mapper), to: Babel.Core
+  defdelegate flat_map(mapper), to: Babel.Builtin
 
   @spec flat_map(Pipeline.t(Enumerable.t(input)), (input -> t(input, output))) :: t([output])
         when input: data, output: term
@@ -154,10 +154,10 @@ defmodule Babel do
   end
 
   @spec get(path) :: Step.t()
-  defdelegate get(path), to: Babel.Core
+  defdelegate get(path), to: Babel.Builtin
 
   @spec get(path, default :: any) :: Step.t()
-  defdelegate get(path, default), to: Babel.Core
+  defdelegate get(path, default), to: Babel.Builtin
 
   @spec get(t(), path, default :: any) :: t
   def get(babel, path, default) do
@@ -165,10 +165,10 @@ defmodule Babel do
   end
 
   @spec identity() :: Step.t(input, input) when input: any
-  defdelegate identity, to: Babel.Core
+  defdelegate identity, to: Babel.Builtin
 
   @spec into(intoable) :: Step.t(intoable) when intoable: Babel.Intoable.t()
-  defdelegate into(intoable), to: Babel.Core
+  defdelegate into(intoable), to: Babel.Builtin
 
   @spec into(t(), intoable) :: t(intoable) when intoable: Babel.Intoable.t()
   def into(babel, intoable) do
@@ -176,7 +176,7 @@ defmodule Babel do
   end
 
   @spec map(t(input, output)) :: Step.t([output]) when input: data, output: term
-  defdelegate map(mapper), to: Babel.Core
+  defdelegate map(mapper), to: Babel.Builtin
 
   @spec map(Pipeline.t(Enumerable.t(input)), t(input, output)) :: t([output])
         when input: data, output: term
@@ -196,7 +196,7 @@ defmodule Babel do
   end
 
   @spec then(Step.fun(input, output)) :: Step.t(output) when input: any, output: any
-  defdelegate then(function), to: Babel.Core
+  defdelegate then(function), to: Babel.Builtin
 
   @spec then(t(input), Step.fun(input, output)) :: t(output)
         when input: data, output: term
@@ -205,7 +205,7 @@ defmodule Babel do
   end
 
   @spec then(name, Step.fun(input, output)) :: Step.t(output) when input: any, output: any
-  defdelegate then(descriptive_name, function), to: Babel.Core
+  defdelegate then(descriptive_name, function), to: Babel.Builtin
 
   @spec then(t(input), name, Step.fun(input, output)) :: t(output)
         when input: data, output: term
@@ -218,7 +218,7 @@ defmodule Babel do
 
   @spec try(applicables :: nonempty_list(t(output))) :: Step.t(output)
         when output: any
-  defdelegate try(applicables), to: Babel.Core
+  defdelegate try(applicables), to: Babel.Builtin
 
   @spec try(t(input), applicables :: nonempty_list(t(input, output))) :: t(input, output)
         when input: any, output: any
@@ -228,7 +228,7 @@ defmodule Babel do
 
   @spec try(applicables :: t(output) | nonempty_list(t(output)), default) :: t(output | default)
         when output: any, default: any
-  defdelegate try(applicables, default), to: Babel.Core
+  defdelegate try(applicables, default), to: Babel.Builtin
 
   @spec try(
           t(input, output),
