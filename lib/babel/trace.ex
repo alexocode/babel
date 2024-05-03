@@ -1,4 +1,7 @@
 defmodule Babel.Trace do
+  require Babel.Core
+  require Babel.Logger
+
   @type t() :: t(any, any)
   @type t(output) :: t(any, output)
   @type t(input, output) :: %__MODULE__{
@@ -37,6 +40,21 @@ defmodule Babel.Trace do
     Enum.reduce(spec_path, [trace], fn spec, traces ->
       Enum.flat_map(traces, &find(&1, spec))
     end)
+  end
+
+  def find(%__MODULE__{} = trace, {atom, arg} = spec)
+      when Babel.Core.is_core_name(atom) and not is_list(arg) do
+    case do_find(trace, spec) do
+      [] ->
+        Babel.Logger.warning(
+          "To find a built-in step the second argument of `#{inspect(spec)}` needs to be a list."
+        )
+
+        []
+
+      traces ->
+        traces
+    end
   end
 
   def find(%__MODULE__{} = trace, spec), do: do_find(trace, spec)
