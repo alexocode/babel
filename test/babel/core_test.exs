@@ -10,7 +10,9 @@ defmodule Babel.CoreTest do
   require Babel.Core
   require NaiveDateTime
 
-  describe "is_core/1" do
+  doctest Babel.Core
+
+  describe "is_core_step/1" do
     test "returns true for all core steps" do
       core_steps = [
         Core.identity(),
@@ -31,7 +33,7 @@ defmodule Babel.CoreTest do
       ]
 
       for step <- core_steps do
-        assert Core.is_core(step)
+        assert Core.is_core_step(step)
         assert Core.core?(step)
       end
     end
@@ -39,7 +41,7 @@ defmodule Babel.CoreTest do
     test "returns false for a custom step" do
       step = Step.new(:some_name, fn _ -> :value end)
 
-      refute Core.is_core(step)
+      refute Core.is_core_step(step)
       refute Core.core?(step)
     end
   end
