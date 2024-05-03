@@ -7,9 +7,6 @@ defmodule Babel.Core do
 
   require Step
 
-  @type data :: Babel.data()
-  @type path :: term | list(term)
-
   @core_names ~w[
     call
     cast
@@ -25,6 +22,13 @@ defmodule Babel.Core do
     then
     try
   ]a
+
+  @type name :: unquote(Enum.reduce(@core_names, &{:|, [], [&1, &2]}))
+  @type name_with_args :: {name, [arg :: term]}
+
+  @type data :: Babel.data()
+  @type path :: term | list(term)
+
   @doc "Determines whether or not the step is a known core step."
   @spec is_core(any) :: boolean
   defguard is_core(step)
