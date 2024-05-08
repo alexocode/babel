@@ -44,9 +44,38 @@ defmodule Babel.Pipeline do
     }
   end
 
-  @spec on_error(t, on_error) :: t
-  def on_error(%__MODULE__{} = pipeline, on_error) do
-    %__MODULE__{pipeline | on_error: OnError.new(on_error)}
+  @spec apply(t(input, output), Babel.data()) :: Babel.Applicable.result(output)
+        when input: Babel.data(), output: any
+  def apply(%__MODULE__{} = pipeline, data) do
+    {reversed_traces, result} =
+      pipeline.reversed_steps
+      |> Enum.reverse()
+      |> Enum.reduce_while({[], {:ok, data}}, fn applicable, {traces, {:ok, data}} ->
+        trace = Trace.apply(applicable, data)
+        traces = [trace | traces]
+
+        cond do
+          Trace.ok?(trace) ->
+            {:cont, {traces, trace.output}}
+
+          is_nil(pipeline.on_error) ->
+            {:halt, {traces, trace.output}}
+
+          true ->
+            {nested, result} = OnError.apply(pipeline.on_error, Error.new(trace))
+
+            on_error_trace = %Trace{
+              babel: pipeline.on_error,
+              input: trace.output,
+              output: result,
+              nested: nested
+            }
+
+            {:halt, {[on_error_trace | traces], on_error_trace.output}}
+        end
+      end)
+
+    {Enum.reverse(reversed_traces), result}
   end
 
   @spec chain(t(input, in_between), t(in_between, output)) :: t(input, output)
@@ -94,38 +123,9 @@ defmodule Babel.Pipeline do
     }
   end
 
-  @spec apply(t(input, output), Babel.data()) :: Babel.Applicable.result(output)
-        when input: Babel.data(), output: any
-  def apply(%__MODULE__{} = pipeline, data) do
-    {reversed_traces, result} =
-      pipeline.reversed_steps
-      |> Enum.reverse()
-      |> Enum.reduce_while({[], {:ok, data}}, fn applicable, {traces, {:ok, data}} ->
-        trace = Trace.apply(applicable, data)
-        traces = [trace | traces]
-
-        cond do
-          Trace.ok?(trace) ->
-            {:cont, {traces, trace.output}}
-
-          is_nil(pipeline.on_error) ->
-            {:halt, {traces, trace.output}}
-
-          true ->
-            {nested, result} = OnError.apply(pipeline.on_error, Error.new(trace))
-
-            on_error_trace = %Trace{
-              babel: pipeline.on_error,
-              input: trace.output,
-              output: result,
-              nested: nested
-            }
-
-            {:halt, {[on_error_trace | traces], on_error_trace.output}}
-        end
-      end)
-
-    {Enum.reverse(reversed_traces), result}
+  @spec on_error(t, on_error) :: t
+  def on_error(%__MODULE__{} = pipeline, on_error) do
+    %__MODULE__{pipeline | on_error: OnError.new(on_error)}
   end
 
   defimpl Babel.Applicable do
