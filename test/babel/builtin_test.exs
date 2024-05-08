@@ -12,7 +12,7 @@ defmodule Babel.BuiltinTest do
 
   doctest Babel.Builtin
 
-  describe "is_builtin_step/1" do
+  describe "is_builtin/1" do
     test "returns true for all core steps" do
       core_steps = [
         Builtin.identity(),
@@ -33,7 +33,7 @@ defmodule Babel.BuiltinTest do
       ]
 
       for step <- core_steps do
-        assert Builtin.is_builtin_step(step)
+        assert Builtin.is_builtin(step)
         assert Builtin.builtin?(step)
       end
     end
@@ -41,7 +41,7 @@ defmodule Babel.BuiltinTest do
     test "returns false for a custom step" do
       step = Step.new(:some_name, fn _ -> :value end)
 
-      refute Builtin.is_builtin_step(step)
+      refute Builtin.is_builtin(step)
       refute Builtin.builtin?(step)
     end
   end

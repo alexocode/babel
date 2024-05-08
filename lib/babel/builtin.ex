@@ -63,21 +63,21 @@ defmodule Babel.Builtin do
 
   ## Examples
 
-      iex> Babel.Builtin.is_builtin_step(Babel.Builtin.identity())
+      iex> Babel.Builtin.is_builtin(Babel.Builtin.identity())
       true
 
-      iex> Babel.Builtin.is_builtin_step(Babel.Builtin.then(:custom_name, fn _ -> :do_stuff end))
+      iex> Babel.Builtin.is_builtin(Babel.Builtin.then(:custom_name, fn _ -> :do_stuff end))
       true
 
-      iex> Babel.Builtin.is_builtin_step(Babel.Step.new(:some_weird_name, fn _ -> :do_stuff end))
+      iex> Babel.Builtin.is_builtin(Babel.Step.new(:some_weird_name, fn _ -> :do_stuff end))
       false
   """
-  @spec is_builtin_step(Step.t() | any) :: boolean
-  defguard is_builtin_step(step) when is_struct(step, Step) and is_builtin_name(step.name)
+  @spec is_builtin(Step.t() | any) :: boolean
+  defguard is_builtin(step) when is_struct(step, Step) and is_builtin_name(step.name)
 
   @doc "Determines whether or not the step is a known core step."
   @spec builtin?(any) :: boolean
-  def builtin?(thing), do: is_builtin_step(thing)
+  def builtin?(thing), do: is_builtin(thing)
 
   @spec call(module, function_name :: atom, extra_args :: list) :: Step.t()
   def call(module, function_name, extra_args \\ [])
