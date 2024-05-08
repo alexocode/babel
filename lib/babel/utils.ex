@@ -1,24 +1,28 @@
 defmodule Babel.Utils do
   @moduledoc false
 
-  @type result_or_trace(output) :: Babel.Applicable.result(output) | Babel.Trace.t(output)
-
-  @spec collapse_to_result(
-          result :: result_or_trace(output),
-          accumulated :: Babel.Applicable.result([output])
+  @spec map_and_collapse_to_result(
+          data :: Enum.t(),
+          mapper :: (any -> Babel.Applicable.result(output) | Babel.Trace.t(output))
         ) :: Babel.Applicable.result([output])
         when output: any
-  def collapse_to_result(result, {traces, {ok_or_error, list}}) do
-    {nested_traces, result} = traces_and_result(result)
+  def map_and_collapse_to_result(data, mapper) when is_function(mapper, 1) do
+    {traces, {ok_or_error, list}} =
+      Enum.reduce(data, {[], {:ok, []}}, fn element, {traces, {ok_or_error, list}} ->
+        {nested_traces, result} =
+          case mapper.(element) do
+            %Babel.Trace{} = trace -> {[trace], trace.output}
+            {traces, result} -> {traces, result}
+          end
 
-    {
-      Enum.reverse(nested_traces) ++ traces,
-      accumulate_result(list, ok_or_error, result)
-    }
+        {
+          Enum.reverse(nested_traces) ++ traces,
+          accumulate_result(list, ok_or_error, result)
+        }
+      end)
+
+    {Enum.reverse(traces), {ok_or_error, Enum.reverse(list)}}
   end
-
-  defp traces_and_result(%Babel.Trace{} = trace), do: {[trace], trace.output}
-  defp traces_and_result({traces, result}), do: {traces, result}
 
   defp accumulate_result(list, :ok, result) do
     case result do
@@ -41,22 +45,6 @@ defmodule Babel.Utils do
       {:error, error} ->
         {:error, [error | list]}
     end
-  end
-
-  @spec map_and_collapse_to_result(
-          data :: Enum.t(),
-          mapper :: (any -> result_or_trace(output))
-        ) :: Babel.Applicable.result([output])
-        when output: any
-  def map_and_collapse_to_result(data, mapper) when is_function(mapper, 1) do
-    {traces, {ok_or_error, list}} =
-      Enum.reduce(data, {[], {:ok, []}}, fn element, accumulated_result ->
-        element
-        |> mapper.()
-        |> collapse_to_result(accumulated_result)
-      end)
-
-    {Enum.reverse(traces), {ok_or_error, Enum.reverse(list)}}
   end
 
   @spec safe_apply(function :: Babel.Step.fun(output), data :: Babel.data()) ::
