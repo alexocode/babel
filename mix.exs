@@ -4,7 +4,7 @@ defmodule MyPackage.MixProject do
   @app :babel
   @name "Babel"
   @description "A cool description"
-  @repo "https://github.com/sascha-wolf/#{@app}"
+  @repo "https://github.com/alexocode/#{@app}"
 
   def project do
     [
@@ -101,7 +101,7 @@ defmodule MyPackage.MixProject do
       files: ["lib", "mix.exs", "CHANGELOG*", "LICENSE*", "README*", "version"],
       licenses: ["MIT"],
       links: %{"GitHub" => @repo},
-      maintainers: ["Sascha Wolf <swolf.dev@gmail.com>"]
+      maintainers: ["Alex Wolf <craft@alexocode.dev>"]
     ]
   end
 
