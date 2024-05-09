@@ -24,7 +24,7 @@ defmodule Babel.BuiltinTest do
         Builtin.cast(:boolean),
         Builtin.into(%{}),
         Builtin.call(List, :to_string, []),
-        Builtin.choice(fn _ -> Builtin.identity() end),
+        Builtin.match(fn _ -> Builtin.identity() end),
         Builtin.map(Builtin.identity()),
         Builtin.flat_map(fn _ -> Builtin.identity() end),
         Builtin.fail(:some_reason),
@@ -272,10 +272,10 @@ defmodule Babel.BuiltinTest do
     end
   end
 
-  describe "choice/1" do
-    test "choses the expected applicable" do
+  describe "match/1" do
+    test "uses the expected returned applicable" do
       step =
-        Builtin.choice(fn
+        Builtin.match(fn
           1 -> Builtin.const(:value1)
           2 -> Builtin.const(:value2)
         end)

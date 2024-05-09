@@ -10,7 +10,6 @@ defmodule Babel.Builtin do
   @builtin_names ~w[
     call
     cast
-    choice
     const
     fail
     fetch
@@ -19,6 +18,7 @@ defmodule Babel.Builtin do
     identity
     into
     map
+    match
     then
     try
   ]a
@@ -98,16 +98,6 @@ defmodule Babel.Builtin do
     Step.new({:cast, [type]}, &__MODULE__.Cast.call(type, &1))
   end
 
-  @spec choice(chooser :: (input -> Babel.t(input, output))) :: Step.t(input, output)
-        when input: data, output: any
-  def choice(chooser) when is_function(chooser, 1) do
-    Step.new({:choice, [chooser]}, fn input ->
-      trace = Trace.apply(chooser.(input), input)
-
-      {[trace], trace.output}
-    end)
-  end
-
   @spec const(value) :: Step.t(value) when value: any
   def const(value) do
     Step.new({:const, [value]}, fn _ -> value end)
@@ -170,6 +160,16 @@ defmodule Babel.Builtin do
         Trace.apply(mapper, element)
       end)
     )
+  end
+
+  @spec match(matcher :: (input -> Babel.t(input, output))) :: Step.t(input, output)
+        when input: data, output: any
+  def match(matcher) when is_function(matcher, 1) do
+    Step.new({:match, [matcher]}, fn input ->
+      trace = Trace.apply(matcher.(input), input)
+
+      {[trace], trace.output}
+    end)
   end
 
   @spec then(custom_name :: nil | any, function :: Step.func(input, output)) ::

@@ -158,15 +158,6 @@ defmodule Babel do
     |> Pipeline.chain(next)
   end
 
-  @spec choice((input -> t(input, output))) :: Step.t(output) when input: data, output: term
-  defdelegate choice(chooser), to: Babel.Builtin
-
-  @spec choice(t(), (input -> t(input, output))) :: t(output)
-        when input: data, output: term
-  def choice(babel, chooser) do
-    chain(babel, choice(chooser))
-  end
-
   @spec const(value) :: Step.t(value) when value: any
   defdelegate const(value), to: Babel.Builtin
 
@@ -220,6 +211,15 @@ defmodule Babel do
         when input: data, output: term
   def map(babel, mapper) do
     chain(babel, map(mapper))
+  end
+
+  @spec match((input -> t(input, output))) :: Step.t(output) when input: data, output: term
+  defdelegate match(chooser), to: Babel.Builtin
+
+  @spec match(t(), (input -> t(input, output))) :: t(output)
+        when input: data, output: term
+  def match(babel, chooser) do
+    chain(babel, match(chooser))
   end
 
   @doc "Alias for `identity/0`."

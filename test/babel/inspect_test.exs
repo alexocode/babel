@@ -32,11 +32,11 @@ defmodule Babel.InspectTest do
       assert_inspects_as(step, "Babel.then(:my_name, #{inspect(function)})")
     end
 
-    test "Babel.choice" do
+    test "Babel.match" do
       chooser = fn _ -> Babel.identity() end
-      step = Babel.choice(chooser)
+      step = Babel.match(chooser)
 
-      assert_inspects_as(step, "Babel.choice(#{inspect(chooser)})")
+      assert_inspects_as(step, "Babel.match(#{inspect(chooser)})")
     end
 
     test "Babel.map" do
