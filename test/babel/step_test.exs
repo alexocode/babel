@@ -1,7 +1,7 @@
 defmodule Babel.StepTest do
   use ExUnit.Case, async: true
 
-  import Babel.Test.StepFactory
+  import Babel.Test.Factory
 
   alias Babel.Step
   alias Babel.Trace

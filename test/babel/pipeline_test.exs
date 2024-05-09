@@ -1,7 +1,7 @@
 defmodule Babel.PipelineTest do
   use ExUnit.Case, async: true
 
-  import Babel.Test.StepFactory
+  import Babel.Test.Factory
 
   alias Babel.Error
   alias Babel.Pipeline
@@ -282,21 +282,6 @@ defmodule Babel.PipelineTest do
                | on_error: Pipeline.OnError.new(on_error)
              }
     end
-  end
-
-  defp pipeline(attrs \\ []) do
-    Pipeline.new(
-      Keyword.get_lazy(attrs, :name, fn -> {:test, make_ref()} end),
-      Keyword.get_lazy(attrs, :on_error, fn ->
-        ref = make_ref()
-        fn _ -> {:on_error, ref} end
-      end),
-      Keyword.get_lazy(attrs, :steps, fn -> [step()] end)
-    )
-  end
-
-  defp data(extras \\ []) do
-    Enum.into(extras, %{value: make_ref()})
   end
 
   defp trace_after(before, babel, data) do
