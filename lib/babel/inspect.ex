@@ -34,6 +34,8 @@ end
 defimpl Inspect, for: Babel.Pipeline do
   import Inspect.Algebra
 
+  alias Babel.Builtin
+
   def inspect(%Babel.Pipeline{} = pipeline, opts) do
     name =
       if pipeline.name do
@@ -56,22 +58,6 @@ defimpl Inspect, for: Babel.Pipeline do
 
   defp steps(%Babel.Pipeline{reversed_steps: reversed_steps}, opts) do
     Enum.reduce(reversed_steps, [], fn
-      %Babel.Step{} = step, list ->
-        inspected_step = to_doc(step, opts)
-
-        pipeline_step =
-          if chainable?(step) do
-            inspected_step
-          else
-            color(
-              concat([color("Babel", :atom, opts), ".chain(", inspected_step, ")"]),
-              :call,
-              opts
-            )
-          end
-
-        [concat([break(), color("|> ", :operator, opts), pipeline_step]) | list]
-
       %Babel.Pipeline{} = pipeline, list ->
         [
           concat([
@@ -91,6 +77,22 @@ defimpl Inspect, for: Babel.Pipeline do
           ])
           | list
         ]
+
+      applicable, list ->
+        inspected_step = to_doc(applicable, opts)
+
+        pipeline_step =
+          if chainable?(applicable) do
+            inspected_step
+          else
+            color(
+              concat([color("Babel", :atom, opts), ".chain(", inspected_step, ")"]),
+              :call,
+              opts
+            )
+          end
+
+        [concat([break(), color("|> ", :operator, opts), pipeline_step]) | list]
     end)
   end
 
@@ -107,8 +109,9 @@ defimpl Inspect, for: Babel.Pipeline do
     then
     try
   ]a
-  defp chainable?(%Babel.Step{name: {name, _args}}), do: name in @chainable
-  defp chainable?(_), do: false
+  defp chainable?(babel) do
+    Builtin.builtin?(babel) and Builtin.name_of_builtin!(babel) in @chainable
+  end
 
   defp on_error(%Babel.Pipeline{on_error: on_error}, opts) do
     if on_error do
@@ -137,42 +140,6 @@ defimpl Inspect, for: Babel.Pipeline.OnError do
       :call,
       opts
     )
-  end
-end
-
-defimpl Inspect, for: Babel.Step do
-  import Inspect.Algebra
-
-  def inspect(%Babel.Step{} = step, opts) do
-    color(concat([color("Babel", :atom, opts), ".", call(step, opts)]), :call, opts)
-  end
-
-  defp call(%Babel.Step{} = step, opts) do
-    if Babel.Builtin.builtin?(step) do
-      {action, args} = step.name
-
-      concat(to_string(action), arguments(args, opts))
-    else
-      color(
-        concat([
-          color("Step", :atom, opts),
-          ".new(",
-          break(""),
-          to_doc(step.name, opts),
-          ",",
-          break(),
-          to_doc(step.function, opts),
-          break(""),
-          ")"
-        ]),
-        :call,
-        opts
-      )
-    end
-  end
-
-  defp arguments(args, opts) do
-    container_doc("(", List.wrap(args), ")", opts, &to_doc(&1, &2))
   end
 end
 
@@ -269,8 +236,8 @@ defimpl Inspect, for: Babel.Trace do
     Inspect.Babel.Pipeline.OnError.inspect(on_error, opts)
   end
 
-  defp babel(%Babel.Step{} = step, opts) do
-    Inspect.Babel.Step.inspect(step, opts)
+  defp babel(applicable, opts) do
+    to_doc(applicable, opts)
   end
 
   defp nested(%{nested: []}, _opts), do: empty()
@@ -307,7 +274,11 @@ defimpl Inspect, for: Babel.Trace do
     no_breaks(concat(["|=< ", to_doc(input, %{opts | limit: 5})]))
   end
 
-  defp output(%{output: output}, opts), do: output(output, opts)
+  defp output(%Babel.Trace{} = trace, opts) do
+    trace
+    |> Babel.Trace.result()
+    |> output(opts)
+  end
 
   defp output(output, opts) do
     value =

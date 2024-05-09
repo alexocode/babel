@@ -3,64 +3,6 @@ defmodule Babel.InspectTest do
 
   require Babel
 
-  describe "Inspect, for: Babel.Step" do
-    test "from Babel.Builtin" do
-      step_and_inspect = %{
-        Babel.identity() => "Babel.identity()",
-        Babel.const(:value) => "Babel.const(:value)",
-        Babel.fetch("foo") => "Babel.fetch(\"foo\")",
-        Babel.fetch(["foo", :bar]) => "Babel.fetch([\"foo\", :bar])",
-        Babel.get("foo", :default) => "Babel.get(\"foo\", :default)",
-        Babel.cast(:boolean) => "Babel.cast(:boolean)",
-        Babel.into([Babel.const(0)]) => "Babel.into([Babel.const(0)])",
-        Babel.call(List, :to_string) => "Babel.call(List, :to_string, [])"
-      }
-
-      for {step, inspect} <- step_and_inspect do
-        assert_inspects_as(step, inspect)
-      end
-    end
-
-    test "Babel.then" do
-      function = fn _ -> :stuff end
-      step = Babel.then(function)
-
-      assert_inspects_as(step, "Babel.then(#{inspect(function)})")
-
-      step = Babel.then(:my_name, function)
-
-      assert_inspects_as(step, "Babel.then(:my_name, #{inspect(function)})")
-    end
-
-    test "Babel.match" do
-      chooser = fn _ -> Babel.identity() end
-      step = Babel.match(chooser)
-
-      assert_inspects_as(step, "Babel.match(#{inspect(chooser)})")
-    end
-
-    test "Babel.map" do
-      step = Babel.map(Babel.identity())
-
-      assert_inspects_as(step, "Babel.map(Babel.identity())")
-    end
-
-    test "Babel.flat_map" do
-      mapper = fn _ -> Babel.identity() end
-      step = Babel.flat_map(mapper)
-
-      assert_inspects_as(step, "Babel.flat_map(#{inspect(mapper)})")
-    end
-
-    test "Babel.Step.new" do
-      name = :my_cool_step
-      function = fn _ -> :my_cool_function end
-      step = Babel.Step.new(name, function)
-
-      assert_inspects_as(step, "Babel.Step.new(:my_cool_step, #{inspect(function)})")
-    end
-  end
-
   describe "Inspect, for: Babel.Pipeline" do
     test "without name" do
       pipeline =
@@ -158,7 +100,7 @@ defmodule Babel.InspectTest do
     test "renders the step and the result for the given data" do
       step = Babel.into(%{nested: %{map: Babel.fetch("value1")}})
       data = %{"value1" => :super_cool}
-      trace = Babel.Trace.apply(step, data)
+      trace = Babel.trace(step, data)
 
       assert_inspects_as(trace, [
         ~s'Babel.Trace<OK>{',
@@ -178,7 +120,7 @@ defmodule Babel.InspectTest do
     test "renders an ERROR state when the result is an error" do
       step = Babel.fail(:some_reason)
       data = %{}
-      trace = Babel.Trace.apply(step, data)
+      trace = Babel.trace(step, data)
 
       assert_inspects_as(trace, [
         "Babel.Trace<ERROR>{",
@@ -207,7 +149,7 @@ defmodule Babel.InspectTest do
         ]
       }
 
-      trace = Babel.Trace.apply(pipeline, data)
+      trace = Babel.trace(pipeline, data)
 
       assert_inspects_as(
         trace,
@@ -252,7 +194,7 @@ defmodule Babel.InspectTest do
 
       data = {:invalid, "data"}
 
-      trace = Babel.Trace.apply(pipeline, data)
+      trace = Babel.trace(pipeline, data)
 
       assert_inspects_as(trace, [
         ~s'Babel.Trace<OK>{',
