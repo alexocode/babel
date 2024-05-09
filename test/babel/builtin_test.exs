@@ -15,21 +15,21 @@ defmodule Babel.BuiltinTest do
   describe "is_builtin/1" do
     test "returns true for all core steps" do
       core_steps = [
-        Builtin.identity(),
-        Builtin.const(:stuff),
-        Builtin.fetch("path"),
-        Builtin.get("path", :default),
-        Builtin.cast(:integer),
-        Builtin.cast(:float),
-        Builtin.cast(:boolean),
-        Builtin.into(%{}),
         Builtin.call(List, :to_string, []),
-        Builtin.match(fn _ -> Builtin.identity() end),
-        Builtin.map(Builtin.identity()),
-        Builtin.flat_map(fn _ -> Builtin.identity() end),
+        Builtin.cast(:boolean),
+        Builtin.cast(:float),
+        Builtin.cast(:integer),
+        Builtin.const(:stuff),
         Builtin.fail(:some_reason),
-        Builtin.try([Babel.fail(:foobar), Babel.const(:baz)]),
-        Builtin.then(:some_name, fn _ -> :value end)
+        Builtin.fetch("path"),
+        Builtin.flat_map(fn _ -> Builtin.identity() end),
+        Builtin.get("path", :default),
+        Builtin.identity(),
+        Builtin.into(%{}),
+        Builtin.map(Builtin.identity()),
+        Builtin.match(fn _ -> Builtin.identity() end),
+        Builtin.then(:some_name, fn _ -> :value end),
+        Builtin.try([Babel.fail(:foobar), Babel.const(:baz)])
       ]
 
       for step <- core_steps do
@@ -46,94 +46,36 @@ defmodule Babel.BuiltinTest do
     end
   end
 
-  describe "id/0" do
-    test "returns the value it's applied to" do
-      step = Builtin.identity()
+  describe "call/3" do
+    test "invokes the expected function" do
+      defmodule MyCoolModule do
+        def my_cool_function(value, returned) do
+          {value, returned}
+        end
+      end
+
+      returned = make_ref()
+      step = Builtin.call(MyCoolModule, :my_cool_function, [returned])
       data = %{value: make_ref()}
 
-      assert apply!(step, data) == data
-    end
-  end
-
-  describe "const/1" do
-    test "always returns the value given when creating" do
-      value = make_ref()
-      step = Builtin.const(value)
-      data = %{value: make_ref()}
-
-      assert apply!(step, data) == value
-      assert apply!(step, data) == value
-    end
-  end
-
-  describe "fetch/1" do
-    test "returns the value at the given path" do
-      step = Builtin.fetch(:value)
-      data = %{value: make_ref()}
-
-      assert apply!(step, data) == data.value
-
-      step = Builtin.fetch([:value, :nested])
-      data = %{value: %{nested: make_ref()}}
-
-      assert apply!(step, data) == data.value.nested
-
-      step = Builtin.fetch([:value, 2, :nested])
-
-      data = %{
-        value: [
-          %{nested: make_ref()},
-          %{nested: make_ref()},
-          %{nested: make_ref()},
-          %{nested: make_ref()},
-          %{nested: make_ref()}
-        ]
-      }
-
-      assert apply!(step, data) == get_in(data, [:value, Access.at(2), :nested])
+      assert apply!(step, data) == {data, returned}
     end
 
-    test "returns an error when a key cannot be found" do
-      step = Builtin.fetch([:value, "nested"])
-      data = %{value: %{nested: "nope"}}
+    test "returns whatever error the function returns" do
+      step = Builtin.call(Map, :fetch, [:something])
+      assert {:error, :unknown} = apply(step, %{})
 
-      assert {:error, {:not_found, "nested"}} = apply(step, data)
-    end
-  end
+      step = Builtin.call(NaiveDateTime, :from_iso8601, [])
+      assert {:error, :invalid_format} = apply(step, "not a date")
 
-  describe "get/2" do
-    test "returns the value at the given path" do
-      step = Builtin.get(:value, :default)
-      data = %{value: make_ref()}
-
-      assert apply!(step, data) == data.value
-
-      step = Builtin.get([:value, :nested], :default)
-      data = %{value: %{nested: make_ref()}}
-
-      assert apply!(step, data) == data.value.nested
-
-      step = Builtin.get([:value, 2, :nested], :default)
-
-      data = %{
-        value: [
-          %{nested: make_ref()},
-          %{nested: make_ref()},
-          %{nested: make_ref()},
-          %{nested: make_ref()},
-          %{nested: make_ref()}
-        ]
-      }
-
-      assert apply!(step, data) == get_in(data, [:value, Access.at(2), :nested])
+      step = Builtin.call(Map, :fetch!, [:something])
+      assert {:error, %KeyError{key: :something}} = apply(step, %{})
     end
 
-    test "returns the given default a key cannot be found" do
-      default = make_ref()
-      step = Builtin.get([:value, "nested"], default)
-      data = %{value: %{nested: "nope"}}
-
-      assert apply!(step, data) == default
+    test "raises an ArgumentError during construction if the given function doesn't exist" do
+      assert_raise ArgumentError, "cannot call missing function `DoesNot.exist/1`", fn ->
+        Builtin.call(DoesNot, :exist, [])
+      end
     end
   end
 
@@ -211,6 +153,130 @@ defmodule Babel.BuiltinTest do
     end
   end
 
+  describe "const/1" do
+    test "always returns the value given when creating" do
+      value = make_ref()
+      step = Builtin.const(value)
+      data = %{value: make_ref()}
+
+      assert apply!(step, data) == value
+      assert apply!(step, data) == value
+    end
+  end
+
+  describe "fail/1" do
+    test "always fails with the given reason" do
+      reason = {:some_reason, make_ref()}
+      step = Builtin.fail(reason)
+
+      assert apply(step, nil) == {:error, reason}
+      assert apply(step, %{}) == {:error, reason}
+    end
+
+    test "allows to pass a function to construct the error reason" do
+      ref = make_ref()
+      step = Builtin.fail(&{:some_reason, ref, &1})
+
+      assert apply(step, nil) == {:error, {:some_reason, ref, nil}}
+      assert apply(step, %{}) == {:error, {:some_reason, ref, %{}}}
+    end
+  end
+
+  describe "fetch/1" do
+    test "returns the value at the given path" do
+      step = Builtin.fetch(:value)
+      data = %{value: make_ref()}
+
+      assert apply!(step, data) == data.value
+
+      step = Builtin.fetch([:value, :nested])
+      data = %{value: %{nested: make_ref()}}
+
+      assert apply!(step, data) == data.value.nested
+
+      step = Builtin.fetch([:value, 2, :nested])
+
+      data = %{
+        value: [
+          %{nested: make_ref()},
+          %{nested: make_ref()},
+          %{nested: make_ref()},
+          %{nested: make_ref()},
+          %{nested: make_ref()}
+        ]
+      }
+
+      assert apply!(step, data) == get_in(data, [:value, Access.at(2), :nested])
+    end
+
+    test "returns an error when a key cannot be found" do
+      step = Builtin.fetch([:value, "nested"])
+      data = %{value: %{nested: "nope"}}
+
+      assert {:error, {:not_found, "nested"}} = apply(step, data)
+    end
+  end
+
+  describe "flat_map/2" do
+    test "allows to pass a function that returns a step which gets evaluated immediately" do
+      mapping_function = fn element -> Builtin.then(&{:mapped, element, &1}) end
+      step = Builtin.flat_map(mapping_function)
+
+      assert {_traces, {:ok, mapped}} = Step.apply(step, [1, 2, 3])
+
+      assert mapped == [
+               {:mapped, 1, 1},
+               {:mapped, 2, 2},
+               {:mapped, 3, 3}
+             ]
+    end
+  end
+
+  describe "get/2" do
+    test "returns the value at the given path" do
+      step = Builtin.get(:value, :default)
+      data = %{value: make_ref()}
+
+      assert apply!(step, data) == data.value
+
+      step = Builtin.get([:value, :nested], :default)
+      data = %{value: %{nested: make_ref()}}
+
+      assert apply!(step, data) == data.value.nested
+
+      step = Builtin.get([:value, 2, :nested], :default)
+
+      data = %{
+        value: [
+          %{nested: make_ref()},
+          %{nested: make_ref()},
+          %{nested: make_ref()},
+          %{nested: make_ref()},
+          %{nested: make_ref()}
+        ]
+      }
+
+      assert apply!(step, data) == get_in(data, [:value, Access.at(2), :nested])
+    end
+
+    test "returns the given default a key cannot be found" do
+      default = make_ref()
+      step = Builtin.get([:value, "nested"], default)
+      data = %{value: %{nested: "nope"}}
+
+      assert apply!(step, data) == default
+    end
+  end
+
+  describe "identity/0" do
+    test "returns the value it's applied to" do
+      step = Builtin.identity()
+      data = %{value: make_ref()}
+
+      assert apply!(step, data) == data
+    end
+  end
+
   describe "into/1" do
     test "maps the values into the data structure as expected" do
       data = %{value1: make_ref(), value2: make_ref(), value3: make_ref(), value4: make_ref()}
@@ -239,36 +305,18 @@ defmodule Babel.BuiltinTest do
     end
   end
 
-  describe "call/3" do
-    test "invokes the expected function" do
-      defmodule MyCoolModule do
-        def my_cool_function(value, returned) do
-          {value, returned}
-        end
-      end
+  describe "map/2" do
+    test "returns a step that applies the given step to each element of an enumerable" do
+      mapping_step = Builtin.then(&{:mapped, &1})
+      step = Builtin.map(mapping_step)
 
-      returned = make_ref()
-      step = Builtin.call(MyCoolModule, :my_cool_function, [returned])
-      data = %{value: make_ref()}
+      assert {_traces, {:ok, mapped}} = Step.apply(step, [1, 2, 3])
 
-      assert apply!(step, data) == {data, returned}
-    end
-
-    test "returns whatever error the function returns" do
-      step = Builtin.call(Map, :fetch, [:something])
-      assert {:error, :unknown} = apply(step, %{})
-
-      step = Builtin.call(NaiveDateTime, :from_iso8601, [])
-      assert {:error, :invalid_format} = apply(step, "not a date")
-
-      step = Builtin.call(Map, :fetch!, [:something])
-      assert {:error, %KeyError{key: :something}} = apply(step, %{})
-    end
-
-    test "raises an ArgumentError during construction if the given function doesn't exist" do
-      assert_raise ArgumentError, "cannot call missing function `DoesNot.exist/1`", fn ->
-        Builtin.call(DoesNot, :exist, [])
-      end
+      assert mapped == [
+               {:mapped, 1},
+               {:mapped, 2},
+               {:mapped, 3}
+             ]
     end
   end
 
@@ -285,51 +333,27 @@ defmodule Babel.BuiltinTest do
     end
   end
 
-  describe "map/2" do
-    test "returns a step that applies the given step to each element of an enumerable" do
-      mapping_step = Builtin.then(&{:mapped, &1})
-      step = Builtin.map(mapping_step)
-
-      assert {_traces, {:ok, mapped}} = Step.apply(step, [1, 2, 3])
-
-      assert mapped == [
-               {:mapped, 1},
-               {:mapped, 2},
-               {:mapped, 3}
-             ]
-    end
-  end
-
-  describe "flat_map/2" do
-    test "allows to pass a function that returns a step which gets evaluated immediately" do
-      mapping_function = fn element -> Builtin.then(&{:mapped, element, &1}) end
-      step = Builtin.flat_map(mapping_function)
-
-      assert {_traces, {:ok, mapped}} = Step.apply(step, [1, 2, 3])
-
-      assert mapped == [
-               {:mapped, 1, 1},
-               {:mapped, 2, 2},
-               {:mapped, 3, 3}
-             ]
-    end
-  end
-
-  describe "fail/1" do
-    test "always fails with the given reason" do
-      reason = {:some_reason, make_ref()}
-      step = Builtin.fail(reason)
-
-      assert apply(step, nil) == {:error, reason}
-      assert apply(step, %{}) == {:error, reason}
-    end
-
-    test "allows to pass a function to construct the error reason" do
+  describe "then/2" do
+    test "invokes the given function" do
       ref = make_ref()
-      step = Builtin.fail(&{:some_reason, ref, &1})
+      step = Builtin.then(:custom_name, &{ref, &1})
+      data = %{value: make_ref()}
 
-      assert apply(step, nil) == {:error, {:some_reason, ref, nil}}
-      assert apply(step, %{}) == {:error, {:some_reason, ref, %{}}}
+      assert apply!(step, data) == {ref, data}
+    end
+
+    test "sets the given name on the created step" do
+      ref = make_ref()
+      step = Builtin.then({:my_cool_name, ref}, &Function.identity/1)
+
+      assert step.name == {:then, [{:my_cool_name, ref}, &Function.identity/1]}
+    end
+
+    test "omits a nil name from the generated step name" do
+      step = Builtin.then(&Function.identity/1)
+
+      assert step == Builtin.then(nil, &Function.identity/1)
+      assert step.name == {:then, [&Function.identity/1]}
     end
   end
 
@@ -414,30 +438,6 @@ defmodule Babel.BuiltinTest do
         )
 
       assert apply!(step, nil) == fallback
-    end
-  end
-
-  describe "then/2" do
-    test "invokes the given function" do
-      ref = make_ref()
-      step = Builtin.then(:custom_name, &{ref, &1})
-      data = %{value: make_ref()}
-
-      assert apply!(step, data) == {ref, data}
-    end
-
-    test "sets the given name on the created step" do
-      ref = make_ref()
-      step = Builtin.then({:my_cool_name, ref}, &Function.identity/1)
-
-      assert step.name == {:then, [{:my_cool_name, ref}, &Function.identity/1]}
-    end
-
-    test "omits a nil name from the generated step name" do
-      step = Builtin.then(&Function.identity/1)
-
-      assert step == Builtin.then(nil, &Function.identity/1)
-      assert step.name == {:then, [&Function.identity/1]}
     end
   end
 
