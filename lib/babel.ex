@@ -27,6 +27,24 @@ defmodule Babel do
   @typedoc "TODO: Better docs"
   @type path :: Babel.Builtin.path()
 
+  @doc """
+  Returns true when the given value is a `Babel.Pipeline` or `Babel.Step`.
+
+  ## Examples
+
+      iex> Babel.is_babel(Babel.identity())
+      true
+
+      iex> pipeline = :my_pipeline |> Babel.begin() |> Babel.fetch([:foo, :bar]) |> Babel.map(Babel.cast(:integer))
+      iex> Babel.is_babel(pipeline)
+      true
+
+      iex> Babel.is_babel(:something)
+      false
+
+      iex> Babel.is_babel("different")
+      false
+  """
   defguard is_babel(babel) when is_struct(babel, Pipeline) or is_struct(babel, Step)
 
   defmacro pipeline(name, [{:do, do_block} | maybe_else]) do
