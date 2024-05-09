@@ -25,7 +25,7 @@ defmodule Babel do
   @type name :: term
 
   @typedoc "TODO: Better docs"
-  @type path :: Builtin.path()
+  @type path :: Babel.Builtin.path()
 
   defguard is_babel(babel) when is_struct(babel, Pipeline) or is_struct(babel, Step)
 

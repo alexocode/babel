@@ -13,6 +13,7 @@ defmodule Babel.Step do
   @type name :: Babel.name()
 
   @type func :: func(any, any)
+  @type func(output) :: func(any, output)
   @type func(input, output) :: (input -> Babel.result(output) | Babel.Applicable.result(output))
 
   defguard is_step_function(function) when is_function(function, 1)

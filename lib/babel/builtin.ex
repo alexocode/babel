@@ -52,7 +52,6 @@ defmodule Babel.Builtin do
       iex> Babel.Builtin.is_builtin_name(:not_a_core_step)
       false
   """
-  @spec is_builtin_name(atom | tuple | any) :: boolean
   defguard is_builtin_name(name)
            when (is_atom(name) and name in @builtin_names) or
                   (is_tuple(name) and tuple_size(name) == 2 and elem(name, 0) in @builtin_names and
@@ -72,7 +71,6 @@ defmodule Babel.Builtin do
       iex> Babel.Builtin.is_builtin(Babel.Step.new(:some_weird_name, fn _ -> :do_stuff end))
       false
   """
-  @spec is_builtin(Step.t() | any) :: boolean
   defguard is_builtin(step) when is_struct(step, Step) and is_builtin_name(step.name)
 
   @doc "Determines whether or not the step is a known core step."

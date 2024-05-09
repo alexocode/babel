@@ -21,8 +21,8 @@ defmodule Babel.Pipeline do
   @type on_error(output) :: Babel.Step.func(Error.t(), output)
 
   @spec new(step | [step]) :: t
-  @spec new(name, step | [step]) :: t
-  @spec new(name, on_error, step | [step]) :: t
+  @spec new(name | nil, step | [step]) :: t
+  @spec new(name | nil, on_error | nil, step | [step]) :: t
   def new(name \\ nil, on_error \\ nil, step_or_steps)
 
   def new(nil, nil, %__MODULE__{} = t), do: t
