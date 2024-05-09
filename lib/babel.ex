@@ -47,6 +47,26 @@ defmodule Babel do
   """
   defguard is_babel(babel) when is_struct(babel, Pipeline) or is_struct(babel, Step)
 
+  @doc """
+  Returns true when the given value is a `Babel.Pipeline` or `Babel.Step`.
+
+  ## Examples
+
+      iex> Babel.babel?(Babel.identity())
+      true
+
+      iex> pipeline = :my_pipeline |> Babel.begin() |> Babel.fetch([:foo, :bar]) |> Babel.map(Babel.cast(:integer))
+      iex> Babel.babel?(pipeline)
+      true
+
+      iex> Babel.babel?(:something)
+      false
+
+      iex> Babel.babel?("different")
+      false
+  """
+  def babel?(babel), do: is_babel(babel)
+
   defmacro pipeline(name, [{:do, do_block} | maybe_else]) do
     case maybe_else do
       [] ->
