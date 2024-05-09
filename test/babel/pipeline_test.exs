@@ -2,6 +2,7 @@ defmodule Babel.PipelineTest do
   use ExUnit.Case, async: true
 
   import Babel.Test.Factory
+  import Kernel, except: [apply: 2]
 
   alias Babel.Error
   alias Babel.Pipeline
@@ -94,7 +95,11 @@ defmodule Babel.PipelineTest do
       pipeline = pipeline(steps: [])
       data = data()
 
-      assert Pipeline.apply(pipeline, data) == {[], {:ok, data}}
+      assert apply(pipeline, data) == %Trace{
+               babel: pipeline,
+               input: data,
+               output: {:ok, data}
+             }
     end
 
     test "applies all steps sequentially" do
@@ -106,10 +111,14 @@ defmodule Babel.PipelineTest do
       pipeline = pipeline(steps: [step1, step2, step3, step4])
       data = [:begin]
 
-      assert {traces, {:ok, list}} = Pipeline.apply(pipeline, data)
+      assert %Trace{} = trace = apply(pipeline, data)
+      assert trace.babel == pipeline
+      assert trace.input == data
+      assert {:ok, list} = trace.output
+
       assert list == [:step4, :step3, :step2, :step1, :begin]
 
-      assert traces == [
+      assert trace.nested == [
                trace_after([], step1, data),
                trace_after([step1], step2, data),
                trace_after([step1, step2], step3, data),
@@ -127,7 +136,10 @@ defmodule Babel.PipelineTest do
       pipeline = pipeline(steps: [step1, step2, step3])
       data = [:begin]
 
-      assert {traces, {:ok, list}} = Pipeline.apply(pipeline, data)
+      assert %Trace{} = trace = apply(pipeline, data)
+      assert trace.babel == pipeline
+      assert trace.input == data
+      assert {:ok, list} = trace.output
 
       assert list == [
                :step3,
@@ -137,7 +149,7 @@ defmodule Babel.PipelineTest do
                :begin
              ]
 
-      assert traces == [
+      assert trace.nested == [
                trace_after([], step1, data),
                trace_after([step1], step2, data),
                trace_after([step1, step2], step3, data)
@@ -152,10 +164,12 @@ defmodule Babel.PipelineTest do
       pipeline = pipeline(steps: [step1, step2, step3], on_error: nil)
       data = [:begin]
 
-      assert {traces, result} = Pipeline.apply(pipeline, data)
-      assert result == {:error, [:step1, :begin]}
+      assert %Trace{} = trace = apply(pipeline, data)
+      assert trace.babel == pipeline
+      assert trace.input == data
+      assert trace.output == {:error, [:step1, :begin]}
 
-      assert traces == [
+      assert trace.nested == [
                trace_after([], step1, data),
                trace_after([step1], step2, data)
              ]
@@ -174,10 +188,12 @@ defmodule Babel.PipelineTest do
 
       data = [:begin]
 
-      assert {traces, result} = Pipeline.apply(pipeline, data)
-      assert result == {:ok, [:on_error, :step1, :begin]}
+      assert %Trace{} = trace = apply(pipeline, data)
+      assert trace.babel == pipeline
+      assert trace.input == data
+      assert trace.output == {:ok, [:on_error, :step1, :begin]}
 
-      assert traces == [
+      assert trace.nested == [
                trace_after([], step1, data),
                trace_after([step1], step2, data),
                trace_for_on_error(pipeline, data)
@@ -284,11 +300,19 @@ defmodule Babel.PipelineTest do
     end
   end
 
+  defp apply(%Pipeline{} = pipeline, %Babel.Context{} = context) do
+    Pipeline.apply(pipeline, context)
+  end
+
+  defp apply(%Pipeline{} = pipeline, data) do
+    Pipeline.apply(pipeline, context(data))
+  end
+
   defp trace_after(before, babel, data) do
     trace_for(babel, Enum.reduce(before, data, &Babel.apply!/2))
   end
 
-  defp trace_for(babel, data), do: Trace.apply(babel, data)
+  defp trace_for(babel, data), do: Babel.trace(babel, data)
 
   defp trace_for_on_error(%Pipeline{} = pipeline, data) do
     error =
@@ -301,13 +325,6 @@ defmodule Babel.PipelineTest do
         end
       end)
 
-    {nested, output} = Pipeline.OnError.apply(pipeline.on_error, error)
-
-    %Trace{
-      babel: pipeline.on_error,
-      input: {:error, error.reason},
-      output: output,
-      nested: nested
-    }
+    Pipeline.OnError.recover(pipeline.on_error, error)
   end
 end

@@ -2,6 +2,8 @@ defmodule Babel.Builtin.Then do
   @moduledoc false
   use Babel.Step
 
+  require Babel.Utils
+
   @enforce_keys [:function]
   defstruct [:name, :function]
 
@@ -11,7 +13,9 @@ defmodule Babel.Builtin.Then do
 
   @impl Babel.Step
   def apply(%__MODULE__{function: function}, %Babel.Context{current: input}) do
-    Babel.Utils.safe_apply(function, input)
+    Babel.Utils.trace_try do
+      function.(input)
+    end
   end
 
   @impl Babel.Step

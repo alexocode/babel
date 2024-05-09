@@ -1,6 +1,10 @@
 defmodule Babel.Test.Factory do
   require Babel
 
+  def context(data \\ data()) do
+    Babel.Context.new(data)
+  end
+
   def data(extras \\ []) do
     Enum.into(extras, %{value: make_ref()})
   end

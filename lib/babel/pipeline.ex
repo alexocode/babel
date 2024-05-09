@@ -1,6 +1,7 @@
 defmodule Babel.Pipeline do
   alias __MODULE__.OnError
   alias Babel.Error
+  alias Babel.Context
   alias Babel.Trace
 
   @type t() :: t(any, any)
@@ -44,38 +45,39 @@ defmodule Babel.Pipeline do
     }
   end
 
-  @spec apply(t(input, output), Babel.data()) :: Babel.Applicable.result(output)
-        when input: Babel.data(), output: any
-  def apply(%__MODULE__{} = pipeline, data) do
+  @spec apply(t(input, output), Context.t(input)) :: Trace.t(output) when input: any, output: any
+  def apply(%__MODULE__{} = pipeline, %Context{} = context) do
     {reversed_traces, result} =
       pipeline.reversed_steps
       |> Enum.reverse()
-      |> Enum.reduce_while({[], {:ok, data}}, fn applicable, {traces, {:ok, data}} ->
-        trace = Trace.apply(applicable, data)
-        traces = [trace | traces]
+      |> Enum.reduce_while(
+        {[], {:ok, context.current}},
+        fn applicable, {traces, {:ok, current}} ->
+          trace = Babel.Applicable.apply(applicable, %Context{context | current: current})
+          traces = [trace | traces]
+          result = Trace.result(trace)
 
-        cond do
-          Trace.ok?(trace) ->
-            {:cont, {traces, trace.output}}
+          cond do
+            Trace.ok?(trace) ->
+              {:cont, {traces, result}}
 
-          is_nil(pipeline.on_error) ->
-            {:halt, {traces, trace.output}}
+            is_nil(pipeline.on_error) ->
+              {:halt, {traces, result}}
 
-          true ->
-            {nested, result} = OnError.apply(pipeline.on_error, Error.new(trace))
+            true ->
+              on_error_trace = OnError.recover(pipeline.on_error, Error.new(trace))
 
-            on_error_trace = %Trace{
-              babel: pipeline.on_error,
-              input: trace.output,
-              output: result,
-              nested: nested
-            }
-
-            {:halt, {[on_error_trace | traces], on_error_trace.output}}
+              {:halt, {[on_error_trace | traces], Trace.result(on_error_trace)}}
+          end
         end
-      end)
+      )
 
-    {Enum.reverse(reversed_traces), result}
+    %Trace{
+      babel: pipeline,
+      input: context.current,
+      output: result,
+      nested: Enum.reverse(reversed_traces)
+    }
   end
 
   @spec chain(t(input, in_between), t(in_between, output)) :: t(input, output)

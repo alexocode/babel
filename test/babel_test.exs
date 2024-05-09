@@ -192,11 +192,11 @@ defmodule BabelTest do
   end
 
   describe "trace/2" do
-    test "delegates to BabelTrace.apply/2" do
+    test "delegates to Babel.Applicable.apply/2" do
       step = Babel.identity()
       data = %{value: make_ref()}
 
-      assert Babel.trace(step, data) == Babel.Trace.apply(step, data)
+      assert Babel.trace(step, data) == Babel.Applicable.apply(step, Babel.Context.new(data))
     end
   end
 

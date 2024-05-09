@@ -12,7 +12,7 @@ defmodule Babel.Builtin.Map do
   @impl Babel.Step
   def apply(%__MODULE__{applicable: applicable} = step, %Babel.Context{current: enum} = context) do
     {nested, result} =
-      Utils.map_nested(
+      Babel.Utils.map_nested(
         enum,
         &Babel.Applicable.apply(applicable, %Babel.Context{context | current: &1})
       )

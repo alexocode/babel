@@ -1,22 +1,20 @@
 defmodule Babel.Builtin do
   @moduledoc false
 
-  alias Babel.Step
-
   @builtin [
-    Step.Call,
-    Step.Cast,
-    Step.Const,
-    Step.Fail,
-    Step.Fetch,
-    Step.FlatMap,
-    Step.Get,
-    Step.Identity,
-    Step.Into,
-    Step.Map,
-    Step.Match,
-    Step.Then,
-    Step.Try
+    __MODULE__.Call,
+    __MODULE__.Cast,
+    __MODULE__.Const,
+    __MODULE__.Fail,
+    __MODULE__.Fetch,
+    __MODULE__.FlatMap,
+    __MODULE__.Get,
+    __MODULE__.Identity,
+    __MODULE__.Into,
+    __MODULE__.Map,
+    __MODULE__.Match,
+    __MODULE__.Then,
+    __MODULE__.Try
   ]
 
   @builtin_names Enum.map(@builtin, fn module ->
@@ -30,8 +28,14 @@ defmodule Babel.Builtin do
                    {module, name}
                  end)
 
-  defguard is_builtin(step) when is_struct(step) and step.__struct__ in @builtin
-  defguard is_builtin_name(atom) when is_atom(atom) and unquote(Keyword.values(@builtin_names))
+  defguard struct_module(thing)
+           when :erlang.is_map(thing) and :erlang.is_map_key(:__struct__, thing) and
+                  :erlang.map_get(:__struct__, thing)
+
+  defguard is_builtin(step) when struct_module(step) in @builtin
+
+  defguard is_builtin_name(atom)
+           when is_atom(atom) and atom in unquote(Keyword.values(@builtin_names))
 
   def builtin?(thing), do: is_builtin(thing)
 

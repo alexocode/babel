@@ -2,6 +2,8 @@ defmodule Babel.Builtin.Call do
   @moduledoc false
   use Babel.Step
 
+  require Babel.Utils
+
   @enforce_keys [:module, :function]
   defstruct [:module, :function, {:extra_args, []}]
 
@@ -17,7 +19,9 @@ defmodule Babel.Builtin.Call do
 
   @impl Babel.Step
   def apply(%__MODULE__{} = call, %Babel.Context{current: input}) do
-    Kernel.apply(call.module, call.function, [input | call.extra_args])
+    Babel.Utils.trace_try do
+      Kernel.apply(call.module, call.function, [input | call.extra_args])
+    end
   end
 
   @impl Babel.Step

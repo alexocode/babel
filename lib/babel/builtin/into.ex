@@ -10,12 +10,12 @@ defmodule Babel.Builtin.Into do
   end
 
   @impl Babel.Step
-  def apply(%__MODULE__{intoable: intoable} = step, %Babel.Context{current: data}) do
-    {traces, output} = Babel.Intoable.into(intoable, data)
+  def apply(%__MODULE__{intoable: intoable} = step, %Babel.Context{} = context) do
+    {traces, output} = Babel.Intoable.into(intoable, context)
 
     %Babel.Trace{
       babel: step,
-      input: data,
+      input: context.current,
       output: output,
       nested: traces
     }

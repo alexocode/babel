@@ -28,7 +28,7 @@ defmodule Babel do
   @type path :: term | [term]
 
   @doc """
-  Returns true when the given value is a `Babel.Pipeline` or a builtin `Babel.Step`.
+  Returns true when the given value is a `Babel.Pipeline` or a built-in `Babel.Step`.
 
   ## Examples
 
@@ -45,10 +45,11 @@ defmodule Babel do
       iex> Babel.is_babel("different")
       false
   """
-  defguard is_babel(babel) when is_struct(babel, Pipeline) or Builtin.is_builtin(babel)
+  defguard is_babel(babel)
+           when Builtin.struct_module(babel) == Pipeline or Builtin.is_builtin(babel)
 
   @doc """
-  Returns true when the given value is a `Babel.Pipeline` or `Babel.Step`.
+  Returns true when the given value is a `Babel.Pipeline` or a built-in `Babel.Step`.
 
   ## Examples
 
@@ -87,10 +88,9 @@ defmodule Babel do
   def apply(babel, data) do
     trace = trace(babel, data)
 
-    if Trace.ok?(trace) do
-      trace.output
-    else
-      {:error, Error.new(trace)}
+    case Trace.result(trace) do
+      {:ok, value} -> {:ok, value}
+      {:error, _} -> {:error, Error.new(trace)}
     end
   end
 
@@ -261,7 +261,7 @@ defmodule Babel do
 
   @spec try(applicables :: nonempty_list(t(output))) :: t(output)
         when output: any
-  defdelegate try(applicables), to: Builtin
+  defdelegate try(applicables), to: Builtin.Try, as: :new
 
   @spec try(t(input), applicables :: nonempty_list(t(input, output))) :: t(input, output)
         when input: any, output: any
@@ -271,7 +271,7 @@ defmodule Babel do
 
   @spec try(applicables :: t(output) | nonempty_list(t(output)), default) :: t(output | default)
         when output: any, default: any
-  defdelegate try(applicables, default), to: Builtin
+  defdelegate try(applicables, default), to: Builtin.Try, as: :new
 
   @spec try(
           t(input, output),
