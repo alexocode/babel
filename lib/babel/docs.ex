@@ -1,3 +1,4 @@
+# coveralls-ignore-start
 defmodule Babel.Docs do
   @moduledoc false
 
