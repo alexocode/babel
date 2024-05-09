@@ -1,42 +1,47 @@
 defprotocol Babel.Intoable do
   @fallback_to_any true
 
+  @typedoc "Any type that implements this protocol."
   @type t :: any
 
-  @spec into(t, Babel.data()) :: Babel.Applicable.result(t)
-  def into(t, data)
+  @type result(output) :: {[Babel.Trace.t()], Babel.Step.result(output)}
+
+  @spec into(t, Babel.Context.t()) :: result(t)
+  def into(t, context)
 end
 
 defmodule Babel.Intoable.Utils do
-  def into_each(enum, data) do
-    Babel.Utils.map_and_collapse_to_result(enum, &Babel.Intoable.into(&1, data))
+  def into_each(enum, context) do
+    Babel.Utils.map_nested(enum, &Babel.Intoable.into(&1, context))
   end
 end
 
 defimpl Babel.Intoable, for: Any do
+  import Kernel, except: [apply: 2]
+
   # Faster than doing Babel.Applicable.impl_for/1
-  def into(%struct{} = babel, data) when struct in [Babel.Pipeline, Babel.Step] do
-    trace(babel, data)
+  def into(%struct{} = babel, context) when struct in [Babel.Pipeline, Babel.Step] do
+    apply(babel, context)
   end
 
-  def into(%_{} = struct, data) do
+  def into(%_{} = struct, context) do
     if applicable?(struct) do
-      trace(struct, data)
+      apply(struct, context)
     else
-      into_struct(struct, data)
+      into_struct(struct, context)
     end
   end
 
-  def into(t, data) do
+  def into(t, context) do
     if applicable?(t) do
-      trace(t, data)
+      apply(t, context)
     else
       {[], {:ok, t}}
     end
   end
 
-  defp trace(babel, data) do
-    trace = Babel.Trace.apply(babel, data)
+  defp apply(babel, context) do
+    trace = Babel.Applicable.apply(babel, context)
 
     {[trace], trace.output}
   end
@@ -45,26 +50,26 @@ defimpl Babel.Intoable, for: Any do
     not is_nil(Babel.Applicable.impl_for(t))
   end
 
-  defp into_struct(%module{} = struct, data) do
+  defp into_struct(%module{} = struct, context) do
     map = Map.from_struct(struct)
 
-    with {traces, {:ok, map}} <- Babel.Intoable.into(map, data) do
+    with {traces, {:ok, map}} <- Babel.Intoable.into(map, context) do
       {traces, {:ok, struct(module, map)}}
     end
   end
 end
 
 defimpl Babel.Intoable, for: Map do
-  def into(map, data) do
-    with {traces, {:ok, list}} <- Babel.Intoable.Utils.into_each(map, data) do
+  def into(map, context) do
+    with {traces, {:ok, list}} <- Babel.Intoable.Utils.into_each(map, context) do
       {traces, {:ok, Map.new(list)}}
     end
   end
 end
 
 defimpl Babel.Intoable, for: List do
-  def into(list, data) do
-    Babel.Intoable.Utils.into_each(list, data)
+  def into(list, context) do
+    Babel.Intoable.Utils.into_each(list, context)
   end
 end
 
@@ -72,16 +77,16 @@ defimpl Babel.Intoable, for: Tuple do
   # Pattern matching is a lot faster than the Tuple.to_list/1 version below
   def into({}, _), do: {[], {:ok, {}}}
 
-  def into({t1}, data) do
-    case _into(t1, data) do
+  def into({t1}, context) do
+    case _into(t1, context) do
       {tr_t1, {:ok, t1}} -> {tr_t1, {:ok, {t1}}}
       other -> other
     end
   end
 
-  def into({t1, t2}, data) do
-    {t1_traces, t1_result} = _into(t1, data)
-    {t2_traces, t2_result} = _into(t2, data)
+  def into({t1, t2}, context) do
+    {t1_traces, t1_result} = _into(t1, context)
+    {t2_traces, t2_result} = _into(t2, context)
 
     {
       Enum.concat([t1_traces, t2_traces]),
@@ -94,10 +99,10 @@ defimpl Babel.Intoable, for: Tuple do
     }
   end
 
-  def into({t1, t2, t3}, data) do
-    {t1_traces, t1_result} = _into(t1, data)
-    {t2_traces, t2_result} = _into(t2, data)
-    {t3_traces, t3_result} = _into(t3, data)
+  def into({t1, t2, t3}, context) do
+    {t1_traces, t1_result} = _into(t1, context)
+    {t2_traces, t2_result} = _into(t2, context)
+    {t3_traces, t3_result} = _into(t3, context)
 
     {
       Enum.concat([t1_traces, t2_traces, t3_traces]),
@@ -129,13 +134,13 @@ defimpl Babel.Intoable, for: Tuple do
     }
   end
 
-  def into(tuple, data) do
+  def into(tuple, context) do
     list = Tuple.to_list(tuple)
 
-    with {traces, {:ok, list}} <- Babel.Intoable.Utils.into_each(list, data) do
+    with {traces, {:ok, list}} <- Babel.Intoable.Utils.into_each(list, context) do
       {traces, {:ok, List.to_tuple(list)}}
     end
   end
 
-  defp _into(t, data), do: Babel.Intoable.into(t, data)
+  defp _into(t, context), do: Babel.Intoable.into(t, context)
 end

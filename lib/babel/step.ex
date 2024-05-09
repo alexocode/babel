@@ -1,35 +1,55 @@
 defmodule Babel.Step do
-  import Kernel, except: [apply: 2]
+  @moduledoc """
+  TODO: Write
+  """
 
-  @type t :: t()
-  @type t(output) :: t(term, output)
-  @type t(input, output) :: %__MODULE__{
-          name: name(),
-          function: func(input, output)
-        }
-  defstruct [:function, :name]
+  @typedoc "An implementation of this behaviour."
+  @type t :: t(any)
+  @typedoc "An implementation of this behaviour whose `apply/2` function produces the specified output."
+  @type t(output) :: t(any, output)
+  @typedoc "An implementation of this behaviour whose `apply/2` function accepts the given input and produces the specified output."
+  @type t(_input, _output) :: any
 
-  @typedoc "A term describing what this step does"
-  @type name :: Babel.name()
+  @type result(output) :: output | {:ok, output} | :error | {:error, reason :: any}
+  @type result_or_trace(output) :: result(output) | Babel.Trace.t(output)
 
-  @type func :: func(any, any)
-  @type func(output) :: func(any, output)
-  @type func(input, output) :: (input -> Babel.result(output) | Babel.Applicable.result(output))
+  defmacro __using__(_) do
+    %{module: module} = __CALLER__
 
-  defguard is_step_function(function) when is_function(function, 1)
+    quote do
+      import Kernel, except: [apply: 2]
 
-  @spec new(name, func(input, output)) :: t(input, output) when input: any, output: any
-  def new(name, function) when is_function(function, 1) do
-    %__MODULE__{name: name, function: function}
+      @behaviour Babel.Step
+
+      @impl Babel.Step
+      defdelegate inspect(step, opts), to: Inspect.Any
+
+      defoverridable inspect: 2
+
+      defimpl Babel.Applicable do
+        def apply(step, context) do
+          case unquote(module).apply(step, context) do
+            %Babel.Trace{} = trace ->
+              trace
+
+            result ->
+              %Babel.Trace{
+                babel: step,
+                input: context.current,
+                output: result
+              }
+          end
+        end
+      end
+
+      defimpl Inspect do
+        defdelegate inspect(step, opts), to: unquote(module)
+      end
+    end
   end
 
-  @spec apply(t(input, output), Babel.data()) :: Babel.Applicable.result(output)
-        when input: any, output: any
-  def apply(%__MODULE__{function: function}, data) do
-    Babel.Utils.safe_apply(function, data)
-  end
+  @callback apply(t(output), Babel.Context.t()) :: result_or_trace(output) when output: any
+  @callback inspect(t, Inspect.Opts.t()) :: Inspect.Algebra.t()
 
-  defimpl Babel.Applicable do
-    defdelegate apply(step, data), to: Babel.Step
-  end
+  @optional_callbacks inspect: 2
 end

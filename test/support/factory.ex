@@ -1,6 +1,4 @@
 defmodule Babel.Test.Factory do
-  alias Babel.Step
-
   require Babel
 
   def data(extras \\ []) do
@@ -24,16 +22,13 @@ defmodule Babel.Test.Factory do
     )
   end
 
-  def step(attrs \\ [])
+  def step, do: step(make_ref())
 
   def step(function) when is_function(function, 1) do
-    step(function: function)
+    Babel.Builtin.Then.new(function)
   end
 
-  def step(attrs) when is_list(attrs) do
-    Step.new(
-      Keyword.get_lazy(attrs, :name, fn -> {:test, make_ref()} end),
-      Keyword.get(attrs, :function, &Function.identity/1)
-    )
+  def step(value) do
+    Babel.Builtin.Const.new(value)
   end
 end

@@ -1,17 +1,21 @@
 defmodule Babel.Utils do
   @moduledoc false
 
-  @spec map_and_collapse_to_result(
-          data :: Enum.t(),
-          mapper :: (any -> Babel.Applicable.result(output) | Babel.Trace.t(output))
-        ) :: Babel.Applicable.result([output])
-        when output: any
-  def map_and_collapse_to_result(data, mapper) when is_function(mapper, 1) do
+  alias Babel.Context
+  alias Babel.Step
+  alias Babel.Trace
+
+  @spec map_nested(
+          enum :: Enumerable.t(element),
+          mapper :: (Context.t(element) -> Step.result(output) | Trace.t(output))
+        ) :: {[Trace.t()], {:ok, [output]} | {:error, [reason :: any]}}
+        when element: any, output: any
+  def map_nested(enum, mapper) when is_function(mapper, 1) do
     {traces, {ok_or_error, list}} =
-      Enum.reduce(data, {[], {:ok, []}}, fn element, {traces, {ok_or_error, list}} ->
+      Enum.reduce(enum, {[], {:ok, []}}, fn element, {traces, {ok_or_error, list}} ->
         {nested_traces, result} =
           case mapper.(element) do
-            %Babel.Trace{} = trace -> {[trace], trace.output}
+            %Trace{} = trace -> {[trace], trace.output}
             {traces, result} -> {traces, result}
           end
 
@@ -47,33 +51,29 @@ defmodule Babel.Utils do
     end
   end
 
-  @spec safe_apply(function :: Babel.Step.func(output), data :: Babel.data()) ::
-          Babel.Applicable.result(output)
+  @spec safe_apply(
+          function :: (any -> Step.result(output) | Trace.t(output)),
+          data :: Babel.data()
+        ) :: Trace.t(output) | Trace.result(output)
         when output: any
   def safe_apply(function, data) do
     case function.(data) do
-      {traces, result} when is_list(traces) ->
-        {traces, resultify(result)}
+      %Trace{} = trace ->
+        trace
 
       # People might do a `Babel.apply/2` inside of the given function;
       # this ensures trace information gets retained in these cases
+      %Babel.Error{trace: trace} ->
+        trace
+
       {:error, %Babel.Error{trace: trace}} ->
-        {[trace], trace.output}
+        trace
 
       result ->
-        {[], resultify(result)}
+        result
     end
   rescue
-    error in [Babel.Error] -> {[error.trace], error.trace.output}
-    other -> {[], {:error, other}}
+    error in [Babel.Error] -> error.trace
+    other -> {:error, other}
   end
-
-  @spec resultify(:error) :: {:error, :unknown}
-  def resultify(:error), do: {:error, :unknown}
-  @spec resultify({:error, reason}) :: {:error, reason} when reason: any
-  def resultify({:error, reason}), do: {:error, reason}
-  @spec resultify({:ok, value}) :: {:ok, value} when value: any
-  def resultify({:ok, value}), do: {:ok, value}
-  @spec resultify(value) :: {:ok, value} when value: any
-  def resultify(value), do: {:ok, value}
 end

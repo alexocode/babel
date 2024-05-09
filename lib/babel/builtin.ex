@@ -2,199 +2,64 @@ defmodule Babel.Builtin do
   @moduledoc false
 
   alias Babel.Step
-  alias Babel.Trace
-  alias Babel.Utils
 
-  require Step
+  @builtin [
+    Step.Call,
+    Step.Cast,
+    Step.Const,
+    Step.Fail,
+    Step.Fetch,
+    Step.FlatMap,
+    Step.Get,
+    Step.Identity,
+    Step.Into,
+    Step.Map,
+    Step.Match,
+    Step.Then,
+    Step.Try
+  ]
 
-  @builtin_names ~w[
-    call
-    cast
-    const
-    fail
-    fetch
-    flat_map
-    get
-    identity
-    into
-    map
-    match
-    then
-    try
-  ]a
+  @builtin_names Enum.map(@builtin, fn module ->
+                   name =
+                     module
+                     |> Module.split()
+                     |> List.last()
+                     |> Macro.underscore()
+                     |> String.to_atom()
 
-  @type name :: unquote(Enum.reduce(@builtin_names, &{:|, [], [&1, &2]}))
-  @type name_with_args :: {name, [arg :: term]}
+                   {module, name}
+                 end)
 
-  @type data :: Babel.data()
-  @type path :: term | list(term)
+  defguard is_builtin(step) when is_struct(step) and step.__struct__ in @builtin
+  defguard is_builtin_name(atom) when is_atom(atom) and unquote(Keyword.values(@builtin_names))
 
-  @doc """
-  Determines whether or not the given name is the name of a known core step.
-
-  Accepts both the name atom (`t:name`) or the full name tuple with arguments (`t:name_with_arguments`).
-
-  ## Examples
-
-  #{Enum.map_join(@builtin_names, &"""
-      iex> Babel.Builtin.is_builtin_name(#{inspect(&1)})
-      true
-
-  """)}
-
-      # The second argument NEEDS to be a list of arguments
-      iex> Babel.Builtin.is_builtin_name({:fetch, "foo"})
-      false
-
-      iex> Babel.Builtin.is_builtin_name({:fetch, [["foo", "bar"]]})
-      true
-
-      iex> Babel.Builtin.is_builtin_name(:not_a_core_step)
-      false
-  """
-  defguard is_builtin_name(name)
-           when (is_atom(name) and name in @builtin_names) or
-                  (is_tuple(name) and tuple_size(name) == 2 and elem(name, 0) in @builtin_names and
-                     is_list(elem(name, 1)))
-
-  @doc """
-  Determines whether or not the given step is a known core step.
-
-  ## Examples
-
-      iex> Babel.Builtin.is_builtin(Babel.Builtin.identity())
-      true
-
-      iex> Babel.Builtin.is_builtin(Babel.Builtin.then(:custom_name, fn _ -> :do_stuff end))
-      true
-
-      iex> Babel.Builtin.is_builtin(Babel.Step.new(:some_weird_name, fn _ -> :do_stuff end))
-      false
-  """
-  defguard is_builtin(step) when is_struct(step, Step) and is_builtin_name(step.name)
-
-  @doc "Determines whether or not the step is a known core step."
-  @spec builtin?(any) :: boolean
   def builtin?(thing), do: is_builtin(thing)
 
-  @spec call(module, function_name :: atom, extra_args :: list) :: Step.t()
-  def call(module, function_name, extra_args \\ [])
-      when is_atom(module) and is_atom(function_name) and is_list(extra_args) do
-    unless function_exported?(module, function_name, 1 + length(extra_args)) do
-      raise ArgumentError,
-            "cannot call missing function `#{inspect(module)}.#{function_name}/#{1 + length(extra_args)}`"
-    end
-
-    Step.new(
-      {:call, [module, function_name, extra_args]},
-      &Kernel.apply(module, function_name, [&1 | extra_args])
-    )
+  def name_of_builtin!(%module{}) when module in @builtin do
+    @builtin_names[module]
   end
 
-  @spec cast(:integer) :: Step.t(data, integer)
-  @spec cast(:float) :: Step.t(data, float)
-  @spec cast(:boolean) :: Step.t(data, boolean)
-  def cast(type) when type in [:boolean, :float, :integer] do
-    Step.new({:cast, [type]}, &__MODULE__.Cast.call(type, &1))
-  end
-
-  @spec const(value) :: Step.t(value) when value: any
-  def const(value) do
-    Step.new({:const, [value]}, fn _ -> value end)
-  end
-
-  @spec fail(reason_function :: (input -> reason)) :: Step.t(no_return)
-        when input: any, reason: any
-  def fail(reason_function) when is_function(reason_function, 1) do
-    Step.new({:fail, [reason_function]}, &{:error, reason_function.(&1)})
-  end
-
-  @spec fail(reason :: any) :: Step.t(no_return)
-  def fail(reason) do
-    Step.new({:fail, [reason]}, fn _ -> {:error, reason} end)
-  end
-
-  @spec fetch(path) :: Step.t(data)
-  def fetch(path) do
-    path_as_list = List.wrap(path)
-
-    Step.new({:fetch, [path]}, &__MODULE__.Fetch.call(&1, path_as_list))
-  end
-
-  @spec flat_map(mapper :: (input -> Babel.t(input, output))) ::
-          Step.t(Enumerable.t(input), list(output))
-        when input: any, output: any
-  def flat_map(mapper) when is_function(mapper, 1) do
-    Step.new(
-      {:flat_map, [mapper]},
-      &Utils.map_and_collapse_to_result(&1, fn element ->
-        Trace.apply(mapper.(element), element)
-      end)
-    )
-  end
-
-  @spec get(path, default) :: Step.t(data, any | default) when default: any
-  def get(path, default \\ nil) do
-    path_as_list = List.wrap(path)
-
-    Step.new({:get, [path, default]}, &__MODULE__.Get.call(&1, path_as_list, default))
-  end
-
-  @spec identity() :: Step.t(input, input) when input: any
-  def identity do
-    Step.new({:identity, []}, &Function.identity/1)
-  end
-
-  @spec into(intoable) :: Step.t(data, intoable) when intoable: Babel.Intoable.t()
-  def into(intoable) do
-    Step.new({:into, [intoable]}, &Babel.Intoable.into(intoable, &1))
-  end
-
-  @spec map(mapper :: Babel.t(input, output)) ::
-          Step.t(Enumerable.t(input), list(output))
-        when input: data, output: any
-  def map(mapper) do
-    Step.new(
-      {:map, [mapper]},
-      &Utils.map_and_collapse_to_result(&1, fn element ->
-        Trace.apply(mapper, element)
-      end)
-    )
-  end
-
-  @spec match(matcher :: (input -> Babel.t(input, output))) :: Step.t(input, output)
-        when input: data, output: any
-  def match(matcher) when is_function(matcher, 1) do
-    Step.new({:match, [matcher]}, fn input ->
-      trace = Trace.apply(matcher.(input), input)
-
-      {[trace], trace.output}
+  def module_of_builtin!(name) when is_builtin_name(name) do
+    Enum.find_value(@builtin_names, fn
+      {module, ^name} -> module
+      _ -> nil
     end)
   end
 
-  @spec then(custom_name :: nil | any, function :: Step.func(input, output)) ::
-          Step.t(input, output)
-        when input: any, output: any
-  def then(custom_name \\ nil, function) do
-    full_name = Enum.reject([custom_name, function], &is_nil/1)
+  def inspect(%module{} = builtin, fields, opts) when module in @builtin do
+    import Inspect.Algebra
 
-    Step.new({:then, full_name}, function)
-  end
+    args = Enum.map(fields, &Map.fetch!(builtin, &1))
 
-  @spec try(nonempty_list(Babel.t(output))) :: Step.t(output) when output: any
-  def try(applicables) do
-    name = {:try, [applicables]}
-    applicables = List.wrap(applicables)
-
-    Step.new(name, &__MODULE__.Try.call(applicables, &1))
-  end
-
-  @spec try(Babel.t(output) | nonempty_list(Babel.t(output)), default) :: Step.t(output | default)
-        when output: any, default: any
-  def try(applicables, default) do
-    name = {:try, [applicables, default]}
-    applicables = List.wrap(applicables) ++ [const(default)]
-
-    Step.new(name, &__MODULE__.Try.call(applicables, &1))
+    color(
+      concat([
+        color("Babel", :atom, opts),
+        ".",
+        to_string(name_of_builtin!(builtin)),
+        container_doc("(", args, ")", opts, &to_doc(&1, &2))
+      ]),
+      :call,
+      opts
+    )
   end
 end

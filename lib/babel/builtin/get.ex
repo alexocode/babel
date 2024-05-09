@@ -1,12 +1,34 @@
 defmodule Babel.Builtin.Get do
-  @moduledoc false
+  use Babel.Step
 
-  alias Babel.Builtin.Fetch
+  @enforce_keys [:path]
+  defstruct [:path, :default]
 
-  def call(data, path, default) do
-    case Fetch.call(data, path) do
-      {:ok, value} -> value
-      {:error, _} -> default
-    end
+  def new(path, default \\ nil) do
+    %__MODULE__{path: path, default: default}
+  end
+
+  @impl Babel.Step
+  def apply(%__MODULE__{path: path, default: default}, %Babel.Context{current: data}) do
+    path
+    |> List.wrap()
+    |> Enum.reduce_while({:ok, data}, fn path_segment, {:ok, next} ->
+      case Babel.Fetchable.fetch(next, path_segment) do
+        {:ok, next} ->
+          {:cont, {:ok, next}}
+
+        :error ->
+          {:halt, {:ok, default}}
+      end
+    end)
+  end
+
+  @impl Babel.Step
+  def inspect(%__MODULE__{default: nil} = step, opts) do
+    Babel.Builtin.inspect(step, [:path], opts)
+  end
+
+  def inspect(%__MODULE__{} = step, opts) do
+    Babel.Builtin.inspect(step, [:path, :default], opts)
   end
 end

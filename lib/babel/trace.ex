@@ -1,5 +1,6 @@
 defmodule Babel.Trace do
-  require Babel.Builtin
+  import Babel.Builtin
+
   require Babel.Logger
 
   @type t() :: t(any, any)
@@ -7,7 +8,7 @@ defmodule Babel.Trace do
   @type t(input, output) :: %__MODULE__{
           babel: Babel.t(input, output),
           input: Babel.data(),
-          output: Babel.result(output),
+          output: Babel.Step.result(output),
           nested: [t]
         }
   defstruct babel: nil,
@@ -15,27 +16,27 @@ defmodule Babel.Trace do
             output: nil,
             nested: []
 
-  @spec apply(babel :: Babel.t(input, output), input :: Babel.data()) :: t(input, output)
-        when input: any, output: any
-  def apply(babel, data) do
-    # TODO: Consider checking if the output is {:error, Babel.Error.t} and extract the contained trace.
-    #       This can happen when someone does `Babel.then(fn data -> Babel.apply(<babel>, data) end)`;
-    #       maybe also print a warning
-    {nested, output} = Babel.Applicable.apply(babel, data)
-
-    %__MODULE__{
-      babel: babel,
-      input: data,
-      output: output,
-      nested: nested
-    }
+  @spec ok?(t) :: boolean
+  def ok?(%__MODULE__{output: output}) do
+    case output do
+      :error -> false
+      {:error, _} -> false
+      _ok -> true
+    end
   end
 
-  @spec ok?(t) :: boolean
-  def ok?(%__MODULE__{output: output}), do: match?({:ok, _}, output)
+  @spec result(t) :: {:ok, value :: any} | {:error, reason :: any}
+  def result(%__MODULE__{output: output}) do
+    case output do
+      :error -> {:error, :unknown}
+      {:error, reason} -> {:error, reason}
+      {:ok, value} -> {:ok, value}
+      value -> {:ok, value}
+    end
+  end
 
   @spec find(t, spec_or_path :: spec | nonempty_list(spec)) :: [t]
-        when spec: Babel.t() | Babel.Builtin.name_with_args() | Babel.Builtin.name()
+        when spec: Babel.t() | (builtin_name :: atom) | {builtin_name :: atom, args :: [term]}
   def find(%__MODULE__{} = trace, spec_path) when is_list(spec_path) do
     Enum.reduce(spec_path, [trace], fn spec, traces ->
       Enum.flat_map(traces, &find(&1, spec))
@@ -43,7 +44,7 @@ defmodule Babel.Trace do
   end
 
   def find(%__MODULE__{} = trace, {atom, arg} = spec)
-      when Babel.Builtin.is_builtin_name(atom) and not is_list(arg) do
+      when is_builtin_name(atom) and not is_list(arg) do
     case do_find(trace, spec) do
       [] ->
         Babel.Logger.warning(
@@ -55,6 +56,10 @@ defmodule Babel.Trace do
       traces ->
         traces
     end
+  end
+
+  def find(%__MODULE__{} = trace, {atom, args}) when is_builtin_name(atom) and is_list(args) do
+    do_find(trace, apply(module_of_builtin!(atom), :new, args))
   end
 
   def find(%__MODULE__{} = trace, spec), do: do_find(trace, spec)
@@ -72,6 +77,10 @@ defmodule Babel.Trace do
 
   def matches_spec?(babel, babel), do: true
   def matches_spec?(%{name: name}, name), do: true
-  def matches_spec?(%{name: {name, _args}}, name), do: true
+
+  def matches_spec?(builtin, name) when is_builtin(builtin) and is_atom(name) do
+    name_of_builtin!(builtin) == name
+  end
+
   def matches_spec?(_babel, _spec), do: false
 end
