@@ -195,19 +195,19 @@ defmodule Babel do
     |> Pipeline.on_error(function)
   end
 
-  @spec then(Step.fun(input, output)) :: Step.t(output) when input: any, output: any
+  @spec then(Step.func(input, output)) :: Step.t(output) when input: any, output: any
   defdelegate then(function), to: Babel.Builtin
 
-  @spec then(t(input), Step.fun(input, output)) :: t(output)
+  @spec then(t(input), Step.func(input, output)) :: t(output)
         when input: data, output: term
   def then(babel, function) when is_babel(babel) do
     chain(babel, then(function))
   end
 
-  @spec then(name, Step.fun(input, output)) :: Step.t(output) when input: any, output: any
+  @spec then(name, Step.func(input, output)) :: Step.t(output) when input: any, output: any
   defdelegate then(descriptive_name, function), to: Babel.Builtin
 
-  @spec then(t(input), name, Step.fun(input, output)) :: t(output)
+  @spec then(t(input), name, Step.func(input, output)) :: t(output)
         when input: data, output: term
   def then(babel, descriptive_name, function) when is_babel(babel) do
     chain(babel, then(descriptive_name, function))

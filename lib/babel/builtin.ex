@@ -174,7 +174,7 @@ defmodule Babel.Builtin do
     )
   end
 
-  @spec then(custom_name :: nil | any, function :: Step.fun(input, output)) ::
+  @spec then(custom_name :: nil | any, function :: Step.func(input, output)) ::
           Step.t(input, output)
         when input: any, output: any
   def then(custom_name \\ nil, function) do

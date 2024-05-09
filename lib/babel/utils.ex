@@ -47,7 +47,7 @@ defmodule Babel.Utils do
     end
   end
 
-  @spec safe_apply(function :: Babel.Step.fun(output), data :: Babel.data()) ::
+  @spec safe_apply(function :: Babel.Step.func(output), data :: Babel.data()) ::
           Babel.Applicable.result(output)
         when output: any
   def safe_apply(function, data) do
