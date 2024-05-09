@@ -62,10 +62,10 @@ defmodule MyPackage.MixProject do
       # No Runtime
       {:credo, ">= 1.0.0", only: :dev, runtime: false},
       {:dialyxir, ">= 1.0.0", only: :dev, runtime: false},
-      {:ex_doc, "~> 0.29", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.32", only: :dev, runtime: false},
 
       # Test
-      {:excoveralls, "~> 0.16", only: :test},
+      {:excoveralls, "~> 0.18", only: :test},
       {:mox, "~> 1.0", only: :test},
 
       # Docs
