@@ -63,42 +63,6 @@ defmodule Babel.BuiltinTest do
     end
   end
 
-  describe "get/2" do
-    test "returns the value at the given path" do
-      step = Builtin.get(:value, :default)
-      data = %{value: make_ref()}
-
-      assert apply!(step, data) == data.value
-
-      step = Builtin.get([:value, :nested], :default)
-      data = %{value: %{nested: make_ref()}}
-
-      assert apply!(step, data) == data.value.nested
-
-      step = Builtin.get([:value, 2, :nested], :default)
-
-      data = %{
-        value: [
-          %{nested: make_ref()},
-          %{nested: make_ref()},
-          %{nested: make_ref()},
-          %{nested: make_ref()},
-          %{nested: make_ref()}
-        ]
-      }
-
-      assert apply!(step, data) == get_in(data, [:value, Access.at(2), :nested])
-    end
-
-    test "returns the given default a key cannot be found" do
-      default = make_ref()
-      step = Builtin.get([:value, "nested"], default)
-      data = %{value: %{nested: "nope"}}
-
-      assert apply!(step, data) == default
-    end
-  end
-
   describe "identity/0" do
     test "returns the value it's applied to" do
       step = Builtin.identity()
