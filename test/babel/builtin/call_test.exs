@@ -3,8 +3,6 @@ defmodule Babel.Builtin.CallTest do
 
   alias Babel.Builtin.Call
 
-  require NaiveDateTime
-
   describe "new/3" do
     test "wraps the given module when the specified function exists" do
       assert Call.new(Enum, :to_list) == %Call{module: Enum, function: :to_list, extra_args: []}

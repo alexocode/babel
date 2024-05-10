@@ -9,7 +9,8 @@ defmodule Babel.Builtin.Call do
 
   def new(module, function, extra_args \\ [])
       when is_atom(module) and is_atom(function) and is_list(extra_args) do
-    unless function_exported?(module, function, 1 + length(extra_args)) do
+    unless Code.ensure_loaded?(module) and
+             function_exported?(module, function, 1 + length(extra_args)) do
       raise ArgumentError,
             "cannot call missing function `#{inspect(module)}.#{function}/#{1 + length(extra_args)}`"
     end
