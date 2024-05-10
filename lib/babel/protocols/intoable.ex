@@ -19,8 +19,10 @@ end
 defimpl Babel.Intoable, for: Any do
   import Kernel, except: [apply: 2]
 
+  require Babel
+
   # Faster than doing Babel.Applicable.impl_for/1
-  def into(%struct{} = babel, context) when struct in [Babel.Pipeline, Babel.Step] do
+  def into(%_{} = babel, context) when Babel.is_babel(babel) do
     apply(babel, context)
   end
 
