@@ -3,7 +3,7 @@ defmodule MyPackage.MixProject do
 
   @app :babel
   @name "Babel"
-  @description "A cool description"
+  @description "Data transformations made easy"
   @repo "https://github.com/alexocode/#{@app}"
 
   def project do
