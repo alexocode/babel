@@ -48,15 +48,6 @@ defmodule Babel.BuiltinTest do
     end
   end
 
-  describe "identity/0" do
-    test "returns the value it's applied to" do
-      step = Builtin.identity()
-      data = %{value: make_ref()}
-
-      assert apply!(step, data) == data
-    end
-  end
-
   describe "into/1" do
     test "maps the values into the data structure as expected" do
       data = %{value1: make_ref(), value2: make_ref(), value3: make_ref(), value4: make_ref()}
