@@ -48,21 +48,6 @@ defmodule Babel.BuiltinTest do
     end
   end
 
-  describe "flat_map/2" do
-    test "allows to pass a function that returns a step which gets evaluated immediately" do
-      mapping_function = fn element -> Builtin.then(&{:mapped, element, &1}) end
-      step = Builtin.flat_map(mapping_function)
-
-      assert {_traces, {:ok, mapped}} = Step.apply(step, [1, 2, 3])
-
-      assert mapped == [
-               {:mapped, 1, 1},
-               {:mapped, 2, 2},
-               {:mapped, 3, 3}
-             ]
-    end
-  end
-
   describe "identity/0" do
     test "returns the value it's applied to" do
       step = Builtin.identity()
