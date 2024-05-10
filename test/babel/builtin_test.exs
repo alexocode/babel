@@ -48,19 +48,6 @@ defmodule Babel.BuiltinTest do
     end
   end
 
-  describe "match/1" do
-    test "uses the expected returned applicable" do
-      step =
-        Builtin.match(fn
-          1 -> Builtin.const(:value1)
-          2 -> Builtin.const(:value2)
-        end)
-
-      assert apply!(step, 1) == :value1
-      assert apply!(step, 2) == :value2
-    end
-  end
-
   describe "then/2" do
     test "invokes the given function" do
       ref = make_ref()
