@@ -1,8 +1,6 @@
 defmodule Babel.Babel.TryTest do
   use Babel.Test.StepCase, async: true
 
-  import Babel.Test.Factory
-
   alias Babel.Builtin.Try
 
   describe "new/1" do
