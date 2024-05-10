@@ -7,7 +7,11 @@ defmodule Babel.Builtin.Then do
   @enforce_keys [:function]
   defstruct [:name, :function]
 
-  def new(name \\ nil, function) when is_function(function, 1) do
+  def new(name \\ nil, function) do
+    unless is_function(function, 1) do
+      raise ArgumentError, "not an arity 1 function: #{inspect(function)}"
+    end
+
     %__MODULE__{name: name, function: function}
   end
 

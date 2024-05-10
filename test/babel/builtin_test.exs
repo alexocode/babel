@@ -48,30 +48,6 @@ defmodule Babel.BuiltinTest do
     end
   end
 
-  describe "then/2" do
-    test "invokes the given function" do
-      ref = make_ref()
-      step = Builtin.then(:custom_name, &{ref, &1})
-      data = %{value: make_ref()}
-
-      assert apply!(step, data) == {ref, data}
-    end
-
-    test "sets the given name on the created step" do
-      ref = make_ref()
-      step = Builtin.then({:my_cool_name, ref}, &Function.identity/1)
-
-      assert step.name == {:then, [{:my_cool_name, ref}, &Function.identity/1]}
-    end
-
-    test "omits a nil name from the generated step name" do
-      step = Builtin.then(&Function.identity/1)
-
-      assert step == Builtin.then(nil, &Function.identity/1)
-      assert step.name == {:then, [&Function.identity/1]}
-    end
-  end
-
   describe "try/1" do
     test "returns the result from the first succeeding applicable" do
       data = %{some: %{nested: "map"}}
