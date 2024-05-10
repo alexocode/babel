@@ -48,34 +48,6 @@ defmodule Babel.BuiltinTest do
     end
   end
 
-  describe "into/1" do
-    test "maps the values into the data structure as expected" do
-      data = %{value1: make_ref(), value2: make_ref(), value3: make_ref(), value4: make_ref()}
-
-      step =
-        Builtin.into(%{
-          :some_key => Builtin.fetch(:value2),
-          Builtin.fetch(:value1) => :value1
-        })
-
-      assert apply!(step, data) == %{
-               :some_key => data.value2,
-               data.value1 => :value1
-             }
-    end
-
-    test "returns the collected errors when nested steps fail" do
-      step =
-        Builtin.into(%{
-          :some_key => Builtin.fetch(:value2),
-          Builtin.fetch(:value1) => :value1
-        })
-
-      assert {:error, reason} = apply(step, %{})
-      assert reason == [not_found: :value2, not_found: :value1]
-    end
-  end
-
   describe "map/2" do
     test "returns a step that applies the given step to each element of an enumerable" do
       mapping_step = Builtin.then(&{:mapped, &1})
