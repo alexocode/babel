@@ -6,6 +6,16 @@ defmodule Babel.Builtin.CallTest do
   require NaiveDateTime
 
   describe "new/3" do
+    test "wraps the given module when the specified function exists" do
+      assert Call.new(Enum, :to_list) == %Call{module: Enum, function: :to_list, extra_args: []}
+
+      assert Call.new(Map, :fetch, [:some_key]) == %Call{
+               module: Map,
+               function: :fetch,
+               extra_args: [:some_key]
+             }
+    end
+
     test "raises an ArgumentError during construction if the given function doesn't exist" do
       assert_raise ArgumentError, "cannot call missing function `DoesNot.exist/1`", fn ->
         Call.new(DoesNot, :exist, [])
