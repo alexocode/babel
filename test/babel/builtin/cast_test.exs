@@ -1,5 +1,6 @@
 defmodule Babel.Builtin.CastTest do
   use Babel.Test.StepCase, async: true
+
   alias Babel.Builtin.Cast
 
   describe "new/1" do
@@ -9,7 +10,20 @@ defmodule Babel.Builtin.CastTest do
       end
     end
 
-    test "raises an ArgumentError for any other value"
+    test "raises an ArgumentError for any other value" do
+      invalid_types = [
+        :list,
+        :map,
+        "whatever",
+        fn -> ~w[the fuck] end
+      ]
+
+      for type <- invalid_types do
+        assert_raise ArgumentError,
+                     "invalid type #{inspect(type)}, allowed types are: :boolean | :float | :integer",
+                     fn -> Cast.new(type) end
+      end
+    end
   end
 
   describe "apply/2 (:integer)" do

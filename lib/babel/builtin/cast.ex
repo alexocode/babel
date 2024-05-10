@@ -12,6 +12,12 @@ defmodule Babel.Builtin.Cast do
     %__MODULE__{type: type}
   end
 
+  def new(invalid) do
+    raise ArgumentError,
+          "invalid type #{inspect(invalid)}, allowed types are: " <>
+            Enum.map_join(@allowed_types, " | ", &inspect/1)
+  end
+
   @impl Babel.Step
   def apply(%__MODULE__{type: type}, %Babel.Context{current: data}) do
     cast(type, data)
