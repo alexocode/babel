@@ -10,9 +10,11 @@ defmodule Babel.Test.StepCase do
     end
   end
 
+  def trace(step, data), do: Babel.trace(step, data)
+
   def apply(step, data) do
     step
-    |> Babel.trace(data)
+    |> trace(data)
     |> Babel.Trace.result()
   end
 
