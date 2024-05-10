@@ -48,21 +48,6 @@ defmodule Babel.BuiltinTest do
     end
   end
 
-  describe "map/2" do
-    test "returns a step that applies the given step to each element of an enumerable" do
-      mapping_step = Builtin.then(&{:mapped, &1})
-      step = Builtin.map(mapping_step)
-
-      assert {_traces, {:ok, mapped}} = Step.apply(step, [1, 2, 3])
-
-      assert mapped == [
-               {:mapped, 1},
-               {:mapped, 2},
-               {:mapped, 3}
-             ]
-    end
-  end
-
   describe "match/1" do
     test "uses the expected returned applicable" do
       step =

@@ -6,6 +6,10 @@ defmodule Babel.Builtin.Map do
   defstruct [:applicable]
 
   def new(applicable) do
+    unless Babel.Applicable.impl_for(applicable) do
+      raise ArgumentError, "not a Babel.Applicable: #{inspect(applicable)}"
+    end
+
     %__MODULE__{applicable: applicable}
   end
 
