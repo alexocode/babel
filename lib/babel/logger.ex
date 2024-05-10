@@ -1,3 +1,4 @@
+# coveralls-ignore-start
 defmodule Babel.Logger do
   @moduledoc false
   defmacro warning(message, metadata \\ []) do
