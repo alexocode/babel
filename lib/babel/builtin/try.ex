@@ -18,7 +18,7 @@ defmodule Babel.Builtin.Try do
   end
 
   defp list_of_applicables?(list) do
-    is_list(list) and Enum.all?(list, &(not is_nil(Babel.Applicable.impl_for(&1))))
+    Enum.all?(list, &(not is_nil(Babel.Applicable.impl_for(&1))))
   end
 
   @impl Babel.Step

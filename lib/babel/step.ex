@@ -16,7 +16,7 @@ defmodule Babel.Step do
   defmacro __using__(_) do
     %{module: module} = __CALLER__
 
-    quote generated: true do
+    quote generated: true, location: :keep do
       import Kernel, except: [apply: 2]
 
       @behaviour Babel.Step

@@ -10,6 +10,7 @@ defmodule Babel do
   alias Babel.Builtin
   alias Babel.Error
   alias Babel.Pipeline
+  alias Babel.Step
   alias Babel.Trace
 
   require Builtin

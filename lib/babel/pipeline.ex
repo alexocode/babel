@@ -19,7 +19,7 @@ defmodule Babel.Pipeline do
   @type name() :: Babel.name()
   @type step() :: Babel.Applicable.t()
   @type on_error :: on_error(term)
-  @type on_error(output) :: Babel.Step.func(Error.t(), output)
+  @type on_error(output) :: (Babel.Error.t() -> Babel.Step.result_or_trace(output))
 
   @spec new(step | [step]) :: t
   @spec new(name | nil, step | [step]) :: t
