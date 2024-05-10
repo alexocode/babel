@@ -1,60 +1,43 @@
 defmodule Babel.BuiltinTest do
   use ExUnit.Case, async: true
 
-  import Kernel, except: [apply: 2]
-
   alias Babel.Builtin
-  alias Babel.Step
-  alias Babel.Trace
 
-  require Babel.Builtin
-  require NaiveDateTime
+  require Builtin
 
-  @moduletag :skip
-
-  doctest Babel.Builtin
+  doctest Builtin
 
   describe "is_builtin/1" do
-    test "returns true for all core steps" do
-      core_steps = [
-        Builtin.call(List, :to_string, []),
-        Builtin.cast(:boolean),
-        Builtin.cast(:float),
-        Builtin.cast(:integer),
-        Builtin.const(:stuff),
-        Builtin.fail(:some_reason),
-        Builtin.fetch("path"),
-        Builtin.flat_map(fn _ -> Builtin.identity() end),
-        Builtin.get("path", :default),
-        Builtin.identity(),
-        Builtin.into(%{}),
-        Builtin.map(Builtin.identity()),
-        Builtin.match(fn _ -> Builtin.identity() end),
-        Builtin.then(:some_name, fn _ -> :value end),
-        Builtin.try([Babel.fail(:foobar), Babel.const(:baz)])
+    test "returns true for all builtin steps" do
+      builtin_steps = [
+        Babel.call(List, :to_string, []),
+        Babel.cast(:boolean),
+        Babel.cast(:float),
+        Babel.cast(:integer),
+        Babel.const(:stuff),
+        Babel.fail(:some_reason),
+        Babel.fetch("path"),
+        Babel.flat_map(fn _ -> Babel.identity() end),
+        Babel.get("path", :default),
+        Babel.identity(),
+        Babel.into(%{}),
+        Babel.map(Babel.identity()),
+        Babel.match(fn _ -> Babel.identity() end),
+        Babel.then(:some_name, fn _ -> :value end),
+        Babel.try([Babel.fail(:foobar), Babel.const(:baz)])
       ]
 
-      for step <- core_steps do
+      for step <- builtin_steps do
         assert Builtin.is_builtin(step)
         assert Builtin.builtin?(step)
       end
     end
 
     test "returns false for a custom step" do
-      step = Step.new(:some_name, fn _ -> :value end)
+      step = %Babel.Test.EmptyCustomStep{}
 
       refute Builtin.is_builtin(step)
       refute Builtin.builtin?(step)
     end
-  end
-
-  defp apply(step, data) do
-    {_traces, result} = Step.apply(step, data)
-    result
-  end
-
-  defp apply!(step, data) do
-    {:ok, value} = apply(step, data)
-    value
   end
 end
