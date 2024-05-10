@@ -6,7 +6,7 @@ defmodule Babel.Utils do
       Enum.reduce(enum, {[], {:ok, []}}, fn element, {traces, {ok_or_error, list}} ->
         {nested_traces, result} =
           case mapper.(element) do
-            %Babel.Trace{} = trace -> {[trace], trace.output}
+            %Babel.Trace{} = trace -> {[trace], Babel.Trace.result(trace)}
             {traces, result} -> {traces, result}
           end
 
