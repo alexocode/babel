@@ -53,6 +53,22 @@ defmodule Babel.Trace do
     end
   end
 
+  @doc """
+  Returns the nested traces which caused the given trace to fail.
+
+  To be specific it recursively checks all nested traces and collects all error
+  traces which have no nested traces themselves, assuming that this implies that
+  they were the root cause of the failure.
+  """
+  @spec root_causes(t) :: [t]
+  def root_causes(%__MODULE__{nested: nested} = trace) do
+    cond do
+      ok?(trace) -> []
+      nested == [] -> [trace]
+      true -> Enum.flat_map(nested, &root_causes/1)
+    end
+  end
+
   @spec find(t, spec_or_path :: spec | nonempty_list(spec)) :: [t]
         when spec: Babel.t() | (builtin_name :: atom) | {builtin_name :: atom, args :: [term]}
   def find(%__MODULE__{} = trace, spec_path) when is_list(spec_path) do
