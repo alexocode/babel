@@ -20,7 +20,7 @@ defmodule Babel.Builtin.Call do
 
   @impl Babel.Step
   def apply(%__MODULE__{} = call, %Babel.Context{current: input}) do
-    Babel.Utils.trace_try do
+    Babel.Utils.trace_try call, input do
       Kernel.apply(call.module, call.function, [input | call.extra_args])
     end
   end

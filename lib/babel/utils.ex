@@ -42,27 +42,36 @@ defmodule Babel.Utils do
     end
   end
 
-  defmacro trace_try(do: block) do
+  defmacro trace_try(babel, input, do: block) do
     quote do
-      try do
-        unquote(block)
-      rescue
-        error in [Babel.Error] -> error.trace
-        other -> {:error, other}
-      else
+      trace_or_result =
+        try do
+          unquote(block)
+        rescue
+          error in [Babel.Error] -> error.trace
+          other -> {:error, other}
+        else
+          %Babel.Trace{} = trace ->
+            trace
+
+          # People might do a `Babel.apply/2` inside of the given function;
+          # this ensures trace information gets retained in these cases
+          %Babel.Error{trace: trace} ->
+            trace
+
+          {:error, %Babel.Error{trace: trace}} ->
+            trace
+
+          result ->
+            result
+        end
+
+      case trace_or_result do
         %Babel.Trace{} = trace ->
-          trace
-
-        # People might do a `Babel.apply/2` inside of the given function;
-        # this ensures trace information gets retained in these cases
-        %Babel.Error{trace: trace} ->
-          trace
-
-        {:error, %Babel.Error{trace: trace}} ->
-          trace
+          Babel.Trace.new(unquote(babel), unquote(input), trace.output, [trace])
 
         result ->
-          result
+          Babel.Trace.new(unquote(babel), unquote(input), result)
       end
     end
   end

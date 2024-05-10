@@ -12,8 +12,8 @@ defmodule Babel.Builtin.Then do
   end
 
   @impl Babel.Step
-  def apply(%__MODULE__{function: function}, %Babel.Context{current: input}) do
-    Babel.Utils.trace_try do
+  def apply(%__MODULE__{function: function} = then, %Babel.Context{current: input}) do
+    Babel.Utils.trace_try then, input do
       function.(input)
     end
   end
