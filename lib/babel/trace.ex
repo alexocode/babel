@@ -16,8 +16,12 @@ defmodule Babel.Trace do
             output: nil,
             nested: []
 
-  @spec new(Babel.t(input, output), input | Babel.Context.t(input), Babel.Step.result(output), [t]) ::
-          t(input, output)
+  @spec new(
+          babel :: Babel.t(input, output),
+          input :: input | Babel.Context.t(input),
+          output :: Babel.Step.result(output),
+          nested :: [t]
+        ) :: t(input, output)
         when input: any, output: any
   def new(babel, input, output, nested \\ [])
 
