@@ -17,16 +17,16 @@ defmodule Babel.Builtin do
     __MODULE__.Try
   ]
 
-  @builtin_names Enum.map(@builtin, fn module ->
-                   name =
-                     module
-                     |> Module.split()
-                     |> List.last()
-                     |> Macro.underscore()
-                     |> String.to_atom()
+  @builtin_name_by_module Enum.map(@builtin, fn module ->
+                            name =
+                              module
+                              |> Module.split()
+                              |> List.last()
+                              |> Macro.underscore()
+                              |> String.to_atom()
 
-                   {module, name}
-                 end)
+                            {module, name}
+                          end)
 
   defguard struct_module(thing)
            when :erlang.is_map(thing) and :erlang.is_map_key(:__struct__, thing) and
@@ -35,19 +35,19 @@ defmodule Babel.Builtin do
   defguard is_builtin(step) when struct_module(step) in @builtin
 
   defguard is_builtin_name(atom)
-           when is_atom(atom) and atom in unquote(Keyword.values(@builtin_names))
+           when is_atom(atom) and atom in unquote(Keyword.values(@builtin_name_by_module))
 
   def builtin?(thing), do: is_builtin(thing)
 
   def name_of_builtin!(%module{}) when module in @builtin do
-    @builtin_names[module]
+    @builtin_name_by_module[module]
   end
 
+  @builtin_module_by_name Enum.map(@builtin_name_by_module, fn {name, module} ->
+                            {module, name}
+                          end)
   def module_of_builtin!(name) when is_builtin_name(name) do
-    Enum.find_value(@builtin_names, fn
-      {module, ^name} -> module
-      _ -> nil
-    end)
+    @builtin_module_by_name[name]
   end
 
   def inspect(%module{} = builtin, fields, opts) when module in @builtin do

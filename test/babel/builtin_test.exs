@@ -7,6 +7,20 @@ defmodule Babel.BuiltinTest do
 
   doctest Builtin
 
+  describe "struct_module/1" do
+    test "returns the module of a struct" do
+      assert Builtin.struct_module(Babel.call(List, :to_string, [])) == Babel.Builtin.Call
+      assert Builtin.struct_module(Babel.identity()) == Babel.Builtin.Identity
+      assert Builtin.struct_module(Babel.into(%{})) == Babel.Builtin.Into
+    end
+
+    test "returns false when the it's not a struct" do
+      assert Builtin.struct_module(:an_atom) == false
+      assert Builtin.struct_module("a string") == false
+      assert Builtin.struct_module(%{a: "map"}) == false
+    end
+  end
+
   describe "is_builtin/1" do
     test "returns true for all builtin steps" do
       builtin_steps = [
@@ -39,5 +53,139 @@ defmodule Babel.BuiltinTest do
       refute Builtin.is_builtin(step)
       refute Builtin.builtin?(step)
     end
+  end
+
+  describe "is_builtin_name/1" do
+    test "returns true for all builtin step names" do
+      builtin_step_names = [
+        :call,
+        :cast,
+        :const,
+        :fail,
+        :fetch,
+        :flat_map,
+        :get,
+        :identity,
+        :into,
+        :map,
+        :match,
+        :then,
+        :try
+      ]
+
+      for name <- builtin_step_names do
+        assert Builtin.is_builtin_name(name)
+      end
+    end
+
+    test "returns false for anything else" do
+      non_builtin_step_names = [
+        :whatever,
+        "whatever",
+        make_ref(),
+        {:tuple, "time"}
+      ]
+
+      for name <- non_builtin_step_names do
+        refute Builtin.is_builtin_name(name)
+      end
+    end
+  end
+
+  describe "name_of_builtin!/1" do
+    test "returns the expected name for each builtin step" do
+      expected_name_and_step = [
+        call: Babel.call(List, :to_string, []),
+        cast: Babel.cast(:boolean),
+        cast: Babel.cast(:float),
+        cast: Babel.cast(:integer),
+        const: Babel.const(:stuff),
+        fail: Babel.fail(:some_reason),
+        fetch: Babel.fetch("path"),
+        flat_map: Babel.flat_map(fn _ -> Babel.identity() end),
+        get: Babel.get("path", :default),
+        identity: Babel.identity(),
+        into: Babel.into(%{}),
+        map: Babel.map(Babel.identity()),
+        match: Babel.match(fn _ -> Babel.identity() end),
+        then: Babel.then(:some_name, fn _ -> :value end),
+        try: Babel.try([Babel.fail(:foobar), Babel.const(:baz)])
+      ]
+
+      for {expected_name, step} <- expected_name_and_step do
+        assert Builtin.name_of_builtin!(step) == expected_name
+      end
+    end
+
+    test "raises a FunctionClauseError for anything else" do
+      invalid = [
+        Babel.Trace,
+        :whatever,
+        "fooooo"
+      ]
+
+      for i <- invalid do
+        assert_raise FunctionClauseError, fn -> Builtin.name_of_builtin!(i) end
+      end
+    end
+  end
+
+  describe "module_of_builtin!/1" do
+    test "returns the expected module for each builtin step's name" do
+      name_and_expected_module = [
+        call: Babel.Builtin.Call,
+        cast: Babel.Builtin.Cast,
+        const: Babel.Builtin.Const,
+        fail: Babel.Builtin.Fail,
+        fetch: Babel.Builtin.Fetch,
+        flat_map: Babel.Builtin.FlatMap,
+        get: Babel.Builtin.Get,
+        identity: Babel.Builtin.Identity,
+        into: Babel.Builtin.Into,
+        map: Babel.Builtin.Map,
+        match: Babel.Builtin.Match,
+        then: Babel.Builtin.Then,
+        try: Babel.Builtin.Try
+      ]
+
+      for {name, expected_module} <- name_and_expected_module do
+        assert Builtin.module_of_builtin!(name) == expected_module
+      end
+    end
+
+    test "raises a FunctionClauseError for anything else" do
+      invalid = [
+        Babel.Trace,
+        :whatever,
+        "fooooo"
+      ]
+
+      for i <- invalid do
+        assert_raise FunctionClauseError, fn -> Builtin.module_of_builtin!(i) end
+      end
+    end
+  end
+
+  describe "inspect/3" do
+    test "includes only the given fields in the order specified" do
+      call = Babel.call(Map, :fetch, [:some_key])
+      opts = Inspect.Opts.new([])
+
+      assert_inspects_to(Builtin.inspect(call, [], opts), "Babel.call()")
+
+      assert_inspects_to(
+        Builtin.inspect(call, [:function, :module], opts),
+        "Babel.call(:fetch, Map)"
+      )
+    end
+  end
+
+  defp assert_inspects_to(inspect_doc, expected) do
+    inspect_string =
+      inspect_doc
+      |> Inspect.Algebra.format(:infinity)
+      |> IO.iodata_to_binary()
+
+    assert inspect_string == expected
   end
 end
