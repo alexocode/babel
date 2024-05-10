@@ -46,6 +46,7 @@ defmodule Babel do
       iex> Babel.is_babel("different")
       false
   """
+  # We're deliberately not using `is_struct/2` here for backwards compatibility
   defguard is_babel(babel)
            when Builtin.struct_module(babel) == Pipeline or Builtin.is_builtin(babel)
 
