@@ -16,6 +16,24 @@ defmodule Babel.Trace do
             output: nil,
             nested: []
 
+  @spec new(Babel.t(input, output), input | Babel.Context.t(input), Babel.Step.result(output), [t]) ::
+          t(input, output)
+        when input: any, output: any
+  def new(babel, input, output, nested \\ [])
+
+  def new(babel, %Babel.Context{current: input}, output, nested) do
+    new(babel, input, output, nested)
+  end
+
+  def new(babel, input, output, nested) do
+    %__MODULE__{
+      babel: babel,
+      input: input,
+      output: output,
+      nested: nested
+    }
+  end
+
   @spec ok?(t) :: boolean
   def ok?(%__MODULE__{output: output}) do
     case output do

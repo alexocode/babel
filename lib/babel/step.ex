@@ -33,11 +33,7 @@ defmodule Babel.Step do
               trace
 
             result ->
-              %Babel.Trace{
-                babel: step,
-                input: context.current,
-                output: result
-              }
+              Babel.Trace.new(step, context, result)
           end
         end
       end

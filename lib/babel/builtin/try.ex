@@ -15,12 +15,7 @@ defmodule Babel.Builtin.Try do
   def apply(%__MODULE__{} = step, %Babel.Context{current: input}) do
     {nested, output} = do_try(step, input)
 
-    %Babel.Trace{
-      babel: step,
-      input: input,
-      output: output,
-      nested: nested
-    }
+    Babel.Trace.new(step, input, output, nested)
   end
 
   defp do_try(%{applicables: applicables, default: @no_default}, input) do

@@ -17,12 +17,7 @@ defmodule Babel.Builtin.Map do
         &Babel.Applicable.apply(applicable, %Babel.Context{context | current: &1})
       )
 
-    %Babel.Trace{
-      babel: step,
-      input: enum,
-      output: result,
-      nested: nested
-    }
+    Babel.Trace.new(step, enum, result, nested)
   end
 
   @impl Babel.Step

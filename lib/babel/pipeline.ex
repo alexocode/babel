@@ -72,12 +72,7 @@ defmodule Babel.Pipeline do
         end
       )
 
-    %Trace{
-      babel: pipeline,
-      input: context.current,
-      output: result,
-      nested: Enum.reverse(reversed_traces)
-    }
+    Trace.new(pipeline, context, result, Enum.reverse(reversed_traces))
   end
 
   @spec chain(t(input, in_between), t(in_between, output)) :: t(input, output)

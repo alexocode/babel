@@ -13,12 +13,7 @@ defmodule Babel.Builtin.Match do
   def apply(%__MODULE__{matcher: matcher} = step, %Babel.Context{current: input}) do
     nested = Babel.Applicable.apply(matcher.(input), input)
 
-    %Babel.Trace{
-      babel: step,
-      input: input,
-      output: nested.output,
-      nested: [nested]
-    }
+    Babel.Trace.new(step, input, nested.output, [nested])
   end
 
   @impl Babel.Step
