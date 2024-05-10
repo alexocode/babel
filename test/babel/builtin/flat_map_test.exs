@@ -15,25 +15,20 @@ defmodule Babel.Builtin.FlatMapTest do
     test "evaluates the babel returned by the given function" do
       step = FlatMap.new(fn element -> Babel.then(&{:mapped, element, &1}) end)
 
-      assert trace = trace(step, [1, 2, 3])
-      assert %Babel.Trace{} = trace
-      assert trace.babel == step
-      assert trace.input == [1, 2, 3]
-
-      assert trace.output ==
-               {:ok,
-                [
-                  {:mapped, 1, 1},
-                  {:mapped, 2, 2},
-                  {:mapped, 3, 3}
-                ]}
+      assert apply!(step, [1, 2, 3]) == [
+               {:mapped, 1, 1},
+               {:mapped, 2, 2},
+               {:mapped, 3, 3}
+             ]
     end
 
-    test "collects all nested traces" do
+    test "builds a proper trace" do
       plus_one = Babel.then(&(&1 + 1))
       step = FlatMap.new(fn _ -> plus_one end)
 
-      assert trace = trace(step, [1, 2, 3])
+      assert %Babel.Trace{} = trace = trace(step, [1, 2, 3])
+      assert trace.babel == step
+      assert trace.input == [1, 2, 3]
 
       assert trace.nested == [
                trace(plus_one, 1),
