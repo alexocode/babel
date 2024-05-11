@@ -192,7 +192,7 @@ defmodule Babel.InspectTest do
         |> Babel.fetch("key1")
         |> Babel.on_error(on_error)
 
-      data = {:invalid, "data"}
+      data = [:invalid, "data"]
 
       trace = Babel.trace(pipeline, data)
 
