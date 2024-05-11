@@ -4,7 +4,7 @@ defprotocol Babel.Intoable do
   @typedoc "Any type that implements this protocol."
   @type t :: any
 
-  @type result(output) :: {[Babel.Trace.t()], Babel.Step.result(output)}
+  @type result(output) :: {[Babel.Trace.t()], {:ok, output} | {:error, reason :: any}}
 
   @spec into(t, Babel.Context.t()) :: result(t)
   def into(t, context)
@@ -45,7 +45,7 @@ defimpl Babel.Intoable, for: Any do
   defp apply(babel, context) do
     trace = Babel.Applicable.apply(babel, context)
 
-    {[trace], trace.output}
+    {[trace], Babel.Trace.result(trace)}
   end
 
   defp applicable?(t) do
@@ -55,7 +55,7 @@ defimpl Babel.Intoable, for: Any do
   defp into_struct(%module{} = struct, context) do
     map = Map.from_struct(struct)
 
-    with {traces, {:ok, map}} <- Babel.Intoable.into(map, context) do
+    with {traces, {:ok, map}} <- Babel.Intoable.Map.into(map, context) do
       {traces, {:ok, struct(module, map)}}
     end
   end
