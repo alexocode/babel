@@ -5,11 +5,17 @@ defprotocol Babel.Fetchable do
   Has default implementations for Map, List, and Tuple, and a fallback for structs.
   """
   @type t :: term
+  @type implementation :: __MODULE__.Any | __MODULE__.Map | __MODULE__.List | __MODULE__.Tuple
 
   @fallback_to_any true
 
   @doc "Fetch the given path the data"
-  @spec fetch(data :: any, path :: any) :: {:ok, any} | :error | {:error, reason :: any}
+  @spec fetch(data, path) ::
+          {:ok, any}
+          | :error
+          | {:error, {:not_implemented, __MODULE__, data}}
+          | {:error, {:not_supported, implementation, path}}
+        when data: any, path: any
   def fetch(data, path)
 end
 
@@ -22,8 +28,8 @@ defimpl Babel.Fetchable, for: Any do
     end
   end
 
-  def fetch(_other, _path) do
-    :error
+  def fetch(other, _path) do
+    {:error, {:not_implemented, Babel.Fetchable, other}}
   end
 end
 
@@ -53,24 +59,23 @@ defimpl Babel.Fetchable, for: List do
 end
 
 defimpl Babel.Fetchable, for: Tuple do
-  def fetch(tuple, pos_index)
-      when is_integer(pos_index) and
-             pos_index >= 0 and
-             tuple_size(tuple) > pos_index do
-    {:ok, elem(tuple, pos_index)}
+  def fetch(tuple, pos_index) when is_integer(pos_index) and pos_index >= 0 do
+    if tuple_size(tuple) > pos_index do
+      {:ok, elem(tuple, pos_index)}
+    else
+      :error
+    end
   end
 
-  def fetch(tuple, neg_index)
-      when is_integer(neg_index) and
-             neg_index < 0 and
-             tuple_size(tuple) >= -neg_index do
-    {:ok,
-     tuple
-     |> Tuple.to_list()
-     |> Enum.at(neg_index)}
+  def fetch(tuple, neg_index) when is_integer(neg_index) and neg_index < 0 do
+    if tuple_size(tuple) >= -neg_index do
+      {:ok, Enum.at(Tuple.to_list(tuple), neg_index)}
+    else
+      :error
+    end
   end
 
-  def fetch(_tuple, _path) do
-    :error
+  def fetch(_tuple, segment) do
+    {:error, {:not_supported, __MODULE__, segment}}
   end
 end

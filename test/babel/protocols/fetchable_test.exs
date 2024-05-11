@@ -147,13 +147,14 @@ defmodule Babel.FetchableTest do
       tuple = List.to_tuple(non_integers)
 
       for path_segment <- non_integers do
-        assert Fetchable.fetch(tuple, path_segment) == :error
+        assert Fetchable.fetch(tuple, path_segment) ==
+                 {:error, {:not_supported, Babel.Fetchable.Tuple, path_segment}}
       end
     end
   end
 
   describe "Any" do
-    test "returns :error" do
+    test "returns {:error, {:not_implemented, Babel.Fetchable, <data>}}" do
       everything_else = [
         :atom,
         "string",
@@ -162,9 +163,11 @@ defmodule Babel.FetchableTest do
       ]
 
       for thing <- everything_else do
-        assert Fetchable.fetch(thing, 0) == :error
-        assert Fetchable.fetch(thing, :foo) == :error
-        assert Fetchable.fetch(thing, "bar") == :error
+        expected_error = {:error, {:not_implemented, Babel.Fetchable, thing}}
+
+        assert Fetchable.fetch(thing, 0) == expected_error
+        assert Fetchable.fetch(thing, :foo) == expected_error
+        assert Fetchable.fetch(thing, "bar") == expected_error
       end
     end
   end

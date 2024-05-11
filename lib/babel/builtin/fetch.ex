@@ -20,6 +20,9 @@ defmodule Babel.Builtin.Fetch do
 
         :error ->
           {:halt, {:error, {:not_found, path_segment}}}
+
+        {:error, reason} ->
+          {:halt, {:error, reason}}
       end
     end)
   end

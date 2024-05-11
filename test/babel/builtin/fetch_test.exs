@@ -44,6 +44,21 @@ defmodule Babel.Builtin.FetchTest do
 
       assert apply(step, data) == {:error, {:not_found, "nested"}}
     end
+
+    test "returns an error when the data type doesn't implement Babel.Fetchable" do
+      step = Fetch.new(:key)
+
+      non_fetchable = [
+        :atom,
+        "string",
+        make_ref(),
+        self()
+      ]
+
+      for data <- non_fetchable do
+        assert apply(step, data) == {:error, {:not_implemented, Babel.Fetchable, data}}
+      end
+    end
   end
 
   describe "inspect/2" do
