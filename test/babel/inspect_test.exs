@@ -38,6 +38,37 @@ defmodule Babel.InspectTest do
       """)
     end
 
+    test "with a nested pipeline" do
+      pipeline =
+        :pipeline1
+        |> Babel.begin()
+        |> Babel.fetch(["foo", "bar"])
+        |> Babel.chain(
+          :pipeline2
+          |> Babel.begin()
+          |> Babel.map(Babel.into(%{}))
+        )
+
+      assert_inspects_as(pipeline, """
+      :pipeline1
+      |> Babel.begin()
+      |> Babel.fetch(["foo", "bar"])
+      |> Babel.chain(
+        :pipeline2
+        |> Babel.begin()
+        |> Babel.map(Babel.into(%{}))
+      )
+      """)
+    end
+
+    test "with a step that doesn't have a chaining shortcut" do
+      pipeline = Babel.begin() |> Babel.chain(Babel.identity())
+
+      assert_inspects_as(pipeline, """
+      Babel.begin() |> Babel.chain(Babel.identity())
+      """)
+    end
+
     test "with on_error" do
       pipeline =
         Babel.begin()

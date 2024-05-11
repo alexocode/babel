@@ -1,3 +1,4 @@
+# coveralls-ignore-start
 defmodule Babel.Inspect do
   @moduledoc false
 
@@ -30,6 +31,8 @@ defmodule Babel.Inspect do
     end
   end
 end
+
+# coveralls-ignore-stop
 
 defimpl Inspect, for: Babel.Pipeline do
   import Inspect.Algebra
@@ -188,11 +191,15 @@ defimpl Inspect, for: Babel.Trace do
   # No colors means the output doesn't support colors
   defp force_color(doc, _color, %{syntax_colors: []}), do: doc
 
+  # Manually tested in iex
+  # coveralls-ignore-start
   defp force_color(doc, color, %{syntax_colors: syntax_colors}) do
     postcolor = Keyword.get(syntax_colors, :reset, :reset)
 
     concat([{:doc_color, doc, color}, {:doc_color, :doc_nil, postcolor}])
   end
+
+  # coveralls-ignore-stop
 
   defp properties(trace, opts) do
     concat([
