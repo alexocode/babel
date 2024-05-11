@@ -106,6 +106,20 @@ defmodule Babel.IntoableTest do
                static_key: "dynamic value!"
              }
     end
+
+    test "collects all errors into one flat list" do
+      map = %{
+        Babel.fail(:reason1) => Babel.fail(:reason2),
+        static_key: Babel.fetch(:range) |> Babel.map(Babel.then(&{:error, {&1, :reason3}}))
+      }
+
+      data = %{range: 1..3}
+
+      assert {_traces, {:error, reasons}} = into(map, data)
+
+      assert sorted(reasons) ==
+               sorted([:reason1, :reason2, {1, :reason3}, {2, :reason3}, {3, :reason3}])
+    end
   end
 
   defp into(intoable, data) do
@@ -118,4 +132,6 @@ defmodule Babel.IntoableTest do
   end
 
   defp trace(babel, data), do: Babel.trace(babel, data)
+
+  defp sorted(enum), do: Enum.sort(enum)
 end

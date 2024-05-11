@@ -96,10 +96,17 @@ defimpl Babel.Intoable, for: Tuple do
     {
       t1_traces ++ t2_traces,
       case {t1_result, t2_result} do
-        {{:ok, t1}, {:ok, t2}} -> {:ok, {t1, t2}}
-        {{:error, t1_error}, {:ok, _}} -> {:error, [t1_error]}
-        {{:ok, _}, {:error, t2_error}} -> {:error, [t2_error]}
-        {{:error, t1_error}, {:error, t2_error}} -> {:error, [t1_error, t2_error]}
+        {{:ok, t1}, {:ok, t2}} ->
+          {:ok, {t1, t2}}
+
+        {{:error, t1_error}, {:ok, _}} ->
+          {:error, list(t1_error)}
+
+        {{:ok, _}, {:error, t2_error}} ->
+          {:error, list(t2_error)}
+
+        {{:error, t1_error}, {:error, t2_error}} ->
+          {:error, list(t1_error, t2_error)}
       end
     }
   end
@@ -116,25 +123,25 @@ defimpl Babel.Intoable, for: Tuple do
           {:ok, {t1, t2, t3}}
 
         {{:error, t1_error}, {:ok, _}, {:ok, _}} ->
-          {:error, [t1_error]}
+          {:error, list(t1_error)}
 
         {{:ok, _}, {:error, t2_error}, {:ok, _}} ->
-          {:error, [t2_error]}
+          {:error, list(t2_error)}
 
         {{:ok, _}, {:ok, _}, {:error, t3_error}} ->
-          {:error, [t3_error]}
+          {:error, list(t3_error)}
 
         {{:error, t1_error}, {:error, t2_error}, {:ok, _}} ->
-          {:error, [t1_error, t2_error]}
+          {:error, list(t1_error, t2_error)}
 
         {{:error, t1_error}, {:ok, _}, {:error, t3_error}} ->
-          {:error, [t1_error, t3_error]}
+          {:error, list(t1_error, t3_error)}
 
         {{:ok, _}, {:error, t2_error}, {:error, t3_error}} ->
-          {:error, [t2_error, t3_error]}
+          {:error, list(t2_error, t3_error)}
 
         {{:error, t1_error}, {:error, t2_error}, {:error, t3_error}} ->
-          {:error, [t1_error, t2_error, t3_error]}
+          {:error, list(t1_error, t2_error, t3_error)}
       end
     }
   end
@@ -152,49 +159,49 @@ defimpl Babel.Intoable, for: Tuple do
           {:ok, {t1, t2, t3, t4}}
 
         {{:error, t1_error}, {:ok, _}, {:ok, _}, {:ok, _}} ->
-          {:error, [t1_error]}
+          {:error, list(t1_error)}
 
         {{:ok, _}, {:error, t2_error}, {:ok, _}, {:ok, _}} ->
-          {:error, [t2_error]}
+          {:error, list(t2_error)}
 
         {{:ok, _}, {:ok, _}, {:error, t3_error}, {:ok, _}} ->
-          {:error, [t3_error]}
+          {:error, list(t3_error)}
 
         {{:ok, _}, {:ok, _}, {:ok, _}, {:error, t4_error}} ->
-          {:error, [t4_error]}
+          {:error, list(t4_error)}
 
         {{:error, t1_error}, {:error, t2_error}, {:ok, _}, {:ok, _}} ->
-          {:error, [t1_error, t2_error]}
+          {:error, list(t1_error, t2_error)}
 
         {{:error, t1_error}, {:ok, _}, {:error, t3_error}, {:ok, _}} ->
-          {:error, [t1_error, t3_error]}
+          {:error, list(t1_error, t3_error)}
 
         {{:error, t1_error}, {:ok, _}, {:ok, _}, {:error, t4_error}} ->
-          {:error, [t1_error, t4_error]}
+          {:error, list(t1_error, t4_error)}
 
         {{:ok, _}, {:error, t2_error}, {:error, t3_error}, {:ok, _}} ->
-          {:error, [t2_error, t3_error]}
+          {:error, list(t2_error, t3_error)}
 
         {{:ok, _}, {:error, t2_error}, {:ok, _}, {:error, t4_error}} ->
-          {:error, [t2_error, t4_error]}
+          {:error, list(t2_error, t4_error)}
 
         {{:ok, _}, {:ok, _}, {:error, t3_error}, {:error, t4_error}} ->
-          {:error, [t3_error, t4_error]}
+          {:error, list(t3_error, t4_error)}
 
         {{:error, t1_error}, {:error, t2_error}, {:error, t3_error}, {:ok, _}} ->
-          {:error, [t1_error, t2_error, t3_error]}
+          {:error, list(t1_error, t2_error, t3_error)}
 
         {{:error, t1_error}, {:error, t2_error}, {:ok, _}, {:error, t4_error}} ->
-          {:error, [t1_error, t2_error, t4_error]}
+          {:error, list(t1_error, t2_error, t4_error)}
 
         {{:error, t1_error}, {:ok, _}, {:error, t3_error}, {:error, t4_error}} ->
-          {:error, [t1_error, t3_error, t4_error]}
+          {:error, list(t1_error, t3_error, t4_error)}
 
         {{:ok, _}, {:error, t2_error}, {:error, t3_error}, {:error, t4_error}} ->
-          {:error, [t2_error, t3_error, t4_error]}
+          {:error, list(t2_error, t3_error, t4_error)}
 
         {{:error, t1_error}, {:error, t2_error}, {:error, t3_error}, {:error, t4_error}} ->
-          {:error, [t1_error, t2_error, t3_error, t4_error]}
+          {:error, list(t1_error, t2_error, t3_error, t4_error)}
       end
     }
   end
@@ -208,4 +215,11 @@ defimpl Babel.Intoable, for: Tuple do
   end
 
   defp _into(t, context), do: Babel.Intoable.into(t, context)
+
+  defp list(l1), do: wrap(l1)
+  defp list(l1, l2), do: wrap(l1) ++ wrap(l2)
+  defp list(l1, l2, l3), do: wrap(l1) ++ wrap(l2) ++ wrap(l3)
+  defp list(l1, l2, l3, l4), do: wrap(l1) ++ wrap(l2) ++ wrap(l3) ++ wrap(l4)
+
+  defp wrap(l), do: List.wrap(l)
 end
