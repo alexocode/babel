@@ -8,34 +8,26 @@ defmodule Babel.Error do
   @spec new(Trace.t({:error, reason})) :: t(reason) when reason: any
   def new(%Trace{} = trace) do
     %__MODULE__{
-      reason: determine_reason(trace.output),
+      reason: determine_reason(trace),
       trace: trace
     }
   end
 
-  defp determine_reason(:error), do: :unknown
+  defp determine_reason(%Trace{} = trace) do
+    trace
+    |> Trace.result()
+    |> determine_reason()
+  end
+
   defp determine_reason({:error, reason}), do: determine_reason(reason)
   defp determine_reason(other_reason), do: other_reason
 
   @impl true
   def message(%__MODULE__{reason: reason, trace: trace}) do
     """
-    #{babel(trace.babel)} failed to transform data: #{inspect(reason)}
+    Failed to transform data: #{inspect(reason)}
 
-    #{trace(trace)}
+    #{inspect(trace, custom_options: [indent: 2])}
     """
-  end
-
-  defp babel(%struct{name: name}) do
-    "#{inspect(struct)}<#{name(name)}>"
-  end
-
-  defp babel(other), do: inspect(other)
-
-  defp name(nil), do: ""
-  defp name(term), do: inspect(term)
-
-  defp trace(%Babel.Trace{} = trace) do
-    inspect(trace, custom_options: [indent: 2])
   end
 end
