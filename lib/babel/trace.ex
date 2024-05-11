@@ -39,11 +39,14 @@ defmodule Babel.Trace do
   end
 
   @spec ok?(t) :: boolean
-  def ok?(%__MODULE__{output: output}) do
+  def ok?(%__MODULE__{} = trace), do: not error?(trace)
+
+  @spec error?(t) :: boolean
+  def error?(%__MODULE__{output: output}) do
     case output do
-      :error -> false
-      {:error, _} -> false
-      _ok -> true
+      :error -> true
+      {:error, _} -> true
+      _ok -> false
     end
   end
 
@@ -65,20 +68,31 @@ defmodule Babel.Trace do
   they were the root cause of the failure.
   """
   @spec root_causes(t) :: [t]
-  def root_causes(%__MODULE__{nested: nested} = trace) do
-    cond do
-      ok?(trace) -> []
-      nested == [] -> [trace]
-      true -> Enum.flat_map(nested, &root_causes/1)
-    end
+  def root_causes(%__MODULE__{} = trace) do
+    find(trace, fn t ->
+      error?(t) and t.nested == []
+    end)
+  end
+
+  @spec find(t, function :: (t -> boolean)) :: [t]
+  def find(%__MODULE__{} = trace, function) when is_function(function, 1) do
+    do_find(trace, function)
   end
 
   @spec find(t, spec_or_path :: spec | nonempty_list(spec)) :: [t]
-        when spec: Babel.t() | (builtin_name :: atom) | {builtin_name :: atom, args :: [term]}
+        when spec:
+               Babel.t()
+               | Babel.name()
+               | (builtin_name :: atom)
+               | {builtin_name :: atom, args :: [term]}
   def find(%__MODULE__{} = trace, spec_path) when is_list(spec_path) do
     Enum.reduce(spec_path, [trace], fn spec, traces ->
       Enum.flat_map(traces, &find(&1, spec))
     end)
+  end
+
+  def find(%__MODULE__{} = trace, {atom, args}) when is_builtin_name(atom) and is_list(args) do
+    do_find(trace, apply(module_of_builtin!(atom), :new, args))
   end
 
   def find(%__MODULE__{} = trace, {atom, arg} = spec)
@@ -96,23 +110,22 @@ defmodule Babel.Trace do
     end
   end
 
-  def find(%__MODULE__{} = trace, {atom, args}) when is_builtin_name(atom) and is_list(args) do
-    do_find(trace, apply(module_of_builtin!(atom), :new, args))
-  end
-
   def find(%__MODULE__{} = trace, spec), do: do_find(trace, spec)
 
-  defp do_find([], _babel), do: []
-  defp do_find([trace | traces], spec), do: do_find(trace, spec) ++ do_find(traces, spec)
+  defp do_find(t, spec) when not is_function(spec), do: do_find(t, &matches_spec?(&1, spec))
 
-  defp do_find(trace, spec) do
-    if matches_spec?(trace.babel, spec) do
-      [trace | do_find(trace.nested, spec)]
+  defp do_find([], _function), do: []
+  defp do_find([t | r], f), do: do_find(t, f) ++ do_find(r, f)
+
+  defp do_find(%__MODULE__{} = trace, function) do
+    if function.(trace) do
+      [trace | do_find(trace.nested, function)]
     else
-      do_find(trace.nested, spec)
+      do_find(trace.nested, function)
     end
   end
 
+  def matches_spec?(%__MODULE__{babel: babel}, spec), do: matches_spec?(babel, spec)
   def matches_spec?(babel, babel), do: true
   def matches_spec?(%{name: name}, name), do: true
 
