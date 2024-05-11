@@ -276,6 +276,16 @@ defmodule Babel.PipelineTest do
                }
       end
     end
+
+    test "includes the given list of steps in the current pipeline" do
+      pipeline = pipeline()
+      steps = [step(), step(), step()]
+
+      assert Pipeline.chain(pipeline, steps) == %Pipeline{
+               pipeline
+               | reversed_steps: Enum.reverse(steps) ++ pipeline.reversed_steps
+             }
+    end
   end
 
   describe "on_error/2" do
