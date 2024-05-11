@@ -9,7 +9,7 @@ defprotocol Babel.Fetchable do
 
   @fallback_to_any true
 
-  @doc "Fetch the given path the data"
+  @doc "Fetch the given path from the data"
   @spec fetch(data, path) ::
           {:ok, any}
           | :error
