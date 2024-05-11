@@ -67,6 +67,7 @@ defmodule BabelTest do
       assert Babel.at(["some", "path"]) == Builtin.Fetch.new(["some", "path"])
       assert Babel.fetch(["some", "path"]) == Builtin.Fetch.new(["some", "path"])
 
+      assert Babel.get(["some", "path"]) == Builtin.Get.new(["some", "path"])
       assert Babel.get(["some", "path"], :default) == Builtin.Get.new(["some", "path"], :default)
 
       assert Babel.cast(:boolean) == Builtin.Cast.new(:boolean)
@@ -105,6 +106,7 @@ defmodule BabelTest do
     test "most core steps have a composing version" do
       assert composes(Babel, :at, [["some", "path"]])
       assert composes(Babel, :call, [List, :to_string])
+      assert composes(Babel, :call, [Map, :fetch, [:key]])
       assert composes(Babel, :cast, [:boolean])
       assert composes(Babel, :cast, [:float])
       assert composes(Babel, :cast, [:integer])
@@ -115,7 +117,9 @@ defmodule BabelTest do
       assert composes(Babel, :map, [unique_step()])
       assert composes(Babel, :match, [fn _ -> unique_step() end])
       assert composes(Babel, :then, [fn _ -> :do_the_thing end])
+      assert composes(Babel, :then, [:my_name, fn _ -> :do_the_thing end])
       assert composes(Babel, :try, [[Babel.fail(:some_reason), unique_step()]])
+      assert composes(Babel, :try, [[Babel.fail(:some_reason), unique_step()], :default])
     end
 
     test "chain/2 returns the right value when the left is nil" do
