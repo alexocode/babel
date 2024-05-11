@@ -14,8 +14,12 @@ defprotocol Babel.Fetchable do
 end
 
 defimpl Babel.Fetchable, for: Any do
-  def fetch(%_{} = struct, path) do
-    Map.fetch(struct, path)
+  def fetch(%module{} = struct, path) do
+    if function_exported?(module, :fetch, 2) do
+      Access.fetch(struct, path)
+    else
+      Map.fetch(struct, path)
+    end
   end
 
   def fetch(_other, _path) do
@@ -28,21 +32,12 @@ defimpl Babel.Fetchable, for: Map do
 end
 
 defimpl Babel.Fetchable, for: List do
-  def fetch(list, index) when is_integer(index) do
-    list
-    |> Enum.reduce_while(0, fn element, count ->
-      if count == index do
-        {:halt, {:ok, element}}
-      else
-        {:cont, count + 1}
-      end
-    end)
-    |> case do
-      {:ok, value} ->
-        {:ok, value}
+  @not_found {__MODULE__, :not_found}
 
-      _ ->
-        :error
+  def fetch(list, index) when is_integer(index) do
+    case Enum.at(list, index, @not_found) do
+      @not_found -> :error
+      found -> {:ok, found}
     end
   end
 
@@ -58,8 +53,21 @@ defimpl Babel.Fetchable, for: List do
 end
 
 defimpl Babel.Fetchable, for: Tuple do
-  def fetch(tuple, index) when is_integer(index) and tuple_size(tuple) > index do
-    {:ok, elem(tuple, index)}
+  def fetch(tuple, pos_index)
+      when is_integer(pos_index) and
+             pos_index >= 0 and
+             tuple_size(tuple) > pos_index do
+    {:ok, elem(tuple, pos_index)}
+  end
+
+  def fetch(tuple, neg_index)
+      when is_integer(neg_index) and
+             neg_index < 0 and
+             tuple_size(tuple) >= -neg_index do
+    {:ok,
+     tuple
+     |> Tuple.to_list()
+     |> Enum.at(neg_index)}
   end
 
   def fetch(_tuple, _path) do
