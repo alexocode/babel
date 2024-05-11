@@ -76,7 +76,10 @@ defimpl Babel.Intoable, for: List do
 end
 
 defimpl Babel.Intoable, for: Tuple do
-  # Pattern matching is a lot faster than the Tuple.to_list/1 version below
+  # Simplest would be to just do `Tuple.to_list/1` but that's comparatively slow;
+  # for performance reasons we hand wrote pattern matching versions for up to
+  # 4-value tuples (which should cover 99% of cases)
+
   def into({}, _), do: {[], {:ok, {}}}
 
   def into({t1}, context) do
@@ -91,7 +94,7 @@ defimpl Babel.Intoable, for: Tuple do
     {t2_traces, t2_result} = _into(t2, context)
 
     {
-      Enum.concat([t1_traces, t2_traces]),
+      t1_traces ++ t2_traces,
       case {t1_result, t2_result} do
         {{:ok, t1}, {:ok, t2}} -> {:ok, {t1, t2}}
         {{:error, t1_error}, {:ok, _}} -> {:error, [t1_error]}
@@ -107,7 +110,7 @@ defimpl Babel.Intoable, for: Tuple do
     {t3_traces, t3_result} = _into(t3, context)
 
     {
-      Enum.concat([t1_traces, t2_traces, t3_traces]),
+      t1_traces ++ t2_traces ++ t3_traces,
       case {t1_result, t2_result, t3_result} do
         {{:ok, t1}, {:ok, t2}, {:ok, t3}} ->
           {:ok, {t1, t2, t3}}
@@ -132,6 +135,66 @@ defimpl Babel.Intoable, for: Tuple do
 
         {{:error, t1_error}, {:error, t2_error}, {:error, t3_error}} ->
           {:error, [t1_error, t2_error, t3_error]}
+      end
+    }
+  end
+
+  def into({t1, t2, t3, t4}, context) do
+    {t1_traces, t1_result} = _into(t1, context)
+    {t2_traces, t2_result} = _into(t2, context)
+    {t3_traces, t3_result} = _into(t3, context)
+    {t4_traces, t4_result} = _into(t4, context)
+
+    {
+      t1_traces ++ t2_traces ++ t3_traces ++ t4_traces,
+      case {t1_result, t2_result, t3_result, t4_result} do
+        {{:ok, t1}, {:ok, t2}, {:ok, t3}, {:ok, t4}} ->
+          {:ok, {t1, t2, t3, t4}}
+
+        {{:error, t1_error}, {:ok, _}, {:ok, _}, {:ok, _}} ->
+          {:error, [t1_error]}
+
+        {{:ok, _}, {:error, t2_error}, {:ok, _}, {:ok, _}} ->
+          {:error, [t2_error]}
+
+        {{:ok, _}, {:ok, _}, {:error, t3_error}, {:ok, _}} ->
+          {:error, [t3_error]}
+
+        {{:ok, _}, {:ok, _}, {:ok, _}, {:error, t4_error}} ->
+          {:error, [t4_error]}
+
+        {{:error, t1_error}, {:error, t2_error}, {:ok, _}, {:ok, _}} ->
+          {:error, [t1_error, t2_error]}
+
+        {{:error, t1_error}, {:ok, _}, {:error, t3_error}, {:ok, _}} ->
+          {:error, [t1_error, t3_error]}
+
+        {{:error, t1_error}, {:ok, _}, {:ok, _}, {:error, t4_error}} ->
+          {:error, [t1_error, t4_error]}
+
+        {{:ok, _}, {:error, t2_error}, {:error, t3_error}, {:ok, _}} ->
+          {:error, [t2_error, t3_error]}
+
+        {{:ok, _}, {:error, t2_error}, {:ok, _}, {:error, t4_error}} ->
+          {:error, [t2_error, t4_error]}
+
+        {{:ok, _}, {:ok, _}, {:error, t3_error}, {:error, t4_error}} ->
+          {:error, [t3_error, t4_error]}
+
+        {{:error, t1_error}, {:error, t2_error}, {:error, t3_error}, {:ok, _}} ->
+          {:error, [t1_error, t2_error, t3_error]}
+
+        {{:error, t1_error}, {:error, t2_error}, {:ok, _}, {:error, t4_error}} ->
+          {:error, [t1_error, t2_error, t4_error]}
+
+        {{:error, t1_error}, {:ok, _}, {:error, t3_error}, {:error, t4_error}} ->
+          {:error, [t1_error, t3_error, t4_error]}
+
+        {{:ok, _}, {:error, t2_error}, {:error, t3_error}, {:error, t4_error}} ->
+          {:error, [t2_error, t3_error, t4_error]}
+
+        {{:error, t1_error}, {:error, t2_error}, {:error, t3_error}, {:error, t4_error}} ->
+          {:error, [t1_error, t2_error, t3_error, t4_error]}
       end
     }
   end
