@@ -1,4 +1,5 @@
 defmodule Babel.IntoableTest do
+  require Babel
   use ExUnit.Case, async: true
 
   import Babel.Test.Factory
@@ -181,6 +182,160 @@ defmodule Babel.IntoableTest do
       data = nil
 
       assert into(list, data) == {:error, [:reason1, :reason2, :reason3]}
+    end
+  end
+
+  describe "Tuple" do
+    test "returns an empty tuple unchanged" do
+      assert {[], {:ok, {}}} = traced_into({}, nil)
+    end
+
+    test "resolves the element of a single value tuple" do
+      assert {[], {:ok, {:static}}} = traced_into({:static}, nil)
+
+      const = Babel.const(:dynamic)
+      assert {[trace], {:ok, {:dynamic}}} = traced_into({const}, nil)
+      assert trace == trace(const, nil)
+    end
+
+    test "captures the error of a single value tuple" do
+      fail = Babel.fail(:reason)
+      assert {[trace], {:error, :reason}} = traced_into({fail}, nil)
+      assert trace == trace(fail, nil)
+    end
+
+    test "resolves the elements of a two value tuple" do
+      const1 = Babel.const(:dynamic1)
+      const2 = Babel.const(:dynamic2)
+      fail1 = Babel.fail(:reason1)
+      fail2 = Babel.fail(:reason2)
+
+      tuple_result = %{
+        {:static1, :static2} => {:ok, {:static1, :static2}},
+        {:static1, const2} => {:ok, {:static1, :dynamic2}},
+        {const1, :static2} => {:ok, {:dynamic1, :static2}},
+        {const1, const2} => {:ok, {:dynamic1, :dynamic2}},
+        {fail1, const2} => {:error, [:reason1]},
+        {const1, fail2} => {:error, [:reason2]},
+        {fail1, fail2} => {:error, [:reason1, :reason2]}
+      }
+
+      data = nil
+
+      for {tuple, expected_result} <- tuple_result do
+        expected_traces =
+          tuple
+          |> Tuple.to_list()
+          |> Enum.filter(&Babel.is_babel/1)
+          |> Enum.map(&trace(&1, data))
+
+        {traces, result} = traced_into(tuple, data)
+
+        assert result == expected_result
+        assert traces == expected_traces
+      end
+    end
+
+    test "resolves the elements of a three value tuple" do
+      data = nil
+
+      for value1 <- [:static1, Babel.const(:dynamic1), Babel.fail(:reason1)],
+          value2 <- [:static2, Babel.const(:dynamic2), Babel.fail(:reason2)],
+          value3 <- [:static3, Babel.const(:dynamic3), Babel.fail(:reason3)] do
+        values = [value1, value2, value3]
+
+        expected_result =
+          if Enum.any?(values, &is_struct(&1, Babel.Builtin.Fail)) do
+            {:error, for(%Babel.Builtin.Fail{reason: reason} <- values, do: reason)}
+          else
+            {:ok,
+             values
+             |> Enum.map(fn
+               %Babel.Builtin.Const{value: value} -> value
+               static -> static
+             end)
+             |> List.to_tuple()}
+          end
+
+        expected_traces =
+          values
+          |> Enum.filter(&Babel.is_babel/1)
+          |> Enum.map(&trace(&1, data))
+
+        {traces, result} = traced_into({value1, value2, value3}, data)
+
+        assert result == expected_result
+        assert traces == expected_traces
+      end
+    end
+
+    test "resolves the elements of a four value tuple" do
+      data = nil
+
+      for value1 <- [:static1, Babel.const(:dynamic1), Babel.fail(:reason1)],
+          value2 <- [:static2, Babel.const(:dynamic2), Babel.fail(:reason2)],
+          value3 <- [:static3, Babel.const(:dynamic3), Babel.fail(:reason3)],
+          value4 <- [:static4, Babel.const(:dynamic4), Babel.fail(:reason4)] do
+        values = [value1, value2, value3, value4]
+
+        expected_result =
+          if Enum.any?(values, &is_struct(&1, Babel.Builtin.Fail)) do
+            {:error, for(%Babel.Builtin.Fail{reason: reason} <- values, do: reason)}
+          else
+            {:ok,
+             values
+             |> Enum.map(fn
+               %Babel.Builtin.Const{value: value} -> value
+               static -> static
+             end)
+             |> List.to_tuple()}
+          end
+
+        expected_traces =
+          values
+          |> Enum.filter(&Babel.is_babel/1)
+          |> Enum.map(&trace(&1, data))
+
+        {traces, result} = traced_into({value1, value2, value3, value4}, data)
+
+        assert result == expected_result
+        assert traces == expected_traces
+      end
+    end
+
+    test "resolves the elements of a five value tuple" do
+      data = nil
+
+      for value1 <- [:static1, Babel.const(:dynamic1), Babel.fail(:reason1)],
+          value2 <- [:static2, Babel.const(:dynamic2), Babel.fail(:reason2)],
+          value3 <- [:static3, Babel.const(:dynamic3), Babel.fail(:reason3)],
+          value4 <- [:static4, Babel.const(:dynamic4), Babel.fail(:reason4)],
+          value5 <- [:static5, Babel.const(:dynamic5), Babel.fail(:reason5)] do
+        values = [value1, value2, value3, value4, value5]
+
+        expected_result =
+          if Enum.any?(values, &is_struct(&1, Babel.Builtin.Fail)) do
+            {:error, for(%Babel.Builtin.Fail{reason: reason} <- values, do: reason)}
+          else
+            {:ok,
+             values
+             |> Enum.map(fn
+               %Babel.Builtin.Const{value: value} -> value
+               static -> static
+             end)
+             |> List.to_tuple()}
+          end
+
+        expected_traces =
+          values
+          |> Enum.filter(&Babel.is_babel/1)
+          |> Enum.map(&trace(&1, data))
+
+        {traces, result} = traced_into({value1, value2, value3, value4, value5}, data)
+
+        assert result == expected_result
+        assert traces == expected_traces
+      end
     end
   end
 
