@@ -70,8 +70,69 @@ defimpl Babel.Intoable, for: Map do
 end
 
 defimpl Babel.Intoable, for: List do
+  def into([], _context), do: {[], {:ok, []}}
+
   def into(list, context) do
-    Babel.Intoable.Utils.into_each(list, context)
+    map_and_collect(list, context)
+  end
+
+  defp map_and_collect(list, context, traces \\ [], result \\ {:ok, []})
+
+  defp map_and_collect([], _context, traces, {ok_or_error, mapped}) do
+    {Enum.reverse(traces), {ok_or_error, Enum.reverse(mapped)}}
+  end
+
+  defp map_and_collect([element | rest], context, traces, {ok_or_error, mapped}) do
+    {element_traces, element_result} = Babel.Intoable.into(element, context)
+
+    map_and_collect(
+      rest,
+      context,
+      element_traces ++ traces,
+      case {ok_or_error, element_result} do
+        {:ok, {:ok, value}} ->
+          {:ok, [value | mapped]}
+
+        {:ok, {:error, reason}} ->
+          {:error, List.wrap(reason)}
+
+        {:error, {:ok, _}} ->
+          {:error, mapped}
+
+        {:error, {:error, reasons}} when is_list(reasons) ->
+          {:error, Enum.reverse(reasons) ++ mapped}
+
+        {:error, {:error, reason}} ->
+          {:error, [reason | mapped]}
+      end
+    )
+  end
+
+  defp map_and_collect(improper, context, traces, {ok_or_error, mapped})
+       when not is_list(improper) do
+    {improper_traces, improper_result} = Babel.Intoable.into(improper, context)
+
+    {
+      Enum.reduce(traces, improper_traces, &[&1 | &2]),
+      case {ok_or_error, improper_result} do
+        # `value` is most likely a list (and as such the result will be a proper list);
+        # but in case it isn't we retain the improper list by using `Enum.reverse/3`
+        {:ok, {:ok, value}} ->
+          {:ok, Enum.reduce(tl(mapped), [hd(mapped) | value], &[&1 | &2])}
+
+        {:ok, {:error, reason}} ->
+          {:error, List.wrap(reason)}
+
+        {:error, {:ok, _}} ->
+          {:error, Enum.reverse(mapped)}
+
+        {:error, {:error, reasons}} when is_list(reasons) ->
+          {:error, Enum.reduce(mapped, reasons, &[&1 | &2])}
+
+        {:error, {:error, reason}} ->
+          {:error, Enum.reverse([reason | mapped])}
+      end
+    }
   end
 end
 

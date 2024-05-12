@@ -3,15 +3,13 @@ defmodule Babel.IntoableTest do
 
   import Babel.Test.Factory
 
-  alias Babel.Intoable
-
   describe "Any" do
     test "when it's a Babel.Pipeline invokes Babel.Applicable.apply/2" do
       ref = make_ref()
       pipeline = Babel.begin() |> Babel.chain(Babel.const(ref))
       data = data()
 
-      assert {traces, {:ok, ^ref}} = into(pipeline, data)
+      assert {traces, {:ok, ^ref}} = traced_into(pipeline, data)
       assert traces == [trace(pipeline, data)]
     end
 
@@ -38,7 +36,7 @@ defmodule Babel.IntoableTest do
       ]
 
       for {builtin, data, expected} <- builtin_data_result do
-        assert {traces, result} = into(builtin, data)
+        assert {traces, result} = traced_into(builtin, data)
         assert {builtin, data, result} == {builtin, data, expected}
         assert traces == [trace(builtin, data)]
       end
@@ -47,7 +45,7 @@ defmodule Babel.IntoableTest do
     test "when it's a custom non-builtin step" do
       step = %Babel.Test.EmptyCustomStep{}
 
-      assert {traces, result} = into(step, nil)
+      assert {traces, result} = traced_into(step, nil)
       assert result == {:ok, 42}
       assert traces == [trace(step, nil)]
     end
@@ -60,7 +58,7 @@ defmodule Babel.IntoableTest do
       step = %RegularOldStruct{foo: Babel.fetch(:foo), bar: Babel.fetch(:bar)}
       data = %{foo: make_ref(), bar: make_ref()}
 
-      assert {traces, {:ok, result}} = into(step, data)
+      assert {traces, {:ok, result}} = traced_into(step, data)
       assert result == %RegularOldStruct{foo: data.foo, bar: data.bar}
       assert traces == [trace(step.foo, data), trace(step.bar, data)]
     end
@@ -76,7 +74,7 @@ defmodule Babel.IntoableTest do
       ]
 
       for thing <- anything_else do
-        assert into(thing, nil) == {[], {:ok, thing}}
+        assert traced_into(thing, nil) == {[], {:ok, thing}}
       end
     end
   end
@@ -115,19 +113,71 @@ defmodule Babel.IntoableTest do
 
       data = %{range: 1..3}
 
-      assert {_traces, {:error, reasons}} = into(map, data)
+      assert {:error, reasons} = into(map, data)
 
       assert sorted(reasons) ==
                sorted([:reason1, :reason2, {1, :reason3}, {2, :reason3}, {3, :reason3}])
     end
   end
 
+  describe "List" do
+    test "resolves every value and also nested lists" do
+      list = [
+        :foo,
+        Babel.fetch(:bar),
+        [
+          Babel.fetch(:boing)
+        ]
+      ]
+
+      data = %{bar: "baz", boing: "whatever"}
+
+      assert into!(list, data) == [:foo, "baz", ["whatever"]]
+    end
+
+    test "resolves an improper list" do
+      list =
+        [
+          1,
+          2
+          | Babel.map(Babel.then(&(&1 * 2)))
+        ]
+
+      data = 1..5
+
+      assert into!(list, data) == [1, 2, 2, 4, 6, 8, 10]
+
+      list =
+        [
+          1,
+          2
+          | Babel.const(:not_a_list)
+        ]
+
+      data = nil
+
+      assert into!(list, data) == [1, 2 | :not_a_list]
+    end
+
+    test "collects all errors into one flat list" do
+      list = [Babel.fail(:reason1), [Babel.fail(:reason2), [Babel.fail(:reason3)]]]
+      data = nil
+
+      assert into(list, data) == {:error, [:reason1, :reason2, :reason3]}
+    end
+  end
+
+  defp traced_into(intoable, data) do
+    Babel.Intoable.into(intoable, Babel.Context.new(data))
+  end
+
   defp into(intoable, data) do
-    Intoable.into(intoable, Babel.Context.new(data))
+    assert {_traces, result} = traced_into(intoable, data)
+    result
   end
 
   defp into!(intoable, data) do
-    assert {_traces, {:ok, result}} = into(intoable, data)
+    assert {:ok, result} = into(intoable, data)
     result
   end
 
