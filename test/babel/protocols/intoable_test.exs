@@ -81,16 +81,20 @@ defmodule Babel.IntoableTest do
 
   describe "Map" do
     test "resolves every key and value" do
-      map = %{
-        %{Babel.fetch(:key1) => Babel.fetch(:key2)} =>
-          Babel.begin()
-          |> Babel.fetch(:range)
-          |> Babel.map(Babel.then(&(&1 * 2))),
-        static_key:
-          Babel.begin()
-          |> Babel.fetch(:value)
-          |> Babel.then(&"dynamic #{&1}")
-      }
+      step1 = Babel.fetch(:key1)
+      step2 = Babel.fetch(:key2)
+
+      pipeline1 =
+        Babel.begin()
+        |> Babel.fetch(:range)
+        |> Babel.map(Babel.then(&(&1 * 2)))
+
+      pipeline2 =
+        Babel.begin()
+        |> Babel.fetch(:value)
+        |> Babel.then(&"dynamic #{&1}")
+
+      map = %{%{step1 => step2} => pipeline1, static_key: pipeline2}
 
       data = %{
         key1: "value1",
@@ -103,6 +107,13 @@ defmodule Babel.IntoableTest do
                %{"value1" => "value2"} => [2, 4, 6],
                static_key: "dynamic value!"
              }
+
+      assert {traces, _} = traced_into(map, data)
+      assert length(traces) == 4
+      assert trace(step1, data) in traces
+      assert trace(step2, data) in traces
+      assert trace(pipeline1, data) in traces
+      assert trace(pipeline2, data) in traces
     end
 
     test "collects all errors into one flat list" do
@@ -133,6 +144,12 @@ defmodule Babel.IntoableTest do
       data = %{bar: "baz", boing: "whatever"}
 
       assert into!(list, data) == [:foo, "baz", ["whatever"]]
+      assert {traces, _} = traced_into(list, data)
+
+      assert traces == [
+               trace(Babel.fetch(:bar), data),
+               trace(Babel.fetch(:boing), data)
+             ]
     end
 
     test "resolves an improper list" do
