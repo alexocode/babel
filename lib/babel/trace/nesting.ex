@@ -6,12 +6,12 @@ defmodule Babel.Trace.Nesting do
   @type traces_with_result(output) :: {[Trace.t()], result(output)}
   @type result(output) :: {:ok, output} | {:error, reason :: any}
 
-  @spec map_nested(
+  @spec traced_map(
           enum :: Enumerable.t(input),
           mapper :: (input -> Trace.t(output) | traces_with_result(output))
         ) :: {[Trace.t()], {:ok, [output]} | {:error, [reason :: any]}}
         when input: any, output: any
-  def map_nested(enum, mapper) when is_function(mapper, 1) do
+  def traced_map(enum, mapper) when is_function(mapper, 1) do
     {traces, {ok_or_error, list}} =
       traced_reduce(enum, mapper, {:ok, []}, fn result, accumulated ->
         {:cont, collect_results(result, accumulated)}

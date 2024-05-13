@@ -21,7 +21,7 @@ defmodule Babel.Builtin.Map do
   @impl Babel.Step
   def apply(%__MODULE__{applicable: applicable} = step, %Context{current: enum} = context) do
     {nested, result} =
-      Trace.Nesting.map_nested(
+      Trace.Nesting.traced_map(
         enum,
         &Applicable.apply(applicable, %Context{context | current: &1})
       )

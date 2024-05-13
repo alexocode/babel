@@ -15,7 +15,7 @@ end
 
 defmodule Babel.Intoable.Utils do
   def into_each(enum, context) do
-    Babel.Trace.Nesting.map_nested(enum, &Babel.Intoable.into(&1, context))
+    Babel.Trace.Nesting.traced_map(enum, &Babel.Intoable.into(&1, context))
   end
 end
 
