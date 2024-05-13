@@ -82,7 +82,7 @@ defmodule Babel.Trace.Nesting do
     end
   end
 
-  defmacro trace_try(babel, input, do: block) do
+  defmacro traced_try(babel, input, do: block) do
     quote do
       trace_or_result =
         try do

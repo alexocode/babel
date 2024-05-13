@@ -21,7 +21,7 @@ defmodule Babel.Builtin.Then do
 
   @impl Babel.Step
   def apply(%__MODULE__{function: function} = then, %Context{current: input}) do
-    Nesting.trace_try then, input do
+    Nesting.traced_try then, input do
       function.(input)
     end
   end
