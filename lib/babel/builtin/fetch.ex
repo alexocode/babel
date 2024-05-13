@@ -2,6 +2,10 @@ defmodule Babel.Builtin.Fetch do
   @moduledoc false
   use Babel.Step
 
+  alias Babel.Builtin
+  alias Babel.Context
+  alias Babel.Fetchable
+
   @enforce_keys [:path]
   defstruct [:path]
 
@@ -10,11 +14,11 @@ defmodule Babel.Builtin.Fetch do
   end
 
   @impl Babel.Step
-  def apply(%__MODULE__{path: path}, %Babel.Context{current: data}) do
+  def apply(%__MODULE__{path: path}, %Context{current: data}) do
     path
     |> List.wrap()
     |> Enum.reduce_while({:ok, data}, fn path_segment, {:ok, next} ->
-      case Babel.Fetchable.fetch(next, path_segment) do
+      case Fetchable.fetch(next, path_segment) do
         {:ok, next} ->
           {:cont, {:ok, next}}
 
@@ -29,6 +33,6 @@ defmodule Babel.Builtin.Fetch do
 
   @impl Babel.Step
   def inspect(%__MODULE__{} = step, opts) do
-    Babel.Builtin.inspect(step, [:path], opts)
+    Builtin.inspect(step, [:path], opts)
   end
 end

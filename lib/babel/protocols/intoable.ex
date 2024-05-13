@@ -1,12 +1,15 @@
 defprotocol Babel.Intoable do
+  alias Babel.Context
+  alias Babel.Trace
+
   @fallback_to_any true
 
   @typedoc "Any type that implements this protocol."
   @type t :: any
 
-  @type result(output) :: {[Babel.Trace.t()], {:ok, output} | {:error, reason :: any}}
+  @type result(output) :: {[Trace.t()], {:ok, output} | {:error, reason :: any}}
 
-  @spec into(t, Babel.Context.t()) :: result(t)
+  @spec into(t, Context.t()) :: result(t)
   def into(t, context)
 end
 

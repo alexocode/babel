@@ -1,19 +1,21 @@
 defmodule Babel.Trace.Nesting do
   @moduledoc false
 
-  @type traces_with_result(output) :: {[Babel.Trace.t()], {:ok, output} | {:error, reason :: any}}
+  alias Babel.Trace
+
+  @type traces_with_result(output) :: {[Trace.t()], {:ok, output} | {:error, reason :: any}}
 
   @spec map_nested(
           enum :: Enumerable.t(input),
-          mapper :: (input -> Babel.Trace.t(output) | traces_with_result(output))
-        ) :: {[Babel.Trace.t()], {:ok, [output]} | {:error, [reason :: any]}}
+          mapper :: (input -> Trace.t(output) | traces_with_result(output))
+        ) :: {[Trace.t()], {:ok, [output]} | {:error, [reason :: any]}}
         when input: any, output: any
   def map_nested(enum, mapper) when is_function(mapper, 1) do
     {traces, {ok_or_error, list}} =
       Enum.reduce(enum, {[], {:ok, []}}, fn element, {traces, {ok_or_error, list}} ->
         {nested_traces, result} =
           case mapper.(element) do
-            %Babel.Trace{} = trace -> {[trace], Babel.Trace.result(trace)}
+            %Trace{} = trace -> {[trace], Trace.result(trace)}
             {traces, result} -> {traces, result}
           end
 

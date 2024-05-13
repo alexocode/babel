@@ -1,8 +1,10 @@
 defmodule Babel.Pipeline do
   alias __MODULE__.OnError
+  alias Babel.Applicable
   alias Babel.Error
   alias Babel.Context
   alias Babel.Trace
+  alias Babel.Step
 
   @type t() :: t(any, any)
   @type t(output) :: t(any, output)
@@ -16,10 +18,10 @@ defmodule Babel.Pipeline do
             reversed_steps: []
 
   @typedoc "A term describing what this pipeline does"
-  @type name() :: Babel.name()
-  @type step() :: Babel.Applicable.t()
+  @type name :: Babel.name()
+  @type step :: Applicable.t()
   @type on_error :: on_error(term)
-  @type on_error(output) :: (Babel.Error.t() -> Babel.Step.result_or_trace(output))
+  @type on_error(output) :: (Error.t() -> Step.result_or_trace(output))
 
   @spec new(step | [step]) :: t
   @spec new(name | nil, step | [step]) :: t
@@ -53,7 +55,7 @@ defmodule Babel.Pipeline do
       |> Enum.reduce_while(
         {[], {:ok, context.current}},
         fn applicable, {traces, {:ok, current}} ->
-          trace = Babel.Applicable.apply(applicable, %Context{context | current: current})
+          trace = Applicable.apply(applicable, %Context{context | current: current})
           traces = [trace | traces]
           result = Trace.result(trace)
 
@@ -125,7 +127,7 @@ defmodule Babel.Pipeline do
     %__MODULE__{pipeline | on_error: OnError.new(on_error)}
   end
 
-  defimpl Babel.Applicable do
+  defimpl Applicable do
     defdelegate apply(pipeline, data), to: Babel.Pipeline
   end
 end

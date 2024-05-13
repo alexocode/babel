@@ -2,6 +2,10 @@ defmodule Babel.Builtin.Call do
   @moduledoc false
   use Babel.Step
 
+  alias Babel.Builtin
+  alias Babel.Context
+  alias Babel.Trace
+
   require Babel.Trace.Nesting
 
   @enforce_keys [:module, :function]
@@ -19,18 +23,18 @@ defmodule Babel.Builtin.Call do
   end
 
   @impl Babel.Step
-  def apply(%__MODULE__{} = call, %Babel.Context{current: input}) do
-    Babel.Trace.Nesting.trace_try call, input do
+  def apply(%__MODULE__{} = call, %Context{current: input}) do
+    Trace.Nesting.trace_try call, input do
       Kernel.apply(call.module, call.function, [input | call.extra_args])
     end
   end
 
   @impl Babel.Step
   def inspect(%__MODULE__{extra_args: []} = step, opts) do
-    Babel.Builtin.inspect(step, [:module, :function], opts)
+    Builtin.inspect(step, [:module, :function], opts)
   end
 
   def inspect(%__MODULE__{} = step, opts) do
-    Babel.Builtin.inspect(step, [:module, :function, :extra_args], opts)
+    Builtin.inspect(step, [:module, :function, :extra_args], opts)
   end
 end

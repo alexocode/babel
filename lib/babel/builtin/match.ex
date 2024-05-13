@@ -2,6 +2,9 @@ defmodule Babel.Builtin.Match do
   @moduledoc false
   use Babel.Step
 
+  alias Babel.Builtin
+  alias Babel.Context
+
   @enforce_keys [:matcher]
   defstruct [:matcher]
 
@@ -14,7 +17,7 @@ defmodule Babel.Builtin.Match do
   end
 
   @impl Babel.Step
-  def apply(%__MODULE__{matcher: matcher} = step, %Babel.Context{current: input} = context) do
+  def apply(%__MODULE__{matcher: matcher} = step, %Context{current: input} = context) do
     nested = Babel.Applicable.apply(matcher.(input), context)
 
     Babel.Trace.new(step, input, nested.output, [nested])
@@ -22,6 +25,6 @@ defmodule Babel.Builtin.Match do
 
   @impl Babel.Step
   def inspect(%__MODULE__{} = step, opts) do
-    Babel.Builtin.inspect(step, [:matcher], opts)
+    Builtin.inspect(step, [:matcher], opts)
   end
 end

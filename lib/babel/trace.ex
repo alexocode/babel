@@ -1,4 +1,7 @@
 defmodule Babel.Trace do
+  alias Babel.Context
+  alias Babel.Step
+
   import Babel.Builtin
 
   require Babel.Logger
@@ -8,7 +11,7 @@ defmodule Babel.Trace do
   @type t(input, output) :: %__MODULE__{
           babel: Babel.t(input, output),
           input: Babel.data(),
-          output: Babel.Step.result(output),
+          output: Step.result(output),
           nested: [t]
         }
   defstruct babel: nil,
@@ -18,14 +21,14 @@ defmodule Babel.Trace do
 
   @spec new(
           babel :: Babel.t(input, output),
-          input :: input | Babel.Context.t(input),
-          output :: Babel.Step.result(output),
+          input :: input | Context.t(input),
+          output :: Step.result(output),
           nested :: [t]
         ) :: t(input, output)
         when input: any, output: any
   def new(babel, input, output, nested \\ [])
 
-  def new(babel, %Babel.Context{current: input}, output, nested) do
+  def new(babel, %Context{current: input}, output, nested) do
     new(babel, input, output, nested)
   end
 

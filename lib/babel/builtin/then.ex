@@ -2,7 +2,11 @@ defmodule Babel.Builtin.Then do
   @moduledoc false
   use Babel.Step
 
-  require Babel.Trace.Nesting
+  alias Babel.Builtin
+  alias Babel.Context
+  alias Babel.Trace.Nesting
+
+  require Nesting
 
   @enforce_keys [:function]
   defstruct [:name, :function]
@@ -16,18 +20,18 @@ defmodule Babel.Builtin.Then do
   end
 
   @impl Babel.Step
-  def apply(%__MODULE__{function: function} = then, %Babel.Context{current: input}) do
-    Babel.Trace.Nesting.trace_try then, input do
+  def apply(%__MODULE__{function: function} = then, %Context{current: input}) do
+    Nesting.trace_try then, input do
       function.(input)
     end
   end
 
   @impl Babel.Step
   def inspect(%__MODULE__{name: nil} = then, opts) do
-    Babel.Builtin.inspect(then, [:function], opts)
+    Builtin.inspect(then, [:function], opts)
   end
 
   def inspect(%__MODULE__{} = then, opts) do
-    Babel.Builtin.inspect(then, [:name, :function], opts)
+    Builtin.inspect(then, [:name, :function], opts)
   end
 end

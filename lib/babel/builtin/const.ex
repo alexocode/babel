@@ -2,6 +2,9 @@ defmodule Babel.Builtin.Const do
   @moduledoc false
   use Babel.Step
 
+  alias Babel.Builtin
+  alias Babel.Context
+
   @enforce_keys [:value]
   defstruct [:value]
 
@@ -10,12 +13,12 @@ defmodule Babel.Builtin.Const do
   end
 
   @impl Babel.Step
-  def apply(%__MODULE__{value: value}, %Babel.Context{}) do
+  def apply(%__MODULE__{value: value}, %Context{}) do
     {:ok, value}
   end
 
   @impl Babel.Step
   def inspect(%__MODULE__{} = step, opts) do
-    Babel.Builtin.inspect(step, [:value], opts)
+    Builtin.inspect(step, [:value], opts)
   end
 end

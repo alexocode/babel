@@ -2,6 +2,11 @@ defmodule Babel.Builtin.FlatMap do
   @moduledoc false
   use Babel.Step
 
+  alias Babel.Applicable
+  alias Babel.Builtin
+  alias Babel.Context
+  alias Babel.Trace
+
   @enforce_keys [:mapper]
   defstruct [:mapper]
 
@@ -10,18 +15,18 @@ defmodule Babel.Builtin.FlatMap do
   end
 
   @impl Babel.Step
-  def apply(%__MODULE__{mapper: mapper} = step, %Babel.Context{current: enum} = context) do
+  def apply(%__MODULE__{mapper: mapper} = step, %Context{current: enum} = context) do
     {nested, result} =
-      Babel.Trace.Nesting.map_nested(
+      Trace.Nesting.map_nested(
         enum,
-        &Babel.Applicable.apply(mapper.(&1), %Babel.Context{context | current: &1})
+        &Applicable.apply(mapper.(&1), %Context{context | current: &1})
       )
 
-    Babel.Trace.new(step, enum, result, nested)
+    Trace.new(step, enum, result, nested)
   end
 
   @impl Babel.Step
   def inspect(%__MODULE__{} = step, opts) do
-    Babel.Builtin.inspect(step, [:mapper], opts)
+    Builtin.inspect(step, [:mapper], opts)
   end
 end
