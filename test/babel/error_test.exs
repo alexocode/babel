@@ -22,13 +22,34 @@ defmodule Babel.ErrorTest do
 
   describe "message/1" do
     test "renders the message as expected" do
-      trace = trace(output: {:error, :broken})
+      error = {:error, :broken}
+      root_cause1 = trace(output: error, nested: [])
+      root_cause2 = trace(output: error, nested: [])
+
+      trace =
+        trace(
+          output: error,
+          nested: [
+            trace(output: {:ok, :whatever}),
+            root_cause1,
+            trace(
+              output: error,
+              nested: [
+                trace(output: {:ok, []}),
+                root_cause2
+              ]
+            )
+          ]
+        )
+
       error = Error.new(trace)
 
       assert_message(error, """
-      Failed to transform data: #{inspect(error.reason)}
+      Failed to transform data: :broken
 
-      #{inspect(trace, custom_options: [indent: 2])}
+      Root Cause(s): #{inspect([root_cause1, root_cause2])}
+
+      Full Trace: #{inspect(trace)}
       """)
     end
   end

@@ -27,7 +27,9 @@ defmodule Babel.Error do
     """
     Failed to transform data: #{inspect(reason)}
 
-    #{inspect(trace, custom_options: [indent: 2])}
+    Root Cause(s): #{inspect(Trace.root_causes(trace))}
+
+    Full Trace: #{inspect(trace)}
     """
   end
 end
