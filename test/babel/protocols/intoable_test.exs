@@ -267,6 +267,25 @@ defmodule Babel.IntoableTest do
         assert traces == expected_traces
       end
     end
+
+    test "resolves the elements of a six value tuple" do
+      data = nil
+
+      for value1 <- [:static1, Babel.const(:dynamic1), Babel.fail(:reason1)],
+          value2 <- [:static2, Babel.const(:dynamic2), Babel.fail(:reason2)],
+          value3 <- [:static3, Babel.const(:dynamic3), Babel.fail(:reason3)],
+          value4 <- [:static4, Babel.const(:dynamic4), Babel.fail(:reason4)],
+          value5 <- [:static5, Babel.const(:dynamic5), Babel.fail(:reason5)],
+          value6 <- [:static6, Babel.const(:dynamic6), Babel.fail(:reason6)] do
+        values = [value1, value2, value3, value4, value5, value6]
+
+        {expected_traces, expected_result} = expected_traces_and_tuple_result(values, data)
+        {traces, result} = traced_into({value1, value2, value3, value4, value5, value6}, data)
+
+        assert result == expected_result
+        assert traces == expected_traces
+      end
+    end
   end
 
   defp traced_into(intoable, data) do
