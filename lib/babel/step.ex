@@ -13,6 +13,7 @@ defmodule Babel.Step do
   @type result(output) :: output | {:ok, output} | :error | {:error, reason :: any}
   @type result_or_trace(output) :: result(output) | Babel.Trace.t(output)
 
+  # coveralls-ignore-start
   defmacro __using__(_) do
     %{module: module} = __CALLER__
 
@@ -43,6 +44,8 @@ defmodule Babel.Step do
       end
     end
   end
+
+  # coveralls-ignore-stop
 
   @callback apply(t(output), Babel.Context.t()) :: result_or_trace(output) when output: any
   @callback inspect(t, Inspect.Opts.t()) :: Inspect.Algebra.t()
