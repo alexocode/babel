@@ -12,7 +12,7 @@ defmodule Babel.Builtin.FlatMap do
   @impl Babel.Step
   def apply(%__MODULE__{mapper: mapper} = step, %Babel.Context{current: enum} = context) do
     {nested, result} =
-      Babel.Utils.map_nested(
+      Babel.Trace.Nesting.map_nested(
         enum,
         &Babel.Applicable.apply(mapper.(&1), %Babel.Context{context | current: &1})
       )

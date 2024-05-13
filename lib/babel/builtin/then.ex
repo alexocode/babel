@@ -2,7 +2,7 @@ defmodule Babel.Builtin.Then do
   @moduledoc false
   use Babel.Step
 
-  require Babel.Utils
+  require Babel.Trace.Nesting
 
   @enforce_keys [:function]
   defstruct [:name, :function]
@@ -17,7 +17,7 @@ defmodule Babel.Builtin.Then do
 
   @impl Babel.Step
   def apply(%__MODULE__{function: function} = then, %Babel.Context{current: input}) do
-    Babel.Utils.trace_try then, input do
+    Babel.Trace.Nesting.trace_try then, input do
       function.(input)
     end
   end

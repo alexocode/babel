@@ -1,5 +1,5 @@
 defmodule Babel.Pipeline.OnError do
-  require Babel.Utils
+  require Babel.Trace.Nesting
 
   @type t :: t(any)
   @type t(output) :: %__MODULE__{
@@ -17,7 +17,7 @@ defmodule Babel.Pipeline.OnError do
 
   @spec recover(t(output), Babel.Error.t()) :: Babel.Trace.t(output) when output: any
   def recover(%__MODULE__{handler: handler} = on_error, %Babel.Error{} = error) do
-    Babel.Utils.trace_try on_error, error.trace.output do
+    Babel.Trace.Nesting.trace_try on_error, error.trace.output do
       handler.(error)
     end
   end

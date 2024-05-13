@@ -1,4 +1,4 @@
-defmodule Babel.Utils do
+defmodule Babel.Trace.Nesting do
   @moduledoc false
 
   @type traces_with_result(output) :: {[Babel.Trace.t()], {:ok, output} | {:error, reason :: any}}
