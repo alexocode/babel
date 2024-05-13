@@ -103,7 +103,7 @@ defmodule Babel.Trace do
     case do_find(trace, spec) do
       [] ->
         Babel.Logger.warning(
-          "To find a built-in step the second argument of `#{inspect(spec)}` needs to be a list."
+          "To find a built-in step the second argument of `#{inspect(spec)}` needs to be a list (`#{inspect({atom, [arg]})}`)."
         )
 
         []

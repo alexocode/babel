@@ -2,6 +2,7 @@ defmodule Babel.TraceTest do
   use ExUnit.Case, async: false
 
   import Babel.Test.Factory
+  import ExUnit.CaptureLog
 
   alias Babel.Trace
 
@@ -228,6 +229,21 @@ defmodule Babel.TraceTest do
                expected_trace1,
                expected_trace2
              ]
+    end
+
+    test "logs a warning when the given spec resembles a builtin spec but not quite" do
+      logs = capture_log(fn -> Trace.find(trace(), {:const, :some_value}) end)
+
+      assert logs =~
+               "[Babel] To find a built-in step the second argument of `{:const, :some_value}` needs to be a list (`{:const, [:some_value]}`)."
+    end
+
+    test "does not log a warning when the given spec resembles a builtin spec but not quite but something is found" do
+      trace = trace(babel: %Babel.Pipeline{name: {:const, :some_value}})
+
+      logs = capture_log(fn -> Trace.find(trace, {:const, :some_value}) end)
+
+      assert logs == ""
     end
   end
 
