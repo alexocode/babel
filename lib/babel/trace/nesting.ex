@@ -12,22 +12,20 @@ defmodule Babel.Trace.Nesting do
         ) :: {[Trace.t()], {:ok, [output]} | {:error, [reason :: any]}}
         when input: any, output: any
   def traced_map(enum, mapper) when is_function(mapper, 1) do
-    {traces, {ok_or_error, list}} =
-      traced_reduce(enum, mapper, {:ok, []}, fn result, accumulated ->
-        {:cont, collect_results(result, accumulated)}
-      end)
-
-    {traces, {ok_or_error, Enum.reverse(list)}}
+    traced_reduce_while(enum, mapper, {:ok, []}, fn result, accumulated ->
+      {:cont, collect_results(result, accumulated)}
+    end)
   end
 
-  @spec traced_reduce(
+  @spec traced_reduce_while(
           enum :: Enumerable.t(input),
           mapper :: (input -> Trace.t(output) | traces_with_result(output)),
           begin :: accumulated,
-          accumulator :: (result(output), accumulated -> {:cont | :halt, accumulated})
+          accumulator :: (result(output), accumulated -> {:cont | :halt, accumulated}),
+          finalize :: (accumulated -> accumulated)
         ) :: {[Trace.t()], accumulated}
         when input: any, output: any, accumulated: any
-  def traced_reduce(enum, mapper, begin, accumulator)
+  def traced_reduce_while(enum, mapper, begin, accumulator, finalize \\ &reverse_results/1)
       when is_function(mapper, 1)
       when is_function(accumulator, 2) do
     {traces, accumulated} =
@@ -43,7 +41,7 @@ defmodule Babel.Trace.Nesting do
         {cont_or_halt, {Enum.reverse(nested_traces) ++ traces, accumulated}}
       end)
 
-    {Enum.reverse(traces), accumulated}
+    {Enum.reverse(traces), finalize.(accumulated)}
   end
 
   @doc "Combines `collect_oks/2` and `collect_errors/2`. When `collect_oks/2` returns `nil` it calls `collect_errors/2`."
@@ -116,6 +114,14 @@ defmodule Babel.Trace.Nesting do
       {:error, reason} -> {:error, [reason | list]}
     end
   end
+
+  @doc "Reverses a list contained in a result tuple. Used as default final step for `traced_reduce_while/5`."
+  @spec reverse_results(result([any])) :: result([any])
+  @spec reverse_results(result(any)) :: result(any)
+  def reverse_results({ok_or_error, list}) when is_list(list),
+    do: {ok_or_error, Enum.reverse(list)}
+
+  def reverse_results(other), do: other
 
   defmacro traced_try(babel, input, do: block) do
     quote do

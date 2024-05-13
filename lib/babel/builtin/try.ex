@@ -29,15 +29,20 @@ defmodule Babel.Builtin.Try do
   @impl Babel.Step
   def apply(%__MODULE__{applicables: applicables, default: default} = step, %Context{} = context) do
     {nested, output} =
-      Trace.Nesting.traced_reduce(applicables, &Applicable.apply(&1, context), {:error, []}, fn
-        {:ok, value}, _errors -> {:halt, {:ok, value}}
-        {:error, _} = e, errors -> {:cont, Trace.Nesting.collect_errors(e, errors)}
-      end)
+      Trace.Nesting.traced_reduce_while(
+        applicables,
+        &Applicable.apply(&1, context),
+        {:error, []},
+        fn
+          {:ok, value}, _errors -> {:halt, {:ok, value}}
+          {:error, _} = e, errors -> {:cont, Trace.Nesting.collect_errors(e, errors)}
+        end
+      )
 
     result =
       case {default, output} do
         {_, {:ok, value}} -> {:ok, value}
-        {@no_default, {:error, reasons}} -> {:error, Enum.reverse(reasons)}
+        {@no_default, {:error, reasons}} -> {:error, reasons}
         {default, {:error, _}} -> {:ok, default}
       end
 
