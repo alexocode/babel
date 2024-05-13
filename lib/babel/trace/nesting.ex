@@ -14,7 +14,7 @@ defmodule Babel.Trace.Nesting do
   def map_nested(enum, mapper) when is_function(mapper, 1) do
     {traces, {ok_or_error, list}} =
       traced_reduce(enum, mapper, {:ok, []}, fn result, accumulated ->
-        {:cont, collect_oks(result, accumulated) || collect_errors(result, accumulated)}
+        {:cont, collect_results(result, accumulated)}
       end)
 
     {traces, {ok_or_error, Enum.reverse(list)}}
@@ -44,6 +44,11 @@ defmodule Babel.Trace.Nesting do
       end)
 
     {Enum.reverse(traces), accumulated}
+  end
+
+  @spec collect_results(result(any), result([any])) :: result([any])
+  def collect_results(result, collected) do
+    collect_oks(result, collected) || collect_errors(result, collected)
   end
 
   @spec collect_oks({:ok, value}, {:ok, [value]}) :: {:ok, [value]} when value: any
