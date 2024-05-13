@@ -43,9 +43,7 @@ defmodule Babel.Builtin do
     @builtin_name_by_module[module]
   end
 
-  @builtin_module_by_name Enum.map(@builtin_name_by_module, fn {name, module} ->
-                            {module, name}
-                          end)
+  @builtin_module_by_name Enum.map(@builtin_name_by_module, fn {n, m} -> {m, n} end)
   def module_of_builtin!(name) when is_builtin_name(name) do
     @builtin_module_by_name[name]
   end
