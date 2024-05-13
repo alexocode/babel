@@ -41,9 +41,6 @@ defmodule Babel.Trace do
     }
   end
 
-  @spec ok?(t) :: boolean
-  def ok?(%__MODULE__{} = trace), do: not error?(trace)
-
   @spec error?(t) :: boolean
   def error?(%__MODULE__{output: output}) do
     case output do
@@ -52,6 +49,9 @@ defmodule Babel.Trace do
       _ok -> false
     end
   end
+
+  @spec ok?(t) :: boolean
+  def ok?(%__MODULE__{} = trace), do: not error?(trace)
 
   @spec result(t) :: {:ok, value :: any} | {:error, reason :: any}
   def result(%__MODULE__{output: output}) do
