@@ -148,6 +148,21 @@ defmodule Babel.InspectTest do
       ])
     end
 
+    test "allows to indent the rendered trace" do
+      step = Babel.identity()
+      data = %{"value1" => :super_cool}
+      trace = Babel.trace(step, data)
+
+      assert_inspects_as(trace, [custom_options: [indent: 2]], [
+        ~s'  Babel.Trace<OK>{',
+        ~s'    data = #{i(data)}',
+        ~s'    ',
+        ~s'    Babel.identity()',
+        ~s'    |=> %{"value1" => :super_cool}',
+        ~s'  }'
+      ])
+    end
+
     test "renders an ERROR state when the result is an error" do
       step = Babel.fail(:some_reason)
       data = %{}
@@ -247,20 +262,26 @@ defmodule Babel.InspectTest do
     end
   end
 
-  defp assert_inspects_as(thing, expected_lines) when is_list(expected_lines) do
-    inspect_thing_lines = String.split(inspect(thing, pretty: true), "\n")
+  defp assert_inspects_as(thing, opts \\ [], expected)
+
+  defp assert_inspects_as(thing, opts, expected_lines) when is_list(expected_lines) do
+    inspect_thing_lines =
+      thing
+      |> inspect(Keyword.put_new(opts, :pretty, true))
+      |> String.split("\n")
+
     expected_lines = Enum.flat_map(expected_lines, &String.split(&1, "\n"))
 
     assert inspect_thing_lines == expected_lines
   end
 
-  defp assert_inspects_as(thing, string) when is_binary(string) do
+  defp assert_inspects_as(thing, opts, string) when is_binary(string) do
     lines = String.split(string, "\n", trim: true)
 
     if length(lines) > 1 do
       assert_inspects_as(thing, lines)
     else
-      assert inspect(thing) == String.trim(string)
+      assert inspect(thing, opts) == String.trim(string)
     end
   end
 
