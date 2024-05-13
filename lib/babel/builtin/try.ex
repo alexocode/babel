@@ -2,6 +2,11 @@ defmodule Babel.Builtin.Try do
   @moduledoc false
   use Babel.Step
 
+  alias Babel.Applicable
+  alias Babel.Builtin
+  alias Babel.Context
+  alias Babel.Trace
+
   @no_default {__MODULE__, :no_default}
 
   @enforce_keys [:applicables]
@@ -22,46 +27,29 @@ defmodule Babel.Builtin.Try do
   end
 
   @impl Babel.Step
-  def apply(%__MODULE__{} = step, %Babel.Context{} = context) do
-    {nested, output} = do_try(step, context)
+  def apply(%__MODULE__{applicables: applicables, default: default} = step, %Context{} = context) do
+    {nested, output} =
+      Trace.Nesting.traced_reduce(applicables, &Applicable.apply(&1, context), {:error, []}, fn
+        {:ok, value}, _errors -> {:halt, {:ok, value}}
+        {:error, _} = e, errors -> {:cont, Trace.Nesting.collect_errors(e, errors)}
+      end)
 
-    Babel.Trace.new(step, context, output, nested)
-  end
+    result =
+      case {default, output} do
+        {_, {:ok, value}} -> {:ok, value}
+        {@no_default, {:error, reasons}} -> {:error, Enum.reverse(reasons)}
+        {default, {:error, _}} -> {:ok, default}
+      end
 
-  defp do_try(%{applicables: applicables, default: @no_default}, context) do
-    do_try(applicables, context, [], [])
-  end
-
-  defp do_try(%{applicables: applicables, default: default}, context) do
-    case do_try(applicables, context, [], []) do
-      {nested, {:error, _}} -> {nested, {:ok, default}}
-      {nested, ok} -> {nested, ok}
-    end
-  end
-
-  defp do_try([], _input, nested, errors) do
-    {Enum.reverse(nested), {:error, Enum.reverse(errors)}}
-  end
-
-  defp do_try([applicable | rest], context, nested, errors) do
-    trace = Babel.Applicable.apply(applicable, context)
-    nested = [trace | nested]
-
-    case Babel.Trace.result(trace) do
-      {:ok, value} ->
-        {Enum.reverse(nested), {:ok, value}}
-
-      {:error, reason} ->
-        do_try(rest, context, nested, [reason | errors])
-    end
+    Trace.new(step, context, result, nested)
   end
 
   @impl Babel.Step
   def inspect(%__MODULE__{default: @no_default} = step, opts) do
-    Babel.Builtin.inspect(step, [:applicables], opts)
+    Builtin.inspect(step, [:applicables], opts)
   end
 
   def inspect(%__MODULE__{} = step, opts) do
-    Babel.Builtin.inspect(step, [:applicables, :default], opts)
+    Builtin.inspect(step, [:applicables, :default], opts)
   end
 end

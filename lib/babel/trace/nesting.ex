@@ -3,7 +3,8 @@ defmodule Babel.Trace.Nesting do
 
   alias Babel.Trace
 
-  @type traces_with_result(output) :: {[Trace.t()], {:ok, output} | {:error, reason :: any}}
+  @type traces_with_result(output) :: {[Trace.t()], result(output)}
+  @type result(output) :: {:ok, output} | {:error, reason :: any}
 
   @spec map_nested(
           enum :: Enumerable.t(input),
@@ -12,42 +13,67 @@ defmodule Babel.Trace.Nesting do
         when input: any, output: any
   def map_nested(enum, mapper) when is_function(mapper, 1) do
     {traces, {ok_or_error, list}} =
-      Enum.reduce(enum, {[], {:ok, []}}, fn element, {traces, {ok_or_error, list}} ->
+      traced_reduce(enum, mapper, {:ok, []}, fn result, accumulated ->
+        {:cont, collect_oks(result, accumulated) || collect_errors(result, accumulated)}
+      end)
+
+    {traces, {ok_or_error, Enum.reverse(list)}}
+  end
+
+  @spec traced_reduce(
+          enum :: Enumerable.t(input),
+          mapper :: (input -> Trace.t(output) | traces_with_result(output)),
+          begin :: accumulated,
+          accumulator :: (result(output), accumulated -> {:cont | :halt, accumulated})
+        ) :: {[Trace.t()], accumulated}
+        when input: any, output: any, accumulated: any
+  def traced_reduce(enum, mapper, begin, accumulator)
+      when is_function(mapper, 1)
+      when is_function(accumulator, 2) do
+    {traces, accumulated} =
+      Enum.reduce_while(enum, {[], begin}, fn element, {traces, accumulated} ->
         {nested_traces, result} =
           case mapper.(element) do
             %Trace{} = trace -> {[trace], Trace.result(trace)}
             {traces, result} -> {traces, result}
           end
 
-        {
-          Enum.reverse(nested_traces) ++ traces,
-          accumulate_result(list, ok_or_error, result)
-        }
+        {cont_or_halt, accumulated} = accumulator.(result, accumulated)
+
+        {cont_or_halt, {Enum.reverse(nested_traces) ++ traces, accumulated}}
       end)
 
-    {Enum.reverse(traces), {ok_or_error, Enum.reverse(list)}}
+    {Enum.reverse(traces), accumulated}
   end
 
-  defp accumulate_result(list, :ok, result) do
+  @spec collect_oks({:ok, value}, {:ok, [value]}) :: {:ok, [value]} when value: any
+  def collect_oks(result, {:ok, l}) do
     case result do
-      {:ok, value} ->
-        {:ok, [value | list]}
-
-      {:error, error} ->
-        {:error, List.wrap(error)}
+      {:ok, value} -> {:ok, [value | l]}
+      {:error, _} -> nil
     end
   end
 
-  defp accumulate_result(list, :error, result) do
+  @spec collect_oks({:error, reason :: any}, {:ok, list}) :: nil
+  def collect_oks(_result, {:error, _}), do: nil
+
+  @spec collect_errors({:ok, any}, {:ok, any}) :: nil
+  @spec collect_errors({:error, reason}, {:ok, any}) :: {:error, [reason]} when reason: any
+  def collect_errors(result, {:ok, _}) do
     case result do
-      {:ok, _} ->
-        {:error, list}
+      {:ok, _} -> nil
+      {:error, reason} -> {:error, List.wrap(reason)}
+    end
+  end
 
-      {:error, errors} when is_list(errors) ->
-        {:error, Enum.reverse(errors) ++ list}
-
-      {:error, error} ->
-        {:error, [error | list]}
+  @spec collect_errors({:ok, any}, {:error, [reason]}) :: {:error, [reason]} when reason: any
+  @spec collect_errors({:error, [reason]}, {:error, [reason]}) :: {:error, [reason]}
+        when reason: any
+  def collect_errors(result, {:error, list}) do
+    case result do
+      {:ok, _} -> {:error, list}
+      {:error, reasons} when is_list(reasons) -> {:error, Enum.reverse(reasons) ++ list}
+      {:error, reason} -> {:error, [reason | list]}
     end
   end
 
