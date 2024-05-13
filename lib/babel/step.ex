@@ -1,64 +1,54 @@
 defmodule Babel.Step do
-  # module = inspect(__MODULE__)
-  import Kernel, except: [apply: 2]
+  @moduledoc """
+  TODO: Write
+  """
 
-  @type t :: t()
-  @type t(input) :: t(input, any)
-  @type t(input, output) :: %__MODULE__{
-          name: name(),
-          function: step_fun(input, output)
-        }
-  defstruct [:function, :name]
-
-  @typedoc "A term describing what this step does"
-  @type name() :: Babel.name()
-
-  @type step_fun :: step_fun(any, any)
-  @type step_fun(input, output) :: (input -> result(output))
+  @typedoc "An implementation of this behaviour."
+  @type t :: t(any)
+  @typedoc "An implementation of this behaviour whose `apply/2` function produces the specified output."
+  @type t(output) :: t(any, output)
+  @typedoc "An implementation of this behaviour whose `apply/2` function accepts the given input and produces the specified output."
+  @type t(_input, _output) :: any
 
   @type result(output) :: output | {:ok, output} | :error | {:error, reason :: any}
+  @type result_or_trace(output) :: result(output) | Babel.Trace.t(output)
 
-  defguard is_step_function(function) when is_function(function, 1)
+  # coveralls-ignore-start
+  defmacro __using__(_) do
+    %{module: module} = __CALLER__
 
-  @spec new(name, step_fun(input, output)) :: t(input, output) when input: any, output: any
-  def new(name, function) when is_function(function, 1) do
-    %__MODULE__{name: name, function: function}
-  end
+    quote generated: true, location: :keep do
+      import Kernel, except: [apply: 2]
 
-  # TODO: Add docs
-  @spec wrap(module, function_name :: atom, args :: list) :: t()
-  def wrap(module, function_name, args)
-      when is_atom(module) and is_atom(function_name) and is_list(args) do
-    unless function_exported?(module, function_name, 1 + length(args)) do
-      raise ArgumentError,
-            "Invalid function spec: `#{inspect(module)}.#{function_name}/#{1 + length(args)}` doesn't seem to exist"
+      @behaviour Babel.Step
+
+      @impl Babel.Step
+      defdelegate inspect(step, opts), to: Inspect.Any
+
+      defoverridable inspect: 2
+
+      defimpl Babel.Applicable do
+        def apply(step, context) do
+          case unquote(module).apply(step, context) do
+            %Babel.Trace{} = trace ->
+              trace
+
+            result ->
+              Babel.Trace.new(step, context, result)
+          end
+        end
+      end
+
+      defimpl Inspect do
+        defdelegate inspect(step, opts), to: unquote(module)
+      end
     end
-
-    new({module, function_name}, &Kernel.apply(module, function_name, [&1 | args]))
   end
 
-  @spec apply(t(input, output), Babel.data()) :: {:ok, output} | {:error, Babel.Error.t()}
-        when input: any, output: any
-  def apply(%__MODULE__{} = step, data) do
-    data
-    |> step.function.()
-    |> Babel.Error.wrap_if_error(data, step)
-    |> case do
-      {:error, error} ->
-        {:error, error}
+  # coveralls-ignore-stop
 
-      {:ok, data} ->
-        {:ok, data}
+  @callback apply(t(output), Babel.Context.t()) :: result_or_trace(output) when output: any
+  @callback inspect(t, Inspect.Opts.t()) :: Inspect.Algebra.t()
 
-      data ->
-        {:ok, data}
-    end
-  rescue
-    error ->
-      {:error, Babel.Error.wrap(error, data, step)}
-  end
-
-  defimpl Babel.Applicable do
-    def apply(step, data), do: Babel.Step.apply(step, data)
-  end
+  @optional_callbacks inspect: 2
 end

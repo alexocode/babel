@@ -3,8 +3,8 @@ defmodule MyPackage.MixProject do
 
   @app :babel
   @name "Babel"
-  @description "A cool description"
-  @repo "https://github.com/sascha-wolf/#{@app}"
+  @description "Data transformations made easy"
+  @repo "https://github.com/alexocode/#{@app}"
 
   def project do
     [
@@ -62,10 +62,10 @@ defmodule MyPackage.MixProject do
       # No Runtime
       {:credo, ">= 1.0.0", only: :dev, runtime: false},
       {:dialyxir, ">= 1.0.0", only: :dev, runtime: false},
-      {:ex_doc, "~> 0.29", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.32", only: :dev, runtime: false},
 
       # Test
-      {:excoveralls, "~> 0.16", only: :test},
+      {:excoveralls, "~> 0.18", only: :test},
       {:mox, "~> 1.0", only: :test},
 
       # Docs
@@ -101,7 +101,7 @@ defmodule MyPackage.MixProject do
       files: ["lib", "mix.exs", "CHANGELOG*", "LICENSE*", "README*", "version"],
       licenses: ["MIT"],
       links: %{"GitHub" => @repo},
-      maintainers: ["Sascha Wolf <swolf.dev@gmail.com>"]
+      maintainers: ["Alex Wolf <craft@alexocode.dev>"]
     ]
   end
 

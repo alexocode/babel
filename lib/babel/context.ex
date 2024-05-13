@@ -1,12 +1,13 @@
 defmodule Babel.Context do
-  @type t :: %__MODULE__{
-          root: Babel.data(),
-          current: Babel.data(),
-          failed?: boolean,
-          next_step: Babel.Step.t() | nil
+  @type t :: t(any)
+  @type t(data) :: %__MODULE__{
+          current: data,
+          original: Babel.data()
         }
-  defstruct root: nil,
-            current: nil,
-            failed?: false,
-            next_step: nil
+  defstruct [:current, :original]
+
+  @spec new(data) :: t(data) when data: Babel.data()
+  def new(data) do
+    %__MODULE__{current: data, original: data}
+  end
 end
