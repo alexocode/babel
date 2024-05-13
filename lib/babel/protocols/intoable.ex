@@ -56,10 +56,18 @@ end
 
 defimpl Babel.Intoable, for: Map do
   def into(map, context) do
-    Babel.Trace.Nesting.traced_reduce_while(map, &Babel.Intoable.into(&1, context), {:ok, %{}}, fn
-      {:ok, {key, value}}, {:ok, map} -> {:cont, {:ok, Map.put(map, key, value)}}
-      mb_error, mb_errors -> {:cont, Babel.Trace.Nesting.collect_errors(mb_error, mb_errors)}
-    end)
+    Babel.Trace.Nesting.traced_reduce_while(
+      map,
+      &Babel.Intoable.Tuple.into(&1, context),
+      {:ok, %{}},
+      fn
+        {:ok, {key, value}}, {:ok, map} ->
+          {:cont, {:ok, Map.put(map, key, value)}}
+
+        mb_error, mb_errors ->
+          {:cont, Babel.Trace.Nesting.collect_errors(mb_error, mb_errors)}
+      end
+    )
   end
 end
 
