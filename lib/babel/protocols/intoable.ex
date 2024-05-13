@@ -37,12 +37,8 @@ defimpl Babel.Intoable, for: Any do
     end
   end
 
-  def into(t, context) do
-    if applicable?(t) do
-      apply(t, context)
-    else
-      {[], {:ok, t}}
-    end
+  def into(t, _context) do
+    {[], {:ok, t}}
   end
 
   defp apply(babel, context) do
