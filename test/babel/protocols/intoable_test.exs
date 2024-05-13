@@ -133,6 +133,10 @@ defmodule Babel.IntoableTest do
   end
 
   describe "List" do
+    test "resolves an empty list" do
+      assert traced_into([], nil) == {[], {:ok, []}}
+    end
+
     test "resolves every value and also nested lists" do
       list = [
         :foo,
@@ -153,7 +157,21 @@ defmodule Babel.IntoableTest do
              ]
     end
 
-    test "resolves an improper list" do
+    test "collects all errors into one flat list" do
+      list = [
+        Babel.const(:whatever1),
+        Babel.fail(:reason1),
+        Babel.const(:whatever2),
+        Babel.fail(:reason2),
+        [Babel.fail(:reason3), [Babel.fail(:reason4)]]
+      ]
+
+      data = nil
+
+      assert into(list, data) == {:error, [:reason1, :reason2, :reason3, :reason4]}
+    end
+
+    test "resolves an improper list to a nice proper list" do
       list =
         [
           1,
@@ -161,10 +179,10 @@ defmodule Babel.IntoableTest do
           | Babel.map(Babel.then(&(&1 * 2)))
         ]
 
-      data = 1..5
+      assert into!(list, 1..5) == [1, 2, 2, 4, 6, 8, 10]
+    end
 
-      assert into!(list, data) == [1, 2, 2, 4, 6, 8, 10]
-
+    test "resolves an improper list to an improper list" do
       list =
         [
           1,
@@ -172,16 +190,57 @@ defmodule Babel.IntoableTest do
           | Babel.const(:not_a_list)
         ]
 
-      data = nil
-
-      assert into!(list, data) == [1, 2 | :not_a_list]
+      assert into!(list, nil) == [1, 2 | :not_a_list]
     end
 
-    test "collects all errors into one flat list" do
-      list = [Babel.fail(:reason1), [Babel.fail(:reason2), [Babel.fail(:reason3)]]]
-      data = nil
+    test "collects all errors when the improper step fails" do
+      list =
+        [
+          1,
+          2
+          | Babel.fail(:reason1)
+        ]
 
-      assert into(list, data) == {:error, [:reason1, :reason2, :reason3]}
+      assert into(list, nil) == {:error, [:reason1]}
+    end
+
+    test "collects all errors when it failed before and the improper step succeeds" do
+      list =
+        [
+          1,
+          2,
+          Babel.fail(:reason1)
+          | Babel.const([])
+        ]
+
+      assert into(list, nil) == {:error, [:reason1]}
+    end
+
+    test "collects all errors when it failed before and the improper step fails" do
+      list =
+        [
+          1,
+          2,
+          Babel.fail(:reason1)
+          | Babel.fail(:reason2)
+        ]
+
+      assert into(list, nil) == {:error, [:reason1, :reason2]}
+    end
+
+    test "collects all errors when it failed before and the improper step returns a nested list of failures" do
+      list =
+        [
+          1,
+          2,
+          Babel.fail(:reason1)
+          | Babel.try([
+              Babel.fail(:reason2),
+              Babel.into([Babel.const(:whatever1), Babel.fail(:reason3)])
+            ])
+        ]
+
+      assert into(list, nil) == {:error, [:reason1, :reason2, :reason3]}
     end
   end
 
