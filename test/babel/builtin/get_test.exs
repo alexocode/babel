@@ -52,6 +52,36 @@ defmodule Babel.Builtin.GetTest do
 
       assert apply!(step, data) == default
     end
+
+    test "returns an error when trying to fetch an atom or string path from a tuple" do
+      paths = [
+        :atom,
+        "string",
+        make_ref(),
+        self()
+      ]
+
+      for path <- paths do
+        step = Get.new(path)
+
+        assert apply(step, {}) == {:error, {:not_supported, Babel.Fetchable.Tuple, path}}
+      end
+    end
+
+    test "returns an error when the data type doesn't implement Babel.Fetchable" do
+      step = Get.new(:key)
+
+      non_fetchable = [
+        :atom,
+        "string",
+        make_ref(),
+        self()
+      ]
+
+      for data <- non_fetchable do
+        assert apply(step, data) == {:error, {:not_implemented, Babel.Fetchable, data}}
+      end
+    end
   end
 
   describe "inspect/2" do

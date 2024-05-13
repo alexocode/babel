@@ -19,6 +19,9 @@ defmodule Babel.Builtin.Get do
 
         :error ->
           {:halt, {:ok, default}}
+
+        {:error, reason} ->
+          {:halt, {:error, reason}}
       end
     end)
   end
