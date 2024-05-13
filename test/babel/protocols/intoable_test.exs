@@ -196,40 +196,21 @@ defmodule Babel.IntoableTest do
       const = Babel.const(:dynamic)
       assert {[trace], {:ok, {:dynamic}}} = traced_into({const}, nil)
       assert trace == trace(const, nil)
-    end
 
-    test "captures the error of a single value tuple" do
       fail = Babel.fail(:reason)
       assert {[trace], {:error, :reason}} = traced_into({fail}, nil)
       assert trace == trace(fail, nil)
     end
 
     test "resolves the elements of a two value tuple" do
-      const1 = Babel.const(:dynamic1)
-      const2 = Babel.const(:dynamic2)
-      fail1 = Babel.fail(:reason1)
-      fail2 = Babel.fail(:reason2)
-
-      tuple_result = %{
-        {:static1, :static2} => {:ok, {:static1, :static2}},
-        {:static1, const2} => {:ok, {:static1, :dynamic2}},
-        {const1, :static2} => {:ok, {:dynamic1, :static2}},
-        {const1, const2} => {:ok, {:dynamic1, :dynamic2}},
-        {fail1, const2} => {:error, [:reason1]},
-        {const1, fail2} => {:error, [:reason2]},
-        {fail1, fail2} => {:error, [:reason1, :reason2]}
-      }
-
       data = nil
 
-      for {tuple, expected_result} <- tuple_result do
-        expected_traces =
-          tuple
-          |> Tuple.to_list()
-          |> Enum.filter(&Babel.is_babel/1)
-          |> Enum.map(&trace(&1, data))
+      for value1 <- [:static1, Babel.const(:dynamic1), Babel.fail(:reason1)],
+          value2 <- [:static2, Babel.const(:dynamic2), Babel.fail(:reason2)] do
+        values = [value1, value2]
 
-        {traces, result} = traced_into(tuple, data)
+        {expected_traces, expected_result} = expected_traces_and_tuple_result(values, data)
+        {traces, result} = traced_into({value1, value2}, data)
 
         assert result == expected_result
         assert traces == expected_traces
@@ -244,24 +225,7 @@ defmodule Babel.IntoableTest do
           value3 <- [:static3, Babel.const(:dynamic3), Babel.fail(:reason3)] do
         values = [value1, value2, value3]
 
-        expected_result =
-          if Enum.any?(values, &is_struct(&1, Babel.Builtin.Fail)) do
-            {:error, for(%Babel.Builtin.Fail{reason: reason} <- values, do: reason)}
-          else
-            {:ok,
-             values
-             |> Enum.map(fn
-               %Babel.Builtin.Const{value: value} -> value
-               static -> static
-             end)
-             |> List.to_tuple()}
-          end
-
-        expected_traces =
-          values
-          |> Enum.filter(&Babel.is_babel/1)
-          |> Enum.map(&trace(&1, data))
-
+        {expected_traces, expected_result} = expected_traces_and_tuple_result(values, data)
         {traces, result} = traced_into({value1, value2, value3}, data)
 
         assert result == expected_result
@@ -278,24 +242,7 @@ defmodule Babel.IntoableTest do
           value4 <- [:static4, Babel.const(:dynamic4), Babel.fail(:reason4)] do
         values = [value1, value2, value3, value4]
 
-        expected_result =
-          if Enum.any?(values, &is_struct(&1, Babel.Builtin.Fail)) do
-            {:error, for(%Babel.Builtin.Fail{reason: reason} <- values, do: reason)}
-          else
-            {:ok,
-             values
-             |> Enum.map(fn
-               %Babel.Builtin.Const{value: value} -> value
-               static -> static
-             end)
-             |> List.to_tuple()}
-          end
-
-        expected_traces =
-          values
-          |> Enum.filter(&Babel.is_babel/1)
-          |> Enum.map(&trace(&1, data))
-
+        {expected_traces, expected_result} = expected_traces_and_tuple_result(values, data)
         {traces, result} = traced_into({value1, value2, value3, value4}, data)
 
         assert result == expected_result
@@ -313,24 +260,7 @@ defmodule Babel.IntoableTest do
           value5 <- [:static5, Babel.const(:dynamic5), Babel.fail(:reason5)] do
         values = [value1, value2, value3, value4, value5]
 
-        expected_result =
-          if Enum.any?(values, &is_struct(&1, Babel.Builtin.Fail)) do
-            {:error, for(%Babel.Builtin.Fail{reason: reason} <- values, do: reason)}
-          else
-            {:ok,
-             values
-             |> Enum.map(fn
-               %Babel.Builtin.Const{value: value} -> value
-               static -> static
-             end)
-             |> List.to_tuple()}
-          end
-
-        expected_traces =
-          values
-          |> Enum.filter(&Babel.is_babel/1)
-          |> Enum.map(&trace(&1, data))
-
+        {expected_traces, expected_result} = expected_traces_and_tuple_result(values, data)
         {traces, result} = traced_into({value1, value2, value3, value4, value5}, data)
 
         assert result == expected_result
@@ -354,6 +284,29 @@ defmodule Babel.IntoableTest do
   end
 
   defp trace(babel, data), do: Babel.trace(babel, data)
+
+  defp expected_traces_and_tuple_result(values, data) do
+    traces_or_static =
+      Enum.map(values, fn
+        babel when Babel.is_babel(babel) -> trace(babel, data)
+        static -> static
+      end)
+
+    results =
+      Enum.map(traces_or_static, fn
+        %Babel.Trace{} = trace -> Babel.Trace.result(trace)
+        static -> {:ok, static}
+      end)
+
+    {
+      Enum.filter(traces_or_static, &match?(%Babel.Trace{}, &1)),
+      if Enum.any?(results, &match?({:error, _}, &1)) do
+        {:error, for({:error, r} <- results, do: r)}
+      else
+        {:ok, List.to_tuple(for {:ok, r} <- results, do: r)}
+      end
+    }
+  end
 
   defp sorted(enum), do: Enum.sort(enum)
 end
