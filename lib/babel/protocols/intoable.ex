@@ -13,12 +13,6 @@ defprotocol Babel.Intoable do
   def into(t, context)
 end
 
-defmodule Babel.Intoable.Utils do
-  def into_each(enum, context) do
-    Babel.Trace.Nesting.traced_map(enum, &Babel.Intoable.into(&1, context))
-  end
-end
-
 defimpl Babel.Intoable, for: Any do
   import Kernel, except: [apply: 2]
 
@@ -62,9 +56,10 @@ end
 
 defimpl Babel.Intoable, for: Map do
   def into(map, context) do
-    with {traces, {:ok, list}} <- Babel.Intoable.Utils.into_each(map, context) do
-      {traces, {:ok, Map.new(list)}}
-    end
+    Babel.Trace.Nesting.traced_reduce_while(map, &Babel.Intoable.into(&1, context), {:ok, %{}}, fn
+      {:ok, {key, value}}, {:ok, map} -> {:cont, {:ok, Map.put(map, key, value)}}
+      mb_error, mb_errors -> {:cont, Babel.Trace.Nesting.collect_errors(mb_error, mb_errors)}
+    end)
   end
 end
 
@@ -246,9 +241,13 @@ defimpl Babel.Intoable, for: Tuple do
   def into(tuple, context) do
     list = Tuple.to_list(tuple)
 
-    with {traces, {:ok, list}} <- Babel.Intoable.Utils.into_each(list, context) do
+    with {traces, {:ok, list}} <- map_into(list, context) do
       {traces, {:ok, List.to_tuple(list)}}
     end
+  end
+
+  defp map_into(list, context) do
+    Babel.Trace.Nesting.traced_map(list, &Babel.Intoable.into(&1, context))
   end
 
   defp _into(t, context), do: Babel.Intoable.into(t, context)
