@@ -39,6 +39,7 @@ defmodule Babel.Builtin do
 
   def builtin?(thing), do: is_builtin(thing)
 
+  # coveralls-ignore-next-line
   def builtin_names, do: unquote(Keyword.values(@builtin_name_by_module))
 
   def name_of_builtin!(%module{}) when module in @builtin do
