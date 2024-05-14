@@ -6,7 +6,7 @@ defmodule Babel.TraceTest do
 
   alias Babel.Trace
 
-  # doctest Babel.Trace
+  doctest Babel.Trace
 
   describe "new/3" do
     test "returns a Babel.Trace with no nested traces" do

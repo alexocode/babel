@@ -1,4 +1,14 @@
 defmodule Babel.Trace do
+  @moduledoc """
+  Represents the evaluation of a `Babel.Applicable`, information on the evaluated
+  applicable, the input data, the output result, and any traces of nested `Babel.Applicable`s.
+
+  Implements `Inspect` to render a human-readable version of the information.
+
+  To analyze a `Babel.Trace` - especially one with `nested` traces - `find/2` will
+  be your friend.
+  """
+  alias Babel.Builtin
   alias Babel.Context
   alias Babel.Step
 
@@ -77,6 +87,43 @@ defmodule Babel.Trace do
     end)
   end
 
+  @doc """
+  Recursively checks all `nested` traces (and this one) against a given spec (or function).
+
+  Useful for debugging purposes.
+
+  ## Specs
+
+  In addition to being able to pass a function `find/2` supports some convenient shortcuts:
+
+  - name of a builtin step: `#{Enum.map_join(Builtin.builtin_names(), " | ", &inspect/1)}`
+  - name of a builtin step + arguments: `{:fetch, [["fetched" "path"]]} | {:map, [Babel.into(%{...})]} | ...`
+  - the actual step: `Babel.fetch(["fetched", "path"])` (basically equivalent to the above)
+  - a list of all of the above to recursively find matching traces
+
+  ## Examples
+
+      iex> pipeline = Babel.fetch("list") |> Babel.map(Babel.into(%{some_key: Babel.fetch("some key")}))
+      iex> data = %{"list" => [%{"some key" => "value1"}, %{"some key" => "value2"}]}
+      iex> trace = Babel.trace(pipeline, data)
+      iex> Babel.Trace.find(trace, &Babel.Trace.error?/1)
+      []
+      iex> Babel.Trace.find(trace, :fetch)
+      [
+        Babel.trace(Babel.fetch("list"), data),
+        Babel.trace(Babel.fetch("some key"), %{"some key" => "value1"}),
+        Babel.trace(Babel.fetch("some key"), %{"some key" => "value2"}),
+      ]
+      iex> Babel.Trace.find(trace, fetch: ["list"])
+      [
+        Babel.trace(Babel.fetch("list"), data)
+      ]
+      iex> Babel.Trace.find(trace, [:into, :fetch])
+      [
+        Babel.trace(Babel.fetch("some key"), %{"some key" => "value1"}),
+        Babel.trace(Babel.fetch("some key"), %{"some key" => "value2"}),
+      ]
+  """
   @spec find(t, function :: (t -> boolean)) :: [t]
   def find(%__MODULE__{} = trace, function) when is_function(function, 1) do
     do_find(trace, function)
