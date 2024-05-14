@@ -94,9 +94,13 @@ defmodule Babel.Trace do
 
   In addition to being able to pass a function `find/2` supports some convenient shortcuts:
 
-  - name of a builtin step: `#{Enum.map_join(Builtin.builtin_names(), " | ", &inspect/1)}`
-  - the actual step: `Babel.fetch(["fetched", "path"])`
+  - name of a builtin step (e.g. `:fetch` or `:map`, see below for a full list)
+  - the actual step (e.g. `Babel.fetch(["fetched", "path"])`)
   - a list of all of the above (incl. functions) to recursively find matching traces
+    (e.g. `[:map, :into, :fetch]` to find all fetch traces inside of `Babel.map(Babel.into(...))`)
+
+  All builtin step names:
+  #{Enum.map_join(Builtin.builtin_names(), "\n", &"- `#{inspect(&1)}`")}
 
   ## Examples
 
