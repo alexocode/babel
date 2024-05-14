@@ -57,34 +57,36 @@ defmodule Babel.Pipeline do
   end
 
   @spec apply(t(input, output), Context.t(input)) :: Trace.t(output) when input: any, output: any
-  def apply(%__MODULE__{} = pipeline, %Context{history: history} = context) do
-    {reversed_traces, result} =
+  def apply(%__MODULE__{} = pipeline, %Context{data: data, history: history}) do
+    {reversed_traces, _, result} =
       pipeline.reversed_steps
       |> Enum.reverse()
       |> Enum.reduce_while(
-        {[], {:ok, context.data}},
-        fn applicable, {traces, {:ok, data}} ->
-          context = %Context{context | data: data, history: traces ++ history}
-          trace = Applicable.apply(applicable, context)
+        {[], history, {:ok, data}},
+        fn applicable, {traces, history, {:ok, data}} ->
+          trace = Applicable.apply(applicable, Context.new(data, history))
           traces = [trace | traces]
+          history = [trace | history]
           result = Trace.result(trace)
 
           cond do
             Trace.ok?(trace) ->
-              {:cont, {traces, result}}
+              {:cont, {traces, history, result}}
 
             is_nil(pipeline.on_error) ->
-              {:halt, {traces, result}}
+              {:halt, {traces, history, result}}
 
             true ->
               on_error_trace = OnError.recover(pipeline.on_error, Error.new(trace))
+              traces = [on_error_trace | traces]
+              history = [on_error_trace | history]
 
-              {:halt, {[on_error_trace | traces], Trace.result(on_error_trace)}}
+              {:halt, {traces, history, Trace.result(on_error_trace)}}
           end
         end
       )
 
-    Trace.new(pipeline, context, result, Enum.reverse(reversed_traces))
+    Trace.new(pipeline, data, result, Enum.reverse(reversed_traces))
   end
 
   @doc """
