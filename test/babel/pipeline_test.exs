@@ -80,14 +80,6 @@ defmodule Babel.PipelineTest do
                | on_error: Pipeline.OnError.new(on_error)
              }
     end
-
-    test "returns the pipeline that was given (when on_error was identical)" do
-      name = {:my_pipeline, make_ref()}
-      on_error = fn _ -> {:recovered, name} end
-      pipeline = pipeline(name: name, on_error: on_error)
-
-      assert Pipeline.new(name, on_error, pipeline) == pipeline
-    end
   end
 
   describe "apply/2" do
@@ -203,7 +195,10 @@ defmodule Babel.PipelineTest do
 
   describe "chain/2" do
     test "merges pipelines when at least one is unnamed and without error handling" do
-      pipeline1 = pipeline()
+      name = {:test_pipeline, make_ref()}
+      on_error = fn _ -> name end
+
+      pipeline1 = pipeline(name: name, on_error: on_error)
       pipeline2 = pipeline(name: nil, on_error: nil)
 
       assert Pipeline.chain(pipeline1, pipeline2) == %Pipeline{
@@ -212,34 +207,35 @@ defmodule Babel.PipelineTest do
              }
 
       pipeline1 = pipeline(name: nil, on_error: nil)
-      pipeline2 = pipeline()
+      pipeline2 = pipeline(name: name, on_error: on_error)
 
       assert Pipeline.chain(pipeline1, pipeline2) == %Pipeline{
                pipeline2
                | reversed_steps: pipeline2.reversed_steps ++ pipeline1.reversed_steps
              }
 
-      pipeline1 = pipeline(name: nil)
-      pipeline2 = pipeline(on_error: nil)
+      pipeline1 = pipeline(name: nil, on_error: on_error)
+      pipeline2 = pipeline(name: name, on_error: nil)
 
       assert Pipeline.chain(pipeline1, pipeline2) == %Pipeline{
                name: pipeline2.name,
                on_error: pipeline1.on_error,
                reversed_steps: pipeline2.reversed_steps ++ pipeline1.reversed_steps
              }
-    end
 
-    test "merges pipelines when they have equal names and on_error handlers" do
-      name = {:test_pipeline, make_ref()}
-      on_error = fn _ -> name end
-
-      pipeline1 = pipeline(name: name, on_error: on_error)
-      pipeline2 = pipeline(name: name, on_error: on_error)
+      pipeline1 = pipeline(name: name, on_error: nil)
+      pipeline2 = pipeline(name: nil, on_error: on_error)
 
       assert Pipeline.chain(pipeline1, pipeline2) == %Pipeline{
-               pipeline1
-               | reversed_steps: pipeline2.reversed_steps ++ pipeline1.reversed_steps
+               name: pipeline1.name,
+               on_error: pipeline2.on_error,
+               reversed_steps: pipeline2.reversed_steps ++ pipeline1.reversed_steps
              }
+    end
+
+    test "merges pipelines when they have equal names and at least one has no error handling" do
+      name = {:test_pipeline, make_ref()}
+      on_error = fn _ -> name end
 
       pipeline1 = pipeline(name: name, on_error: on_error)
       pipeline2 = pipeline(name: name, on_error: nil)
@@ -249,7 +245,7 @@ defmodule Babel.PipelineTest do
                | reversed_steps: pipeline2.reversed_steps ++ pipeline1.reversed_steps
              }
 
-      pipeline1 = pipeline(name: nil, on_error: on_error)
+      pipeline1 = pipeline(name: name, on_error: nil)
       pipeline2 = pipeline(name: name, on_error: on_error)
 
       assert Pipeline.chain(pipeline1, pipeline2) == %Pipeline{

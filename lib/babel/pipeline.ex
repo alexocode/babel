@@ -106,8 +106,7 @@ defmodule Babel.Pipeline do
   end
 
   defp merge?(%__MODULE__{} = left, %__MODULE__{} = right) do
-    equal_or_any_nil?(left.name, right.name) and
-      equal_or_any_nil?(left.on_error, right.on_error)
+    equal_or_any_nil?(left.name, right.name) and (is_nil(left.on_error) or is_nil(right.on_error))
   end
 
   defp equal_or_any_nil?(left, right) do
