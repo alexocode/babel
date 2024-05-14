@@ -215,7 +215,7 @@ defmodule Babel do
   @doc """
   Combines two steps into a `Babel.Pipeline`.
 
-  All steps in a pipeline are applied sequentially, an error stops the pipeline,
+  All steps in a pipeline are evaluated sequentially, an error stops the pipeline,
   unless an `on_error` handler has been set.
   """
   @spec chain(nil, next) :: next when next: t
