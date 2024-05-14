@@ -2,6 +2,9 @@ defmodule Babel.Builtin.Identity do
   @moduledoc false
   use Babel.Step, inspect: true
 
+  alias Babel.Builtin
+  alias Babel.Context
+
   defstruct []
 
   def new do
@@ -9,12 +12,12 @@ defmodule Babel.Builtin.Identity do
   end
 
   @impl Babel.Step
-  def apply(%__MODULE__{}, %Babel.Context{data: current}) do
-    current
+  def apply(%__MODULE__{}, %Context{data: data}) do
+    data
   end
 
   @impl Babel.Step
   def inspect(%__MODULE__{} = step, opts) do
-    Babel.Builtin.inspect(step, [], opts)
+    Builtin.inspect(step, [], opts)
   end
 end
