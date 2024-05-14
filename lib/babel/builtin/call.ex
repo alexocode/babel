@@ -1,6 +1,6 @@
 defmodule Babel.Builtin.Call do
   @moduledoc false
-  use Babel.Step
+  use Babel.Step, inspect: true
 
   alias Babel.Builtin
   alias Babel.Context

@@ -1,6 +1,6 @@
 defmodule Babel.Builtin.Identity do
   @moduledoc false
-  use Babel.Step
+  use Babel.Step, inspect: true
 
   defstruct []
 

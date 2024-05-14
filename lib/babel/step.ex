@@ -1,6 +1,22 @@
 defmodule Babel.Step do
   @moduledoc """
-  TODO: Write
+  This module is meant to be used to create your own `Babel` custom steps,
+  and is used internally to create all of `Babel`'s built-in steps.
+
+  It's required that any module which `use`s `Babel.Step` defines a struct.
+
+  ## What happens when I `use Babel.Step`?
+
+  Your struct will:
+
+  1. implement the `Babel.Step` behaviour (`c:apply/2`)
+  2. implement the `Babel.Applicable` protocol, whose invocations delegate to `c:apply/2`
+
+  ## Inspect
+
+  If you'd like to customize the `inspect/2` rendition of your custom `Babel.Step`,
+  you can `use Babel.Step, inspect: true`; this will implement the `Inspect` protocol
+  and delegate all invocations to `c:inspect/2`.
   """
 
   @typedoc "An implementation of this behaviour."
@@ -14,19 +30,19 @@ defmodule Babel.Step do
   @type result_or_trace(output) :: result(output) | Babel.Trace.t(output)
 
   # coveralls-ignore-start
-  defmacro __using__(_) do
-    %{module: module} = __CALLER__
-
+  defmacro __using__(opts) do
     quote generated: true, location: :keep do
       import Kernel, except: [apply: 2]
 
       @behaviour Babel.Step
 
-      @impl Babel.Step
-      defdelegate inspect(step, opts), to: Inspect.Any
+      unquote(impl_applicable(__CALLER__))
+      unquote(impl_inspect(__CALLER__, opts[:inspect]))
+    end
+  end
 
-      defoverridable inspect: 2
-
+  defp impl_applicable(%{module: module}) do
+    quote generated: true, location: :keep do
       defimpl Babel.Applicable do
         def apply(step, context) do
           case unquote(module).apply(step, context) do
@@ -38,12 +54,18 @@ defmodule Babel.Step do
           end
         end
       end
+    end
+  end
 
+  defp impl_inspect(%{module: module}, true) do
+    quote do
       defimpl Inspect do
         defdelegate inspect(step, opts), to: unquote(module)
       end
     end
   end
+
+  defp impl_inspect(_env, _false), do: nil
 
   # coveralls-ignore-stop
 

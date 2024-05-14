@@ -1,6 +1,6 @@
 defmodule Babel.Builtin.Cast do
   @moduledoc false
-  use Babel.Step
+  use Babel.Step, inspect: true
 
   @allowed_types [:boolean, :float, :integer]
 

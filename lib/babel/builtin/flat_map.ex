@@ -1,6 +1,6 @@
 defmodule Babel.Builtin.FlatMap do
   @moduledoc false
-  use Babel.Step
+  use Babel.Step, inspect: true
 
   alias Babel.Applicable
   alias Babel.Builtin
