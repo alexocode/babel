@@ -94,13 +94,15 @@ defmodule BabelTest do
 
       assert Babel.fail(:some_reason) == Builtin.Fail.new(:some_reason)
 
-      applicables = [Babel.fail(:some_reason), unique_step()]
-      assert Babel.try(applicables) == Builtin.Try.new(applicables)
-      assert Babel.try(applicables, :default) == Builtin.Try.new(applicables, :default)
+      assert Babel.root() == Builtin.Root.new()
 
       function = fn _ -> :do_the_thing end
       assert Babel.then(function) == Builtin.Then.new(function)
       assert Babel.then(:my_name, function) == Builtin.Then.new(:my_name, function)
+
+      applicables = [Babel.fail(:some_reason), unique_step()]
+      assert Babel.try(applicables) == Builtin.Try.new(applicables)
+      assert Babel.try(applicables, :default) == Builtin.Try.new(applicables, :default)
     end
   end
 

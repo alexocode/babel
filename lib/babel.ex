@@ -562,6 +562,25 @@ defmodule Babel do
     end
   end
 
+  @doc """
+  Always returns the original data that was given to `Babel`.
+
+  ## Examples
+
+      iex> step = Babel.root()
+      iex> Babel.apply!(step, "some value")
+      "some value"
+
+      iex> pipeline = Babel.fetch(:list) |> Babel.map(Babel.into(%{nested_key: Babel.fetch(:key), root_key: Babel.root() |> Babel.fetch(:key)}))
+      iex> Babel.apply!(pipeline, %{key: "root value", list: [%{key: "nested value1"}, %{key: "nested value2"}]})
+      [
+        %{nested_key: "nested value1", root_key: "root value"},
+        %{nested_key: "nested value2", root_key: "root value"}
+      ]
+  """
+  @spec root() :: t()
+  defdelegate root, to: Builtin.Root, as: :new
+
   @doc "See `then/3`."
   @spec then((input -> Step.result_or_trace(output))) :: t(output)
         when input: any, output: any
