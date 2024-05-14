@@ -9,7 +9,7 @@ defmodule Babel.Builtin.Identity do
   end
 
   @impl Babel.Step
-  def apply(%__MODULE__{}, %Babel.Context{current: current}) do
+  def apply(%__MODULE__{}, %Babel.Context{data: current}) do
     current
   end
 

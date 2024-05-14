@@ -23,7 +23,7 @@ defmodule Babel.Builtin.Call do
   end
 
   @impl Babel.Step
-  def apply(%__MODULE__{} = call, %Context{current: input}) do
+  def apply(%__MODULE__{} = call, %Context{data: input}) do
     Trace.Nesting.traced_try call, input do
       Kernel.apply(call.module, call.function, [input | call.extra_args])
     end

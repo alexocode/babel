@@ -15,11 +15,11 @@ defmodule Babel.Builtin.FlatMap do
   end
 
   @impl Babel.Step
-  def apply(%__MODULE__{mapper: mapper} = step, %Context{current: enum} = context) do
+  def apply(%__MODULE__{mapper: mapper} = step, %Context{data: enum} = context) do
     {nested, result} =
       Trace.Nesting.traced_map(
         enum,
-        &Applicable.apply(mapper.(&1), %Context{context | current: &1})
+        &Applicable.apply(mapper.(&1), %Context{context | data: &1})
       )
 
     Trace.new(step, enum, result, nested)

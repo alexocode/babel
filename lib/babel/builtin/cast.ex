@@ -18,7 +18,7 @@ defmodule Babel.Builtin.Cast do
   end
 
   @impl Babel.Step
-  def apply(%__MODULE__{type: type}, %Babel.Context{current: data}) do
+  def apply(%__MODULE__{type: type}, %Babel.Context{data: data}) do
     cast(type, data)
   end
 

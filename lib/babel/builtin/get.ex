@@ -14,7 +14,7 @@ defmodule Babel.Builtin.Get do
   end
 
   @impl Babel.Step
-  def apply(%__MODULE__{path: path, default: default}, %Context{current: data})
+  def apply(%__MODULE__{path: path, default: default}, %Context{data: data})
       when is_list(path) do
     Enum.reduce_while(path, {:ok, data}, fn path_segment, {:ok, next} ->
       case Fetchable.fetch(next, path_segment) do
@@ -30,7 +30,7 @@ defmodule Babel.Builtin.Get do
     end)
   end
 
-  def apply(%__MODULE__{path: path_segment, default: default}, %Context{current: data}) do
+  def apply(%__MODULE__{path: path_segment, default: default}, %Context{data: data}) do
     case Fetchable.fetch(data, path_segment) do
       {:ok, next} ->
         {:ok, next}

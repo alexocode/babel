@@ -62,9 +62,9 @@ defmodule Babel.Pipeline do
       pipeline.reversed_steps
       |> Enum.reverse()
       |> Enum.reduce_while(
-        {[], {:ok, context.current}},
-        fn applicable, {traces, {:ok, current}} ->
-          trace = Applicable.apply(applicable, %Context{context | current: current})
+        {[], {:ok, context.data}},
+        fn applicable, {traces, {:ok, data}} ->
+          trace = Applicable.apply(applicable, %Context{context | data: data})
           traces = [trace | traces]
           result = Trace.result(trace)
 

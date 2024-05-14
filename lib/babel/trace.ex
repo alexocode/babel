@@ -36,7 +36,7 @@ defmodule Babel.Trace do
         when input: any, output: any
   def new(babel, input, output, nested \\ [])
 
-  def new(babel, %Context{current: input}, output, nested) do
+  def new(babel, %Context{data: input}, output, nested) do
     new(babel, input, output, nested)
   end
 

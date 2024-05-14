@@ -13,9 +13,9 @@ defmodule Babel.Builtin.Fail do
   end
 
   @impl Babel.Step
-  def apply(%__MODULE__{reason: reason_fn}, %Context{current: input})
+  def apply(%__MODULE__{reason: reason_fn}, %Context{data: data})
       when is_function(reason_fn, 1) do
-    {:error, reason_fn.(input)}
+    {:error, reason_fn.(data)}
   end
 
   def apply(%__MODULE__{reason: reason}, %Context{}) do

@@ -17,10 +17,10 @@ defmodule Babel.Builtin.Match do
   end
 
   @impl Babel.Step
-  def apply(%__MODULE__{matcher: matcher} = step, %Context{current: input} = context) do
-    nested = Babel.Applicable.apply(matcher.(input), context)
+  def apply(%__MODULE__{matcher: matcher} = step, %Context{data: data} = context) do
+    nested = Babel.Applicable.apply(matcher.(data), context)
 
-    Babel.Trace.new(step, input, nested.output, [nested])
+    Babel.Trace.new(step, data, nested.output, [nested])
   end
 
   @impl Babel.Step
