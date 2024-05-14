@@ -34,9 +34,15 @@ defmodule Babel.Builtin.CastTest do
     end
 
     test "succeeds when the value is the string representation of an integer" do
-      assert apply!(Cast.new(:integer), "1") == 1
-      assert apply!(Cast.new(:integer), "42") == 42
-      assert apply!(Cast.new(:integer), "-100") == -100
+      assert apply!(Cast.new(:integer), " 1") == 1
+      assert apply!(Cast.new(:integer), "42  ") == 42
+      assert apply!(Cast.new(:integer), "  -100 ") == -100
+    end
+
+    test "succeeds when the value is the string representation of a float" do
+      assert apply!(Cast.new(:integer), " 1.0") == 1
+      assert apply!(Cast.new(:integer), "  42.2") == 42
+      assert apply!(Cast.new(:integer), " -100.6 ") == -100
     end
 
     test "succeeds when the value is a float" do
@@ -46,8 +52,16 @@ defmodule Babel.Builtin.CastTest do
     end
 
     test "fails when the value is a string without an integer" do
-      assert {:error, reason} = apply(Cast.new(:integer), "not an integer")
-      assert reason == {:invalid, :integer, "not an integer"}
+      failing = [
+        "not an integer",
+        "1not an integer",
+        "1.0not an integer"
+      ]
+
+      for s <- failing do
+        assert {:error, reason} = apply(Cast.new(:integer), s)
+        assert reason == {:invalid, :integer, s}
+      end
     end
   end
 
@@ -59,10 +73,16 @@ defmodule Babel.Builtin.CastTest do
     end
 
     test "succeeds when the value is the string representation of an float" do
+      assert apply!(Cast.new(:float), " 1.0") == 1.0
+      assert apply!(Cast.new(:float), "42.2 ") == 42.2
+      assert apply!(Cast.new(:float), " -100.8  ") == -100.8
+    end
+
+    test "succeeds when the value is the string representation of an integer" do
       assert apply!(Cast.new(:float), "1") == 1.0
-      assert apply!(Cast.new(:float), "1.0") == 1.0
-      assert apply!(Cast.new(:float), "42.2") == 42.2
-      assert apply!(Cast.new(:float), "-100.8") == -100.8
+      assert apply!(Cast.new(:float), " 1.0") == 1.0
+      assert apply!(Cast.new(:float), "42.2 ") == 42.2
+      assert apply!(Cast.new(:float), " -100.8  ") == -100.8
     end
 
     test "succeeds when the value is an integer" do
@@ -72,8 +92,16 @@ defmodule Babel.Builtin.CastTest do
     end
 
     test "fails when the value is a string without a float" do
-      assert {:error, reason} = apply(Cast.new(:float), "not a float")
-      assert reason == {:invalid, :float, "not a float"}
+      failing = [
+        "not a float",
+        "1not a float",
+        "1.0not a float"
+      ]
+
+      for s <- failing do
+        assert {:error, reason} = apply(Cast.new(:float), s)
+        assert reason == {:invalid, :float, s}
+      end
     end
   end
 
