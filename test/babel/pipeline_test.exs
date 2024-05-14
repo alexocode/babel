@@ -6,6 +6,7 @@ defmodule Babel.PipelineTest do
 
   alias Babel.Error
   alias Babel.Pipeline
+  alias Babel.Test.ContextStep
   alias Babel.Trace
 
   describe "new/1" do
@@ -145,6 +146,47 @@ defmodule Babel.PipelineTest do
                trace_after([], step1, data),
                trace_after([step1], step2, data),
                trace_after([step1, step2], step3, data)
+             ]
+    end
+
+    test "records each executed step's trace in the `Babel.Context`" do
+      ref = make_ref()
+
+      send_context_and_return_data = fn step_name, context ->
+        send(self(), {ref, step_name, context})
+        context.data
+      end
+
+      step1 = ContextStep.new(&send_context_and_return_data.(:step1, &1))
+      step2 = ContextStep.new(&send_context_and_return_data.(:step2, &1))
+      step3 = ContextStep.new(&send_context_and_return_data.(:step3, &1))
+      step4 = ContextStep.new(&send_context_and_return_data.(:step4, &1))
+      nested_pipeline = Babel.Pipeline.new([step3, step4])
+      pipeline = Babel.Pipeline.new([step1, step2, nested_pipeline])
+      data = %{}
+
+      apply(pipeline, data)
+
+      assert_received {^ref, :step1, context1}
+      assert_received {^ref, :step2, context2}
+      assert_received {^ref, :step3, context3}
+      assert_received {^ref, :step4, context4}
+
+      assert context1.history == []
+
+      assert context2.history == [
+               Babel.trace(step1, context1.data)
+             ]
+
+      assert context3.history == [
+               Babel.trace(step2, context2.data),
+               Babel.trace(step1, context1.data)
+             ]
+
+      assert context4.history == [
+               Babel.trace(step3, context3.data),
+               Babel.trace(step2, context2.data),
+               Babel.trace(step1, context1.data)
              ]
     end
 

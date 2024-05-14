@@ -57,14 +57,15 @@ defmodule Babel.Pipeline do
   end
 
   @spec apply(t(input, output), Context.t(input)) :: Trace.t(output) when input: any, output: any
-  def apply(%__MODULE__{} = pipeline, %Context{} = context) do
+  def apply(%__MODULE__{} = pipeline, %Context{history: history} = context) do
     {reversed_traces, result} =
       pipeline.reversed_steps
       |> Enum.reverse()
       |> Enum.reduce_while(
         {[], {:ok, context.data}},
         fn applicable, {traces, {:ok, data}} ->
-          trace = Applicable.apply(applicable, %Context{context | data: data})
+          context = %Context{context | data: data, history: traces ++ history}
+          trace = Applicable.apply(applicable, context)
           traces = [trace | traces]
           result = Trace.result(trace)
 
