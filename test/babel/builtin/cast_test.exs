@@ -80,9 +80,9 @@ defmodule Babel.Builtin.CastTest do
 
     test "succeeds when the value is the string representation of an integer" do
       assert apply!(Cast.new(:float), "1") == 1.0
-      assert apply!(Cast.new(:float), " 1.0") == 1.0
-      assert apply!(Cast.new(:float), "42.2 ") == 42.2
-      assert apply!(Cast.new(:float), " -100.8  ") == -100.8
+      assert apply!(Cast.new(:float), " 42") == 42
+      assert apply!(Cast.new(:float), "1337 ") == 1337
+      assert apply!(Cast.new(:float), " -100  ") == -100
     end
 
     test "succeeds when the value is an integer" do
