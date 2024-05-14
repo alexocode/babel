@@ -130,42 +130,6 @@ defmodule Babel.BuiltinTest do
     end
   end
 
-  describe "module_of_builtin!/1" do
-    test "returns the expected module for each builtin step's name" do
-      name_and_expected_module = [
-        call: Babel.Builtin.Call,
-        cast: Babel.Builtin.Cast,
-        const: Babel.Builtin.Const,
-        fail: Babel.Builtin.Fail,
-        fetch: Babel.Builtin.Fetch,
-        flat_map: Babel.Builtin.FlatMap,
-        get: Babel.Builtin.Get,
-        identity: Babel.Builtin.Identity,
-        into: Babel.Builtin.Into,
-        map: Babel.Builtin.Map,
-        match: Babel.Builtin.Match,
-        then: Babel.Builtin.Then,
-        try: Babel.Builtin.Try
-      ]
-
-      for {name, expected_module} <- name_and_expected_module do
-        assert Builtin.module_of_builtin!(name) == expected_module
-      end
-    end
-
-    test "raises a FunctionClauseError for anything else" do
-      invalid = [
-        Babel.Trace,
-        :whatever,
-        "fooooo"
-      ]
-
-      for i <- invalid do
-        assert_raise FunctionClauseError, fn -> Builtin.module_of_builtin!(i) end
-      end
-    end
-  end
-
   describe "inspect/3" do
     test "includes only the given fields in the order specified" do
       call = Babel.call(Map, :fetch, [:some_key])

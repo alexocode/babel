@@ -14,8 +14,6 @@ defmodule Babel.Trace do
 
   import Babel.Builtin
 
-  require Babel.Logger
-
   @type t() :: t(any, any)
   @type t(output) :: t(any, output)
   @type t(input, output) :: %__MODULE__{
@@ -97,9 +95,8 @@ defmodule Babel.Trace do
   In addition to being able to pass a function `find/2` supports some convenient shortcuts:
 
   - name of a builtin step: `#{Enum.map_join(Builtin.builtin_names(), " | ", &inspect/1)}`
-  - name of a builtin step + arguments: `{:fetch, [["fetched" "path"]]} | {:map, [Babel.into(%{...})]} | ...`
-  - the actual step: `Babel.fetch(["fetched", "path"])` (basically equivalent to the above)
-  - a list of all of the above to recursively find matching traces
+  - the actual step: `Babel.fetch(["fetched", "path"])`
+  - a list of all of the above (incl. functions) to recursively find matching traces
 
   ## Examples
 
@@ -114,7 +111,7 @@ defmodule Babel.Trace do
         Babel.trace(Babel.fetch("some key"), %{"some key" => "value1"}),
         Babel.trace(Babel.fetch("some key"), %{"some key" => "value2"}),
       ]
-      iex> Babel.Trace.find(trace, fetch: ["list"])
+      iex> Babel.Trace.find(trace, Babel.fetch("list"))
       [
         Babel.trace(Babel.fetch("list"), data)
       ]
@@ -130,34 +127,11 @@ defmodule Babel.Trace do
   end
 
   @spec find(t, spec_or_path :: spec | nonempty_list(spec)) :: [t]
-        when spec:
-               Babel.t()
-               | Babel.name()
-               | (builtin_name :: atom)
-               | {builtin_name :: atom, args :: [term]}
+        when spec: Babel.t() | Babel.name() | (builtin_name :: atom)
   def find(%__MODULE__{} = trace, spec_path) when is_list(spec_path) do
     Enum.reduce(spec_path, [trace], fn spec, traces ->
       Enum.flat_map(traces, &find(&1, spec))
     end)
-  end
-
-  def find(%__MODULE__{} = trace, {atom, args}) when is_builtin_name(atom) and is_list(args) do
-    do_find(trace, apply(module_of_builtin!(atom), :new, args))
-  end
-
-  def find(%__MODULE__{} = trace, {atom, arg} = spec)
-      when is_builtin_name(atom) and not is_list(arg) do
-    case do_find(trace, spec) do
-      [] ->
-        Babel.Logger.warning(
-          "To find a built-in step the second argument of `#{inspect(spec)}` needs to be a list (`#{inspect({atom, [arg]})}`)."
-        )
-
-        []
-
-      traces ->
-        traces
-    end
   end
 
   def find(%__MODULE__{} = trace, spec), do: do_find(trace, spec)
