@@ -13,6 +13,7 @@ defmodule Babel.Builtin do
     __MODULE__.Into,
     __MODULE__.Map,
     __MODULE__.Match,
+    __MODULE__.Root,
     __MODULE__.Then,
     __MODULE__.Try
   ]
