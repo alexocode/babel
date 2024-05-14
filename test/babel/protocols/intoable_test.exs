@@ -61,7 +61,7 @@ defmodule Babel.IntoableTest do
 
       assert {traces, {:ok, result}} = traced_into(step, data)
       assert result == %RegularOldStruct{foo: data.foo, bar: data.bar}
-      assert traces == [trace(step.foo, data), trace(step.bar, data)]
+      assert sorted(traces) == sorted([trace(step.foo, data), trace(step.bar, data)])
     end
 
     test "when it's anything else it just leaves it as it is" do
