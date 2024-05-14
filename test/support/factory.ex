@@ -1,4 +1,5 @@
 defmodule Babel.Test.Factory do
+  @moduledoc false
   require Babel
 
   def context(data \\ data()) do

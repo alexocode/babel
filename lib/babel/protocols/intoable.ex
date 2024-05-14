@@ -186,6 +186,7 @@ defimpl Babel.Intoable, for: Tuple do
     }
   end
 
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   def into({t1, t2, t3, t4}, context) do
     {t1_traces, t1_result} = _into(t1, context)
     {t2_traces, t2_result} = _into(t2, context)

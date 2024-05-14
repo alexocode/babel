@@ -1,4 +1,5 @@
 defmodule Babel.Builtin.Get do
+  @moduledoc false
   use Babel.Step
 
   alias Babel.Builtin

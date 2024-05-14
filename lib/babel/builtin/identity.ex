@@ -1,4 +1,5 @@
 defmodule Babel.Builtin.Identity do
+  @moduledoc false
   use Babel.Step
 
   defstruct []

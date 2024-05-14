@@ -7,7 +7,6 @@ defmodule Babel.Builtin.Cast do
   @enforce_keys [:type]
   defstruct [:type]
 
-  # TODO: Raise ArgumentError
   def new(type) when type in @allowed_types do
     %__MODULE__{type: type}
   end

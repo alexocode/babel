@@ -1,4 +1,5 @@
 defmodule Babel.Test.EmptyCustomStep do
+  @moduledoc false
   use Babel.Step
 
   defstruct []

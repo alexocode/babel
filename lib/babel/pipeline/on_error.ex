@@ -1,4 +1,5 @@
 defmodule Babel.Pipeline.OnError do
+  @moduledoc false
   alias Babel.Error
   alias Babel.Pipeline
   alias Babel.Trace
