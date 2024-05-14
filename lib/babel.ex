@@ -571,7 +571,10 @@ defmodule Babel do
       iex> Babel.apply!(step, "some value")
       "some value"
 
-      iex> pipeline = Babel.fetch(:list) |> Babel.map(Babel.into(%{nested_key: Babel.fetch(:key), root_key: Babel.root() |> Babel.fetch(:key)}))
+      iex> pipeline = Babel.fetch(:list) |> Babel.map(Babel.into(%{
+      ...>   nested_key: Babel.fetch(:key),
+      ...>   root_key: Babel.root() |> Babel.fetch(:key)
+      ...> }))
       iex> Babel.apply!(pipeline, %{key: "root value", list: [%{key: "nested value1"}, %{key: "nested value2"}]})
       [
         %{nested_key: "nested value1", root_key: "root value"},
