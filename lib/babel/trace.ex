@@ -1,10 +1,18 @@
 defmodule Babel.Trace do
+  @moduledoc """
+  Represents the evaluation of a `Babel.Applicable`, information on the evaluated
+  applicable, the input data, the output result, and any traces of nested `Babel.Applicable`s.
+
+  Implements `Inspect` to render a human-readable version of the information.
+
+  To analyze a `Babel.Trace` - especially one with `nested` traces - `find/2` will
+  be your friend.
+  """
+  alias Babel.Builtin
   alias Babel.Context
   alias Babel.Step
 
   import Babel.Builtin
-
-  require Babel.Logger
 
   @type t() :: t(any, any)
   @type t(output) :: t(any, output)
@@ -77,40 +85,57 @@ defmodule Babel.Trace do
     end)
   end
 
+  @doc """
+  Recursively checks all `nested` traces (and this one) against a given spec (or function).
+
+  Useful for debugging purposes.
+
+  ## Specs
+
+  In addition to being able to pass a function `find/2` supports some convenient shortcuts:
+
+  - name of a builtin step (e.g. `:fetch` or `:map`, see below for a full list)
+  - the actual step (e.g. `Babel.fetch(["fetched", "path"])`)
+  - a list of all of the above (incl. functions) to recursively find matching traces
+    (e.g. `[:map, :into, :fetch]` to find all fetch traces inside of `Babel.map(Babel.into(...))`)
+
+  All builtin step names:
+  #{Enum.map_join(Builtin.builtin_names(), "\n", &"- `#{inspect(&1)}`")}
+
+  ## Examples
+
+      iex> pipeline = Babel.fetch("list") |> Babel.map(Babel.into(%{some_key: Babel.fetch("some key")}))
+      iex> data = %{"list" => [%{"some key" => "value1"}, %{"some key" => "value2"}]}
+      iex> trace = Babel.trace(pipeline, data)
+      iex> Babel.Trace.find(trace, &Babel.Trace.error?/1)
+      []
+      iex> Babel.Trace.find(trace, :fetch)
+      [
+        Babel.trace(Babel.fetch("list"), data),
+        Babel.trace(Babel.fetch("some key"), %{"some key" => "value1"}),
+        Babel.trace(Babel.fetch("some key"), %{"some key" => "value2"}),
+      ]
+      iex> Babel.Trace.find(trace, Babel.fetch("list"))
+      [
+        Babel.trace(Babel.fetch("list"), data)
+      ]
+      iex> Babel.Trace.find(trace, [:into, :fetch])
+      [
+        Babel.trace(Babel.fetch("some key"), %{"some key" => "value1"}),
+        Babel.trace(Babel.fetch("some key"), %{"some key" => "value2"}),
+      ]
+  """
   @spec find(t, function :: (t -> boolean)) :: [t]
   def find(%__MODULE__{} = trace, function) when is_function(function, 1) do
     do_find(trace, function)
   end
 
   @spec find(t, spec_or_path :: spec | nonempty_list(spec)) :: [t]
-        when spec:
-               Babel.t()
-               | Babel.name()
-               | (builtin_name :: atom)
-               | {builtin_name :: atom, args :: [term]}
+        when spec: Babel.t() | Babel.name() | (builtin_name :: atom)
   def find(%__MODULE__{} = trace, spec_path) when is_list(spec_path) do
     Enum.reduce(spec_path, [trace], fn spec, traces ->
       Enum.flat_map(traces, &find(&1, spec))
     end)
-  end
-
-  def find(%__MODULE__{} = trace, {atom, args}) when is_builtin_name(atom) and is_list(args) do
-    do_find(trace, apply(module_of_builtin!(atom), :new, args))
-  end
-
-  def find(%__MODULE__{} = trace, {atom, arg} = spec)
-      when is_builtin_name(atom) and not is_list(arg) do
-    case do_find(trace, spec) do
-      [] ->
-        Babel.Logger.warning(
-          "To find a built-in step the second argument of `#{inspect(spec)}` needs to be a list (`#{inspect({atom, [arg]})}`)."
-        )
-
-        []
-
-      traces ->
-        traces
-    end
   end
 
   def find(%__MODULE__{} = trace, spec), do: do_find(trace, spec)

@@ -39,13 +39,10 @@ defmodule Babel.Builtin do
 
   def builtin?(thing), do: is_builtin(thing)
 
+  def builtin_names, do: unquote(Keyword.values(@builtin_name_by_module))
+
   def name_of_builtin!(%module{}) when module in @builtin do
     @builtin_name_by_module[module]
-  end
-
-  @builtin_module_by_name Enum.map(@builtin_name_by_module, fn {n, m} -> {m, n} end)
-  def module_of_builtin!(name) when is_builtin_name(name) do
-    @builtin_module_by_name[name]
   end
 
   def inspect(%module{} = builtin, fields, opts) when module in @builtin do
