@@ -47,9 +47,12 @@ defmodule Babel.Builtin.GetTest do
 
     test "returns the given default a key cannot be found" do
       default = make_ref()
-      step = Get.new([:value, "nested"], default)
       data = %{value: %{nested: "nope"}}
 
+      step = Get.new([:value, "nested"], default)
+      assert apply!(step, data) == default
+
+      step = Get.new("nested", default)
       assert apply!(step, data) == default
     end
 
@@ -57,20 +60,20 @@ defmodule Babel.Builtin.GetTest do
       paths = [
         :atom,
         "string",
+        [:atom, "string"],
         make_ref(),
         self()
       ]
 
       for path <- paths do
         step = Get.new(path)
+        failing_path = path |> List.wrap() |> List.first()
 
-        assert apply(step, {}) == {:error, {:not_supported, Babel.Fetchable.Tuple, path}}
+        assert apply(step, {}) == {:error, {:not_supported, Babel.Fetchable.Tuple, failing_path}}
       end
     end
 
     test "returns an error when the data type doesn't implement Babel.Fetchable" do
-      step = Get.new(:key)
-
       non_fetchable = [
         :atom,
         "string",
@@ -79,6 +82,10 @@ defmodule Babel.Builtin.GetTest do
       ]
 
       for data <- non_fetchable do
+        step = Get.new(:key)
+        assert apply(step, data) == {:error, {:not_implemented, Babel.Fetchable, data}}
+
+        step = Get.new([:list, :path])
         assert apply(step, data) == {:error, {:not_implemented, Babel.Fetchable, data}}
       end
     end

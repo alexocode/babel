@@ -14,21 +14,30 @@ defmodule Babel.Builtin.Fetch do
   end
 
   @impl Babel.Step
-  def apply(%__MODULE__{path: path}, %Context{current: data}) do
-    path
-    |> List.wrap()
-    |> Enum.reduce_while({:ok, data}, fn path_segment, {:ok, next} ->
-      case Fetchable.fetch(next, path_segment) do
-        {:ok, next} ->
-          {:cont, {:ok, next}}
-
-        :error ->
-          {:halt, {:error, {:not_found, path_segment}}}
-
-        {:error, reason} ->
-          {:halt, {:error, reason}}
+  def apply(%__MODULE__{path: path}, %Context{current: data}) when is_list(path) do
+    Enum.reduce_while(path, {:ok, data}, fn path_segment, {:ok, next} ->
+      case do_fetch(next, path_segment) do
+        {:ok, next} -> {:cont, {:ok, next}}
+        {:error, reason} -> {:halt, {:error, reason}}
       end
     end)
+  end
+
+  def apply(%__MODULE__{path: path_segment}, %Context{current: data}) do
+    do_fetch(data, path_segment)
+  end
+
+  defp do_fetch(data, path_segment) do
+    case Fetchable.fetch(data, path_segment) do
+      {:ok, value} ->
+        {:ok, value}
+
+      :error ->
+        {:error, {:not_found, path_segment}}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 
   @impl Babel.Step

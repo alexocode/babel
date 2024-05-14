@@ -13,10 +13,9 @@ defmodule Babel.Builtin.Get do
   end
 
   @impl Babel.Step
-  def apply(%__MODULE__{path: path, default: default}, %Context{current: data}) do
-    path
-    |> List.wrap()
-    |> Enum.reduce_while({:ok, data}, fn path_segment, {:ok, next} ->
+  def apply(%__MODULE__{path: path, default: default}, %Context{current: data})
+      when is_list(path) do
+    Enum.reduce_while(path, {:ok, data}, fn path_segment, {:ok, next} ->
       case Fetchable.fetch(next, path_segment) do
         {:ok, next} ->
           {:cont, {:ok, next}}
@@ -28,6 +27,19 @@ defmodule Babel.Builtin.Get do
           {:halt, {:error, reason}}
       end
     end)
+  end
+
+  def apply(%__MODULE__{path: path_segment, default: default}, %Context{current: data}) do
+    case Fetchable.fetch(data, path_segment) do
+      {:ok, next} ->
+        {:ok, next}
+
+      :error ->
+        {:ok, default}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 
   @impl Babel.Step
