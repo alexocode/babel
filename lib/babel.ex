@@ -70,22 +70,15 @@ defmodule Babel do
   """
   def babel?(babel), do: is_babel(babel)
 
-  defmacro pipeline(name, [{:do, do_block} | maybe_else]) do
-    case maybe_else do
-      [] ->
-        quote do
-          Babel.Pipeline.new(unquote(name), unquote(do_block))
-        end
+  @doc """
+  Tries to transform the given `data` as described by the given `Babel.Applicable`.
 
-      [else: else_block] ->
-        on_error = {:fn, [], else_block}
+  If the `Babel.Applicable` transforms the data successfully it returns `{:ok, output}`,
+  where `output` is whatever the given `Babel.Applicable` produces.
 
-        quote do
-          Babel.Pipeline.new(unquote(name), unquote(on_error), unquote(do_block))
-        end
-    end
-  end
-
+  In case of failure an `{:error, Babel.Error.t}` is returned, which contains the failure
+  `reason` and a `Babel.Trace` that describes each transformation step. See `Babel.Trace` for details.
+  """
   @spec apply(t(output), data) :: {:ok, output} | {:error, Error.t()} when output: any
   def apply(babel, data) do
     trace = trace(babel, data)
@@ -96,6 +89,15 @@ defmodule Babel do
     end
   end
 
+  @doc """
+  Tries to transform the given `data` as described by the given `Babel.Applicable`.
+
+  If the `Babel.Applicable` transforms the data successfully it returns `output`,
+  where `output` is whatever the given `Babel.Applicable` produces.
+
+  In case of failure a `Babel.Error.t` is raised, whose message includes a `Babel.Trace`
+  that describes each transformation step. See `Babel.Trace` for details.
+  """
   @spec apply!(t(output), data) :: output | no_return when output: any
   def apply!(babel, data) do
     case apply(babel, data) do
@@ -119,9 +121,18 @@ defmodule Babel do
   @spec begin(name) :: Pipeline.t()
   def begin(name \\ nil), do: Pipeline.new(name, [])
 
+  @doc """
+  Calls the specified function with the current data as the first argument.
+
+  To pass additional arguments use `call/3`.
+  To pass the data not as the first argument use `then/1`.
+  """
   @spec call(module, function_name :: atom) :: t
   defdelegate call(module, function_name), to: Builtin.Call, as: :new
 
+  @doc """
+  Calls the specified function with the current data as the first argument.
+  """
   @spec call(t, module, function_name :: atom) :: t
   def call(babel, module, function_name) when is_babel(babel) do
     chain(babel, call(module, function_name))
@@ -241,6 +252,22 @@ defmodule Babel do
     babel
     |> Pipeline.new()
     |> Pipeline.on_error(function)
+  end
+
+  defmacro pipeline(name, [{:do, do_block} | maybe_else]) do
+    case maybe_else do
+      [] ->
+        quote do
+          Babel.Pipeline.new(unquote(name), unquote(do_block))
+        end
+
+      [else: else_block] ->
+        on_error = {:fn, [], else_block}
+
+        quote do
+          Babel.Pipeline.new(unquote(name), unquote(on_error), unquote(do_block))
+        end
+    end
   end
 
   @spec then((input -> Step.result_or_trace(output))) :: t(output)
