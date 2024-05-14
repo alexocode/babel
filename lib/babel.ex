@@ -163,6 +163,15 @@ defmodule Babel do
   @spec const(value) :: t(value) when value: any
   defdelegate const(value), to: Builtin.Const, as: :new
 
+  @doc "Alias for `match/1`."
+  @spec choose((input -> t(input, output))) :: t(output) when input: data, output: term
+  defdelegate choose(chooser), to: __MODULE__, as: :match
+
+  @doc "Alias for `match/2`."
+  @spec choose(t(), (input -> t(input, output))) :: t(output)
+        when input: data, output: term
+  defdelegate choose(babel, chooser), to: __MODULE__, as: :match
+
   @spec fail(reason_or_function :: reason | (input -> reason)) :: t(no_return)
         when input: any, reason: any
   defdelegate fail(reason_or_function), to: Builtin.Fail, as: :new

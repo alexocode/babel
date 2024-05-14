@@ -86,6 +86,7 @@ defmodule BabelTest do
 
       chooser = fn _ -> unique_step() end
       assert Babel.match(chooser) == Builtin.Match.new(chooser)
+      assert Babel.choose(chooser) == Builtin.Match.new(chooser)
 
       mapper = fn _ -> unique_step() end
       assert Babel.flat_map(mapper) == Builtin.FlatMap.new(mapper)
@@ -110,6 +111,7 @@ defmodule BabelTest do
       assert composes(Babel, :cast, [:boolean])
       assert composes(Babel, :cast, [:float])
       assert composes(Babel, :cast, [:integer])
+      assert composes(Babel, :choose, [fn _ -> unique_step() end])
       assert composes(Babel, :fetch, [["some", "path"]])
       assert composes(Babel, :flat_map, [fn _ -> unique_step() end])
       assert composes(Babel, :get, [["some", "path"], :default])
