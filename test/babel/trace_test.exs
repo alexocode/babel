@@ -226,6 +226,24 @@ defmodule Babel.TraceTest do
                expected_trace2
              ]
     end
+
+    test "accepts a pipeline name" do
+      pipeline1 = :pipeline1 |> Babel.begin()
+      pipeline2 = :pipeline2 |> Babel.begin()
+      expected_trace2 = trace(babel: pipeline2, nested: [])
+
+      trace =
+        trace(
+          babel: pipeline1,
+          nested: [
+            trace(babel: Babel.identity(), nested: []),
+            expected_trace2
+          ]
+        )
+
+      assert Trace.find(trace, :pipeline1) == [trace]
+      assert Trace.find(trace, :pipeline2) == [expected_trace2]
+    end
   end
 
   defp t(output), do: trace(output: output)
