@@ -1,4 +1,13 @@
 defmodule Babel.Pipeline do
+  @moduledoc """
+  Represents a sequence of `Babel.Step`s (or nested `Babel.Pipeline`s) that get
+  evaluated sequentially, when a step fails the pipeline stops and - if set -
+  invokes the `on_error` handler in an attempt to recover from the error.
+
+  Pipelines can be chained together (using `chain/2`). Babel will try to simplify
+  pipeline chains by merging pipelines without distinct names and no error handling.
+  """
+
   alias __MODULE__.OnError
   alias Babel.Applicable
   alias Babel.Error
