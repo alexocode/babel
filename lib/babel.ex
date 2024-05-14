@@ -109,13 +109,11 @@ defmodule Babel do
 
   @doc "Alias for `fetch/1`."
   @spec at(path) :: t
-  def at(path), do: fetch(path)
+  defdelegate at(path), to: __MODULE__, as: :fetch
 
   @doc "Alias for `fetch/2`."
   @spec at(t, path) :: t
-  def at(babel, path) do
-    fetch(babel, path)
-  end
+  defdelegate at(babel, path), to: __MODULE__, as: :fetch
 
   @doc "Begin a new `Babel.Pipeline`."
   @spec begin(name) :: Pipeline.t()
@@ -236,7 +234,7 @@ defmodule Babel do
 
   @doc "Alias for `identity/0`."
   @spec noop() :: t(input, input) when input: any
-  def noop, do: identity()
+  defdelegate noop, to: __MODULE__, as: :identity
 
   @spec on_error(t(), Pipeline.on_error(output)) :: t(output) when output: any
   def on_error(babel, function) do
