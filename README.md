@@ -5,9 +5,7 @@
 [![Hex.pm](https://img.shields.io/hexpm/v/babel.svg)](https://hex.pm/packages/babel)
 [![Hex.pm Downloads](https://img.shields.io/hexpm/dt/babel)](https://hex.pm/packages/babel)
 
-TODO
-
-[See the documentation](https://hexdocs.pm/babel) for more information.
+Data transformations made easy.
 
 ## Table of Contents
 
