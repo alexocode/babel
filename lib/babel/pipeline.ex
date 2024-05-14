@@ -86,6 +86,20 @@ defmodule Babel.Pipeline do
     Trace.new(pipeline, context, result, Enum.reverse(reversed_traces))
   end
 
+  @doc """
+  Combines a `Babel.Pipeline` either with another `Babel.Pipeline` or a list of
+  steps. Passing another `Babel.Pipeline` might lead both pipelines being merged
+  into one larger `Babel.Pipeline`.
+
+  ## Merging
+  When all of the following conditions match two `Babel.Pipeline`s get merged:
+
+  1. at least one pipeline has no `name` or both `name`s are equal
+  2. at least one pipeline has no `on_error` handler
+
+  In all other cases the second `Babel.Pipeline` will be included as a step of
+  the first `Babel.Pipeline`.
+  """
   @spec chain(t(input, in_between), t(in_between, output)) :: t(input, output)
         when input: any, in_between: any, output: any
   def chain(%__MODULE__{} = left, %__MODULE__{} = right) do
