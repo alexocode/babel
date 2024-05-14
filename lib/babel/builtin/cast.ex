@@ -57,7 +57,10 @@ defmodule Babel.Builtin.Cast do
   end
 
   defp cast(:float, binary) when is_binary(binary) do
-    case Float.parse(binary) do
+    binary
+    |> String.trim()
+    |> Float.parse()
+    |> case do
       {float, ""} when is_float(float) ->
         {:ok, float}
 
@@ -75,9 +78,18 @@ defmodule Babel.Builtin.Cast do
   end
 
   defp cast(:integer, binary) when is_binary(binary) do
-    case Integer.parse(binary) do
+    binary
+    |> String.trim()
+    |> Integer.parse()
+    |> case do
       {integer, ""} when is_integer(integer) ->
         {:ok, integer}
+
+      {integer, "." <> _} when is_integer(integer) ->
+        case cast(:float, binary) do
+          {:ok, _} -> {:ok, integer}
+          _ -> {:error, {:invalid, :integer, binary}}
+        end
 
       _other ->
         {:error, {:invalid, :integer, binary}}

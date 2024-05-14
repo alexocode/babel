@@ -5,9 +5,7 @@
 [![Hex.pm](https://img.shields.io/hexpm/v/babel.svg)](https://hex.pm/packages/babel)
 [![Hex.pm Downloads](https://img.shields.io/hexpm/dt/babel)](https://hex.pm/packages/babel)
 
-TODO
-
-[See the documentation](https://hexdocs.pm/babel) for more information.
+Data transformations made easy.
 
 ## Table of Contents
 
@@ -46,26 +44,24 @@ pipeline =
   |> Babel.fetch(["some", "nested", "path"])
   |> Babel.map(Babel.into(%{atom_key: Babel.fetch("string-key")}))
 
-data =
-  %{
-    "some" => %{
-      "nested" => %{
-        "path" => [
-          %{"string-key" => :value2},
-          %{"string-key" => :value2},
-          %{"string-key" => :value2}
-        ]
-      }
+data = %{
+  "some" => %{
+    "nested" => %{
+      "path" => [
+        %{"string-key" => :value2},
+        %{"string-key" => :value2},
+        %{"string-key" => :value2}
+      ]
     }
   }
+}
 
-iex> Babel.apply(pipeline, data)
-{:ok,
- [
+Babel.apply(pipeline, data)
+=> {:ok, [
    %{atom_key: :value1},
    %{atom_key: :value2},
    %{atom_key: :value3}
- ]}
+]}
 ```
 
 ### Error Reporting
@@ -81,46 +77,45 @@ pipeline =
   |> Babel.fetch(["some", "nested", "path"])
   |> Babel.map(Babel.into(%{atom_key: Babel.fetch("string-key")}))
 
-data =
-  %{
-    "some" => %{
-      "nested" => %{
-        "path" => [
-          %{"unexpected-key" => :value2},
-          %{"unexpected-key" => :value2},
-          %{"unexpected-key" => :value2}
-        ]
-      }
+data = %{
+  "some" => %{
+    "nested" => %{
+      "path" => [
+        %{"unexpected-key" => :value1},
+        %{"unexpected-key" => :value2},
+        %{"unexpected-key" => :value3}
+      ]
     }
   }
+}
 
-iex> Babel.apply(pipeline, data)
-{
+Babel.apply(pipeline, data)
+=> {
   :error,
   %Babel.Error{
-   reason: [
-     not_found: "string-key",
-     not_found: "string-key",
-     not_found: "string-key"
-   ],
-   trace: Babel.Trace<ERROR>{
+    reason: [
+      not_found: "string-key",
+      not_found: "string-key",
+      not_found: "string-key"
+    ],
+    trace: Babel.Trace<ERROR>{
       data =
         %{
-         "some" => %{
-           "nested" => %{
-             "path" => [
-               %{"unexpected-key" => :value1},
-               %{"unexpected-key" => :value2},
-               %{"unexpected-key" => :value2}
-             ]
-           }
-         }
+          "some" => %{
+            "nested" => %{
+              "path" => [
+                %{"unexpected-key" => :value1},
+                %{"unexpected-key" => :value2},
+                %{"unexpected-key" => :value3}
+              ]
+            }
+          }
         }
 
       Babel.Pipeline<>
       |
       | Babel.fetch(["some", "nested", "path"])
-      | |=< %{"some" => %{"nested" => %{"path" => [%{"unexpected-key" => :value1, ...}, %{...}, ...]}}}
+      | |=< %{"some" => %{"nested" => %{"path" => [%{"unexpected-key" => :value1}, %{...}, ...]}}}
       | |=> [%{"unexpected-key" => :value1}, %{"unexpected-key" => :value2}, %{"unexpected-key" => :value3}]
       |
       | Babel.map(Babel.into(%{atom_key: Babel.fetch("string-key")}))

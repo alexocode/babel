@@ -58,6 +58,21 @@ defimpl Babel.Fetchable, for: List do
   end
 end
 
+defimpl Babel.Fetchable, for: Range do
+  @not_found {__MODULE__, :not_found}
+
+  def fetch(range, index) when is_integer(index) do
+    case Enum.at(range, index, @not_found) do
+      @not_found -> :error
+      found -> {:ok, found}
+    end
+  end
+
+  def fetch(_range, path) do
+    {:error, {:not_supported, __MODULE__, path}}
+  end
+end
+
 defimpl Babel.Fetchable, for: Tuple do
   def fetch(tuple, pos_index) when is_integer(pos_index) and pos_index >= 0 do
     if tuple_size(tuple) > pos_index do

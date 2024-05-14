@@ -5,7 +5,8 @@ defmodule BabelTest do
 
   require Babel
 
-  doctest Babel, only: [is_babel: 1, babel?: 1]
+  # doctest Babel, except: [:moduledoc]
+  doctest Babel
 
   describe "typical pipelines" do
     test "constructing a map from a nested path" do

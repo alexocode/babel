@@ -103,6 +103,56 @@ defmodule Babel.FetchableTest do
     end
   end
 
+  describe "Range" do
+    test "fetches the element at the given index when the path segment is an integer" do
+      range = 1..3
+
+      ranges_indizes_results = [
+        {range, 0, {:ok, 1}},
+        {range, 1, {:ok, 2}},
+        {range, 2, {:ok, 3}},
+        {range, 3, :error}
+      ]
+
+      for {range, index, result} <- ranges_indizes_results do
+        assert Fetchable.fetch(range, index) == result
+      end
+    end
+
+    test "fetches the element counting from the end, when the path segment is a negative integer" do
+      range = 1..3
+
+      ranges_indizes_results = [
+        {range, -1, {:ok, 3}},
+        {range, -2, {:ok, 2}},
+        {range, -3, {:ok, 1}},
+        {range, -4, :error}
+      ]
+
+      for {range, index, result} <- ranges_indizes_results do
+        assert Fetchable.fetch(range, index) == result
+      end
+    end
+
+    test "always returns an error when the path segment is anything but an integer" do
+      non_integers = [
+        :foo,
+        "bar",
+        make_ref(),
+        42.0,
+        [],
+        %{}
+      ]
+
+      range = 1..3
+
+      for path_segment <- non_integers do
+        assert Fetchable.fetch(range, path_segment) ==
+                 {:error, {:not_supported, Babel.Fetchable.Range, path_segment}}
+      end
+    end
+  end
+
   describe "Tuple" do
     test "fetches the element at the given index when the path segment is an integer" do
       tuple = {:first, :second, :third}
