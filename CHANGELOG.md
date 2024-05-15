@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 ### Removed
 
-[Unreleased]: https://github.com/alexocode/babel/compare/176373951df796ded497645fc36409090c489be1...main
+## [1.0.0]
+First release of Babel with a stable API.
+
+[Unreleased]: https://github.com/alexocode/babel/compare/v1.0.0...main
+[1.0.0]: https://github.com/alexocode/babel/compare/176373951df796ded497645fc36409090c489be1...v1.0.0
 
 [@alexocode]: https://github.com/alexocode
