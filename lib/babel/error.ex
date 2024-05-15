@@ -24,12 +24,22 @@ defmodule Babel.Error do
 
   @impl true
   def message(%__MODULE__{reason: reason, trace: trace}) do
+    root_causes =
+      trace
+      |> Trace.root_causes()
+      |> Enum.with_index(1)
+      |> Enum.map_join("\n", fn {root_cause, index} ->
+        "#{index}. " <> inspect(root_cause)
+      end)
+
     """
     Failed to transform data: #{inspect(reason)}
 
-    Root Cause(s): #{inspect(Trace.root_causes(trace))}
+    Root Cause(s):
+    #{root_causes}
 
-    Full Trace: #{inspect(trace)}
+    Full Trace:
+    #{inspect(trace)}
     """
   end
 end

@@ -47,9 +47,12 @@ defmodule Babel.ErrorTest do
       assert_message(error, """
       Failed to transform data: :broken
 
-      Root Cause(s): #{inspect([root_cause1, root_cause2])}
+      Root Cause(s):
+      1. #{inspect(root_cause1)}
+      2. #{inspect(root_cause2)}
 
-      Full Trace: #{inspect(trace)}
+      Full Trace:
+      #{inspect(trace)}
       """)
     end
   end
