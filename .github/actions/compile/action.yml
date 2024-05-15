@@ -35,7 +35,7 @@ runs:
         fi
 
         key_partial="${{ inputs.cache-prefix }}-compile"
-        key="$key_partial-commit:${{ github.event.pull_request.head.sha || github.sha }}
+        key="$key_partial-commit:${{ github.event.pull_request.head.sha || github.sha }}"
 
         echo "MIX_ENV=$MIX_ENV" >>$GITHUB_OUTPUT
         echo "key_partial=$key_partial" >>$GITHUB_OUTPUT
