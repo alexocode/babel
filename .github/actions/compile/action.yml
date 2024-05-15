@@ -43,11 +43,16 @@ runs:
 
         echo "Set cache key to '$key'"
 
+    - shell: sh
+      run: |
+        ls _build
+        ls _build/*/lib/babel
+
     - name: Cache
       id: cache
       uses: actions/cache@v4
       with:
-        path: _build/${{ steps.compute.outputs.MIX_ENV }}/lib/babel
+        path: _build/*/lib/babel
         key: ${{ steps.compute.outputs.key }}
         restore-keys: |
           ${{ steps.compute.outputs.key_partial }}-
