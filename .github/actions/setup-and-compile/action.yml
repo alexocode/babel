@@ -1,0 +1,63 @@
+name: Setup BEAM, Install Deps, and Compile App
+description: Composite of the setup-beam, install-deps, and compile actions
+
+inputs:
+  MIX_ENV:
+    required: false
+    description: The MIX_ENV in which this action should run. Defaults to whatever is set in the environment (or test).
+  cache-version:
+    description: The leading cache-version prefix (useful to invalidate caches)
+    required: false
+    default: v1
+  cache-os-version:
+    required: true
+    description: A string describing the operating system version
+  cache-beam-versions:
+    required: true
+    description: A string describing the used software versions for this BEAM application (e.g. OTP and Elixir versions)
+  generate-summary:
+    required: false
+    description: Whether or not the action should generate a step summary. Defaults to `false`.
+    default: 'false'
+outputs:
+  cache-prefix:
+    description: The generated cache prefix used for all generated caches
+    value: ${{ steps.compute.outputs.cache-prefix }}
+  cache-key-compile:
+    description: The full cache key used to cache the compiled app
+    value: ${{ steps.compile.outputs.cache-key }}
+  cache-key-partial-compile:
+    description: The beginning of the cache key used to cache the compiled app, useful for `restore_keys`
+    value: ${{ steps.compile.outputs.cache-key-partial }}
+  cache-key-deps:
+    description: The full cache key used to cache dependencies
+    value: ${{ steps.install-deps.outputs.cache-key }}
+  cache-key-partial-deps:
+    description: The beginning of the cache key used to cache dependencies, useful for `restore_keys`
+    value: ${{ steps.install-deps.outputs.cache-key-partial }}
+
+runs:
+  using: composite
+  steps:
+    - id: cache
+      uses: ./.github/actions/compute-cache-key
+      with:
+        MIX_ENV: ${{ inputs.MIX_ENV }}
+        version: ${{ inputs.cache-version }}
+        os-version: ${{ inputs.cache-os-version }}
+        beam-versions: ${{ inputs.cache-beam-versions }}
+        generate-summary: ${{ inputs.generate-summary }}
+
+    - id: install-deps
+      uses: ./.github/actions/install-deps
+      with:
+        MIX_ENV: ${{ inputs.MIX_ENV }}
+        cache-prefix: ${{ steps.cache.outputs.key }}
+        generate-summary: ${{ inputs.generate-summary }}
+
+    - id: compile
+      uses: ./.github/actions/compile
+      with:
+        MIX_ENV: ${{ inputs.MIX_ENV }}
+        cache-prefix: ${{ steps.cache.outputs.key }}
+        generate-summary: ${{ inputs.generate-summary }}

@@ -1,0 +1,100 @@
+name: Compile and Cache
+description: Runs mix compile and caches _build with the given cache-prefix
+
+inputs:
+  MIX_ENV:
+    required: false
+    description: The MIX_ENV in which this action should run. Defaults to whatever is set in the environment (or test).
+  cache-prefix:
+    required: true
+    description: The prefix that should be added to all cache keys
+  generate-summary:
+    required: false
+    description: Whether or not the action should generate a step summary. Defaults to `false`.
+    default: 'false'
+outputs:
+  cache-key:
+    description: The full cache key used to cache the compiled app
+    value: ${{ steps.compute.outputs.key }}
+  cache-key-partial:
+    description: The beginning of the cache key, useful for `restore_keys`
+    value: ${{ steps.compute.outputs.key_partial }}
+
+runs:
+  using: composite
+  steps:
+    - name: Compute MIX_ENV and Cache Key
+      id: compute
+      shell: bash
+      run: |
+        # Always use the given MIX_ENV and fallback to the already set one
+        if [ -z '${{ inputs.MIX_ENV }}' ]; then
+          MIX_ENV="${MIX_ENV:-test}"
+        else
+          MIX_ENV='${{ inputs.MIX_ENV }}'
+        fi
+
+        key_partial="${{ inputs.cache-prefix }}-compile"
+        key="$key_partial-commit:$(git rev-parse HEAD)"
+
+        echo "MIX_ENV=$MIX_ENV" >>$GITHUB_OUTPUT
+        echo "key_partial=$key_partial" >>$GITHUB_OUTPUT
+        echo "key=$key" >>$GITHUB_OUTPUT
+
+        echo "Set cache key to '$key'"
+
+    - name: Cache
+      id: cache
+      uses: actions/cache@v4
+      with:
+        path: _build/${{ steps.compute.outputs.MIX_ENV }}/lib/babel
+        key: ${{ steps.compute.outputs.key }}
+        restore-keys: |
+          ${{ steps.compute.outputs.key_partial }}-
+
+    - name: Generate Action Summary
+      if: inputs.generate-summary == 'true'
+      shell: bash
+      run: |
+        {
+          echo '### :hammer: Compile Application (${{ steps.compute.outputs.MIX_ENV }})'
+          echo '<details><summary>Cache Key</summary>' >>$GITHUB_STEP_SUMMARY
+          echo
+          echo '```'
+          echo '${{ steps.compute.outputs.key }}'
+          echo '```'
+          echo
+          echo '</details>'
+
+          echo '<details><summary>Cache Key (partial)</summary>' >>$GITHUB_STEP_SUMMARY
+          echo
+          echo '```'
+          echo '${{ steps.compute.outputs.key_partial }}'
+          echo '```'
+          echo
+          echo '</details>'
+
+          echo
+          echo '#### :hammer: Output'
+          if [[ '${{ steps.cache.outputs.cache-hit }}' == 'true' ]]; then
+            echo 'Hit cache. No need to compile.'
+          fi
+        } >>$GITHUB_STEP_SUMMARY
+
+    - name: Compile
+      if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        MIX_ENV: ${{ steps.compute.outputs.MIX_ENV }}
+      run: |
+        mix compile --warnings-as-errors | tee mix-compile.output
+
+        if ${{ inputs.generate-summary }}; then
+          echo '<details><summary><code>mix compile</code></summary>'
+          echo
+          echo '```'
+          cat mix-compile.output
+          echo '```'
+          echo
+          echo '</details>'
+        fi >>$GITHUB_STEP_SUMMARY

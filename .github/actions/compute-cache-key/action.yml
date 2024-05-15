@@ -1,0 +1,61 @@
+name: Computes a Cache Key for BEAM applications
+description: Uses the given inputs, the runner OS, and MIX_ENV to compute a cache key
+
+inputs:
+  version:
+    required: true
+    description: The leading version prefix for the cache (useful to invalidate)
+  os-version:
+    required: true
+    description: A string describing the operating system version
+  beam-versions:
+    required: true
+    description: A string describing the used software versions for this BEAM application (e.g. OTP and Elixir versions)
+  MIX_ENV:
+    required: false
+    description: The MIX_ENV in which this action should run. Defaults to whatever is set in the environment (or test).
+    default: test
+  generate-summary:
+    required: false
+    description: Whether or not the action should generate a step summary. Defaults to `false`.
+    default: 'false'
+outputs:
+  key:
+    description: The computed cache key
+    value: ${{ steps.compute.outputs.key }}
+
+runs:
+  using: composite
+  steps:
+    - name: Compute cache key
+      id: compute
+      shell: bash
+      run: |
+        version='${{ inputs.version }}'
+        beam='${{ inputs.beam-versions }}'
+
+        if [ -z '${{ inputs.os-version }}' ]; then
+          os='os:${{ runner.os }}'
+        else
+          os='os:${{ inputs.os-version }}'
+        fi
+
+        if [ -z '${{ inputs.MIX_ENV }}' ]; then
+          mix_env="MIX_ENV:${MIX_ENV:-test}"
+        else
+          mix_env='MIX_ENV:${{ inputs.MIX_ENV }}'
+        fi
+
+        echo "key=$version-$os-$beam-$mix_env" >>$GITHUB_OUTPUT
+        echo "Set key to '$key'"
+
+    - name: Generate action summary
+      if: inputs.generate-summary == 'true'
+      shell: bash
+      run: |
+        {
+          echo '### :zap: Compute Cache Key'
+          echo '```'
+          echo '${{ steps.compute.outputs.key }}'
+          echo '```'
+        } >>$GITHUB_STEP_SUMMARY
