@@ -68,9 +68,6 @@ Babel.apply(pipeline, data)
 
 Since you'll most likely build non-trivial transformation pipelines with `Babel` - which can fail at any given step - `Babel` ships with elaborate error reporting:
 
-<details>
-<summary>Example</summary>
-
 ```elixir
 pipeline =
   Babel.begin()
@@ -155,8 +152,6 @@ Babel.apply(pipeline, data)
   }
 }
 ```
-
-</details>
 
 `Babel` achieves this through a custom implementation of the `Inspect` protocol for `Babel.Trace`.
 As such you'll have access to them everywhere; in the `Babel.Error` message, in `iex`, and whenever you `inspect` a `Babel.Error` or `Babel.Trace`.
