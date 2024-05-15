@@ -29,7 +29,7 @@ runs:
   steps:
     - name: Compute cache key
       id: compute
-      shell: bash
+      shell: sh
       run: |
         version='${{ inputs.version }}'
         beam='${{ inputs.beam-versions }}'
@@ -51,7 +51,7 @@ runs:
 
     - name: Generate action summary
       if: inputs.generate-summary == 'true'
-      shell: bash
+      shell: sh
       run: |
         {
           echo '### :zap: Compute Cache Key'

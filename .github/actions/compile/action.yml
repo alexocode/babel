@@ -25,7 +25,7 @@ runs:
   steps:
     - name: Compute MIX_ENV and Cache Key
       id: compute
-      shell: bash
+      shell: sh
       run: |
         # Always use the given MIX_ENV and fallback to the already set one
         if [ -z '${{ inputs.MIX_ENV }}' ]; then
@@ -54,7 +54,7 @@ runs:
 
     - name: Generate Action Summary
       if: inputs.generate-summary == 'true'
-      shell: bash
+      shell: sh
       run: |
         {
           echo '### :hammer: Compile Application (${{ steps.compute.outputs.MIX_ENV }})'
@@ -83,7 +83,7 @@ runs:
 
     - name: Compile
       if: steps.cache.outputs.cache-hit != 'true'
-      shell: bash
+      shell: sh
       env:
         MIX_ENV: ${{ steps.compute.outputs.MIX_ENV }}
       run: |

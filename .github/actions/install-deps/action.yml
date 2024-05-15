@@ -25,7 +25,7 @@ runs:
   steps:
     - name: Compute MIX_ENV
       id: config
-      shell: bash
+      shell: sh
       run: |
         # Always use the given MIX_ENV and fallback to the already set one
         if [ -z '${{ inputs.MIX_ENV }}' ]; then
@@ -38,7 +38,7 @@ runs:
 
     - name: Compute cache key
       id: compute
-      shell: bash
+      shell: sh
       run: |
         key_partial="${{ inputs.cache-prefix }}-deps"
         key="$key_partial-mix.lock:${{ hashFiles('mix.lock') }}"
@@ -63,7 +63,7 @@ runs:
 
     - name: Generate action summary
       if: inputs.generate-summary == 'true'
-      shell: bash
+      shell: sh
       run: |
         {
           echo '### :arrow_up: Install Deps (${{ steps.config.outputs.MIX_ENV }})'
@@ -92,7 +92,7 @@ runs:
 
     - name: Get and compile mix dependencies
       if: steps.cache.outputs.cache-hit != 'true'
-      shell: bash
+      shell: sh
       env:
         MIX_ENV: ${{ steps.config.outputs.MIX_ENV }}
       run: |
