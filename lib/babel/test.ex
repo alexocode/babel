@@ -15,6 +15,8 @@ defmodule Babel.Test do
   import ExUnit.Assertions
   import Kernel, except: [apply: 2]
 
+  @dialyzer {:nowarn_function, apply!: 2}
+
   def apply(step, data) do
     step
     |> Babel.trace(data)
