@@ -6,7 +6,7 @@ supports_composition =
 defmodule Babel do
   use Babel.EnforceVersion,
     otp: ">= 21.0.0",
-    elixir: ">= 1.7.4"
+    elixir: ">= 1.9.0"
 
   @external_resource readme
   @moduledoc Babel.Docs.massage_readme(readme, for: "Babel")

@@ -9,7 +9,7 @@ defmodule MyPackage.MixProject do
   def project do
     [
       app: @app,
-      elixir: ">= 1.7.4 and < 2.0.0",
+      elixir: ">= 1.9.0 and < 2.0.0",
       elixirc_paths: elixirc_paths(Mix.env()),
       preferred_cli_env: [
         coveralls: :test,
