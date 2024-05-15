@@ -1,5 +1,16 @@
 defprotocol Babel.Intoable do
-  @moduledoc false
+  @moduledoc """
+  Used to enable `Babel.into/1`.
+
+  Babel ships with implementations for:
+  - `List`
+  - `Map`
+  - `Tuple`
+
+  The `Any` implementation for structs checks if the struct implements `Babel.Applicable`,
+  if yes it invokes `Babel.Applicable.apply/2` on it. Otherwise it just treats each struct
+  as a `Map`.
+  """
 
   alias Babel.Context
   alias Babel.Trace
