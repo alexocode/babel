@@ -43,11 +43,6 @@ runs:
 
         echo "Set cache key to '$key'"
 
-    - shell: sh
-      run: |
-        ls _build
-        ls _build/*/lib/babel
-
     - name: Cache
       id: cache
       uses: actions/cache@v4
