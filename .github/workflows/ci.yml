@@ -148,10 +148,33 @@ jobs:
           cache-beam-versions: elixir:${{ env.VERSION_ELIXIR }}-otp:${{ env.VERSION_ELIXIR }}
           generate-summary: true
 
+      - id: cache
+        uses: ./.github/actions/compute-cache-key
+        with:
+          version: ${{ env.CACHE_PREFIX_DIALYZER }}
+          os-version: alpine:${{ env.VERSION_ALPINE }}
+          beam-versions: elixir:${{ env.VERSION_ELIXIR }}-otp:${{ env.VERSION_OTP }}
+          generate-summary: true
+
       - name: Cache - Dialyzer PLTs
+        id: plt_cache
         uses: actions/cache@v4
         with:
+          # This is not working - we're keeping it so that it starts working when https://github.com/actions/cache/issues/1315 is resolved
+          save-always: true
           path: .dialyzer/
-          key: ${{ env.CACHE_PREFIX_DIALYZER }}-env:${{ env.MIX_ENV }}-alpine:${{ env.VERSION_ALPINE }}-elixir:${{ env.VERSION_ELIXIR }}-otp:${{ env.VERSION_OTP }}
+          key: ${{ steps.cache.outputs.key }}-plt-mix.lock:${{ hashFiles('mix.lock') }}-${{ hashFiles('lib/**') }}
+          restore-keys: |
+            ${{ steps.cache.outputs.key }}-plt-mix.lock:${{ hashFiles('mix.lock') }}-
+            ${{ steps.cache.outputs.key }}-plt-
 
-      - run: mix dialyzer
+      - run: mix dialyzer --format github
+
+      # TODO: Remove this as soon as https://github.com/actions/cache/issues/1315 is resolved (and save-always works)
+      - if: steps.plt_cache.outputs.cache-hit != 'true'
+        name: Save PLT cache
+        id: plt_cache_save
+        uses: actions/cache/save@v4
+        with:
+          path: .dialyzer/
+          key: ${{ steps.cache.outputs.key }}-plt-mix.lock:${{ hashFiles('mix.lock') }}-${{ hashFiles('lib/**') }}
