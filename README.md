@@ -1,5 +1,5 @@
 # Babel
-[![CI](https://github.com/alexocode/babel/workflows/CI/badge.svg)](https://github.com/alexocode/babel/actions?query=branch%3Amain+workflow%3ACI)
+[![CI](https://github.com/alexocode/babel/actions/workflows/ci.yml/badge.svg)](https://github.com/alexocode/babel/actions/workflows/ci.yml)
 [![Coverage Status](https://coveralls.io/repos/github/alexocode/babel/badge.svg?branch=main)](https://coveralls.io/github/alexocode/babel?branch=main)
 [![Hexdocs.pm](https://img.shields.io/badge/hexdocs-online-blue)](https://hexdocs.pm/babel/)
 [![Hex.pm](https://img.shields.io/hexpm/v/babel.svg)](https://hex.pm/packages/babel)
