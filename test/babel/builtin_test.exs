@@ -133,7 +133,8 @@ defmodule Babel.BuiltinTest do
   describe "inspect/3" do
     test "includes only the given fields in the order specified" do
       call = Babel.call(Map, :fetch, [:some_key])
-      opts = Inspect.Opts.new([])
+      # We're not using Inspect.Opts.new/1 because that's not available in Elixir versions <1.13
+      opts = %Inspect.Opts{}
 
       assert_inspects_to(Builtin.inspect(call, [], opts), "Babel.call()")
 
