@@ -34,23 +34,18 @@ runs:
           MIX_ENV='${{ inputs.MIX_ENV }}'
         fi
 
-        key_partial="${{ inputs.cache-prefix }}-compile"
-        key="$key_partial-commit:${{ github.event.pull_request.head.sha || github.sha }}"
-
         echo "MIX_ENV=$MIX_ENV" >>$GITHUB_OUTPUT
-        echo "key_partial=$key_partial" >>$GITHUB_OUTPUT
-        echo "key=$key" >>$GITHUB_OUTPUT
-
-        echo "Set cache key to '$key'"
+        echo "Set MIX_ENV to $MIX_ENV"
 
     - name: Cache
       id: cache
       uses: actions/cache@v4
       with:
-        path: _build/*/lib/babel
-        key: ${{ steps.compute.outputs.key }}
+        path: _build/test/lib/babel
+        key: ${{ inputs.cache-prefix }}-mix:${{ hashFiles('mix.exs') }}-lib:${{ hashFiles('README.md', 'lib/**') }}
         restore-keys: |
-          ${{ steps.compute.outputs.key_partial }}-
+          ${{ inputs.cache-prefix }}-mix:${{ hashFiles('mix.exs') }}-
+          ${{ inputs.cache-prefix }}-
 
     - name: Generate Action Summary
       if: inputs.generate-summary == 'true'
@@ -88,6 +83,10 @@ runs:
         MIX_ENV: ${{ steps.compute.outputs.MIX_ENV }}
       run: |
         mix compile --warnings-as-errors | tee mix-compile.output
+        echo _build
+        ls _build
+        echo "_build/${{ steps.compute.outputs.MIX_ENV }}/lib/babel"
+        ls "_build/${{ steps.compute.outputs.MIX_ENV }}/lib/babel"
 
         if ${{ inputs.generate-summary }}; then
           echo '<details><summary><code>mix compile</code></summary>'
