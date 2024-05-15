@@ -90,14 +90,18 @@ runs:
           fi
         } >>$GITHUB_STEP_SUMMARY
 
+    - name: Setup hex and rebar
+      shell: sh
+      run: |
+        mix local.hex --force
+        mix local.rebar --force
+
     - name: Get and compile mix dependencies
       if: steps.cache.outputs.cache-hit != 'true'
       shell: sh
       env:
         MIX_ENV: ${{ steps.config.outputs.MIX_ENV }}
       run: |
-        mix local.rebar --force
-        mix local.hex --force
         mix deps.get --only $MIX_ENV | tee mix-deps.get.output
         mix deps.compile | tee mix-deps.compile.output
 
