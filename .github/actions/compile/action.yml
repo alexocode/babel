@@ -83,10 +83,6 @@ runs:
         MIX_ENV: ${{ steps.compute.outputs.MIX_ENV }}
       run: |
         mix compile --warnings-as-errors | tee mix-compile.output
-        echo _build
-        ls _build
-        echo "_build/${{ steps.compute.outputs.MIX_ENV }}/lib/babel"
-        ls "_build/${{ steps.compute.outputs.MIX_ENV }}/lib/babel"
 
         if ${{ inputs.generate-summary }}; then
           echo '<details><summary><code>mix compile</code></summary>'
