@@ -1,5 +1,15 @@
 defprotocol Babel.Fetchable do
-  @moduledoc false
+  @moduledoc """
+  The protocol which enables `Babel.fetch/1` and `Babel.get/2`.
+
+  Babel ships with implementations for:
+  - `List`
+  - `Map`
+  - `Range`
+  - `Tuple`
+
+  The fallback `Any` implementation treats any struct as a `Map`.
+  """
 
   @typedoc """
   Anything that implements this protocol.

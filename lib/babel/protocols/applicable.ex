@@ -1,4 +1,12 @@
 defprotocol Babel.Applicable do
+  @moduledoc """
+  The protocol which enables `Babel.apply/2`.
+
+  Any custom `Babel.Step` will have to implement this protocol. It's suggested
+  to `use Babel.Step` as that will derive an implementation. See `Babel.Step`
+  for further details.
+  """
+
   alias Babel.Trace
 
   @type t :: t(any)
