@@ -4,6 +4,10 @@ supports_composition =
   "Supports composition (you can pipe into this to create a `Babel.Pipeline`)."
 
 defmodule Babel do
+  use Babel.EnforceVersion,
+    otp: ">= 21.0.0",
+    elixir: ">= 1.7.4"
+
   @external_resource readme
   @moduledoc Babel.Docs.massage_readme(readme, for: "Babel")
 
