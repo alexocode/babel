@@ -86,75 +86,84 @@ data = %{
   }
 }
 
-Babel.apply(pipeline, data)
-=> {
-  :error,
-  %Babel.Error{
-    reason: [
-      not_found: "string-key",
-      not_found: "string-key",
-      not_found: "string-key"
-    ],
-    trace: Babel.Trace<ERROR>{
-      data =
-        %{
-          "some" => %{
-            "nested" => %{
-              "path" => [
-                %{"unexpected-key" => :value1},
-                %{"unexpected-key" => :value2},
-                %{"unexpected-key" => :value3}
-              ]
-            }
-          }
-        }
+Babel.apply!(pipeline, data)
+```
 
-      Babel.Pipeline<>
-      |
-      | Babel.fetch(["some", "nested", "path"])
-      | |=< %{"some" => %{"nested" => %{"path" => [%{"unexpected-key" => :value1}, %{...}, ...]}}}
-      | |=> [%{"unexpected-key" => :value1}, %{"unexpected-key" => :value2}, %{"unexpected-key" => :value3}]
-      |
-      | Babel.map(Babel.into(%{atom_key: Babel.fetch("string-key")}))
-      | |=< [%{"unexpected-key" => :value1}, %{"unexpected-key" => :value2}, %{"unexpected-key" => :value3}]
-      | |
-      | | Babel.into(%{atom_key: Babel.fetch("string-key")})
-      | | |=< %{"unexpected-key" => :value1}
-      | | |
-      | | | Babel.fetch("string-key")
-      | | | |=< %{"unexpected-key" => :value1}
-      | | | |=> {:error, {:not_found, "string-key"}}
-      | | |
-      | | |=> {:error, [not_found: "string-key"]}
-      | |
-      | | Babel.into(%{atom_key: Babel.fetch("string-key")})
-      | | |=< %{"unexpected-key" => :value2}
-      | | |
-      | | | Babel.fetch("string-key")
-      | | | |=< %{"unexpected-key" => :value2}
-      | | | |=> {:error, {:not_found, "string-key"}}
-      | | |
-      | | |=> {:error, [not_found: "string-key"]}
-      | |
-      | | Babel.into(%{atom_key: Babel.fetch("string-key")})
-      | | |=< %{"unexpected-key" => :value3}
-      | | |
-      | | | Babel.fetch("string-key")
-      | | | |=< %{"unexpected-key" => :value3}
-      | | | |=> {:error, {:not_found, "string-key"}}
-      | | |
-      | | |=> {:error, [not_found: "string-key"]}
-      | |
-      | |=> {:error, [not_found: "string-key", not_found: "string-key", not_found: "string-key"]}
-      |
-      |=> {:error, [not_found: "string-key", not_found: "string-key", not_found: "string-key"]}
-    }
-  }
+Which will produce the following error:
+
+```
+** (Babel.Error) Failed to transform data: [not_found: "string-key", not_found: "string-key", not_found: "string-key"]
+
+Root Cause(s):
+1. Babel.Trace<ERROR>{
+  data = %{"unexpected-key" => :value1}
+
+  Babel.fetch("string-key")
+  |=> {:error, {:not_found, "string-key"}}
+}
+2. Babel.Trace<ERROR>{
+  data = %{"unexpected-key" => :value2}
+
+  Babel.fetch("string-key")
+  |=> {:error, {:not_found, "string-key"}}
+}
+3. Babel.Trace<ERROR>{
+  data = %{"unexpected-key" => :value3}
+
+  Babel.fetch("string-key")
+  |=> {:error, {:not_found, "string-key"}}
+}
+
+Full Trace:
+Babel.Trace<ERROR>{
+  data = %{"some" => %{"nested" => %{"path" => [%{"unexpected-key" => :value1}, %{"unexpected-key" => :value2}, %{"unexpected-key" => :value3}]}}}
+
+  Babel.Pipeline<>
+  |
+  | Babel.fetch(["some", "nested", "path"])
+  | |=< %{"some" => %{"nested" => %{"path" => [%{"unexpected-key" => :value1}, %{...}, ...]}}}
+  | |=> [%{"unexpected-key" => :value1}, %{"unexpected-key" => :value2}, %{"unexpected-key" => :value3}]
+  |
+  | Babel.map(Babel.into(%{atom_key: Babel.fetch("string-key")}))
+  | |=< [%{"unexpected-key" => :value1}, %{"unexpected-key" => :value2}, %{"unexpected-key" => :value3}]
+  | |
+  | | Babel.into(%{atom_key: Babel.fetch("string-key")})
+  | | |=< %{"unexpected-key" => :value1}
+  | | |
+  | | | Babel.fetch("string-key")
+  | | | |=< %{"unexpected-key" => :value1}
+  | | | |=> {:error, {:not_found, "string-key"}}
+  | | |
+  | | |=> {:error, [not_found: "string-key"]}
+  | |
+  | | Babel.into(%{atom_key: Babel.fetch("string-key")})
+  | | |=< %{"unexpected-key" => :value2}
+  | | |
+  | | | Babel.fetch("string-key")
+  | | | |=< %{"unexpected-key" => :value2}
+  | | | |=> {:error, {:not_found, "string-key"}}
+  | | |
+  | | |=> {:error, [not_found: "string-key"]}
+  | |
+  | | Babel.into(%{atom_key: Babel.fetch("string-key")})
+  | | |=< %{"unexpected-key" => :value3}
+  | | |
+  | | | Babel.fetch("string-key")
+  | | | |=< %{"unexpected-key" => :value3}
+  | | | |=> {:error, {:not_found, "string-key"}}
+  | | |
+  | | |=> {:error, [not_found: "string-key"]}
+  | |
+  | |=> {:error, [not_found: "string-key", not_found: "string-key", not_found: "string-key"]}
+  |
+  |=> {:error, [not_found: "string-key", not_found: "string-key", not_found: "string-key"]}
 }
 ```
 
-`Babel` achieves this through a custom implementation of the `Inspect` protocol for `Babel.Trace`.
-As such you'll have access to them everywhere; in the `Babel.Error` message, in `iex`, and whenever you `inspect` a `Babel.Error` or `Babel.Trace`.
+`Babel` achieves this by keeping track of all applied steps in a `Babel.Trace` struct.
+Rendering of a `Babel.Trace` is done through a custom `Inspect` implementation.
+
+You have to this information everywhere: in the `Babel.Error` message, in `iex`, and whenever you `inspect` a `Babel.Error` or `Babel.Trace`.
 
 ## Contributing
 
