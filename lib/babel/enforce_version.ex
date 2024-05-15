@@ -1,3 +1,4 @@
+# coveralls-ignore-start
 defmodule Babel.EnforceVersion do
   @moduledoc false
 
