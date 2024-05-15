@@ -92,7 +92,24 @@ defmodule MyPackage.MixProject do
       source_ref: "v#{version()}",
       source_url: @repo,
       extras: @extras,
-      groups_for_modules: []
+      groups_for_modules: [
+        Usage: [
+          Babel,
+          Babel.Error,
+          Babel.Trace
+        ],
+        "Creating Custom Steps": [
+          Babel.Step,
+          Babel.Context,
+          Babel.Test
+        ],
+        Internals: [
+          Babel.Pipeline,
+          Babel.Applicable,
+          Babel.Fetchable,
+          Babel.Intoable
+        ]
+      ]
     ]
   end
 
