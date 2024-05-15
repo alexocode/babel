@@ -276,6 +276,10 @@ defmodule Babel do
         when input: any, reason: any
   defdelegate fail(reason_or_function), to: Builtin.Fail, as: :new
 
+  @doc "See `fetch/2`."
+  @spec fetch(path) :: t
+  defdelegate fetch(path), to: Builtin.Fetch, as: :new
+
   @doc """
   Fetches the given path from the data, erroring when it cannot be found.
 
@@ -297,9 +301,6 @@ defmodule Babel do
       iex> Babel.apply!(pipeline, %{some_key: %{"nested key" => [:first, :second, :third, :fourth]}})
       :fourth
   """
-  @spec fetch(path) :: t
-  defdelegate fetch(path), to: Builtin.Fetch, as: :new
-
   @spec fetch(t(), path) :: t
   def fetch(babel, path) do
     chain(babel, fetch(path))
@@ -442,7 +443,7 @@ defmodule Babel do
       iex> Babel.apply!(pipeline, %{"list" => [%{some_key: "value1"}, %{some_key: "value2"}]})
       ["value1", "value2"]
   """
-  @spec map(Pipeline.t(Enumerable.t(input)), t(input, output)) :: t([output])
+  @spec map(t(Enumerable.t(input)), t(input, output)) :: t([output])
         when input: data, output: term
   def map(babel, mapper) do
     chain(babel, map(mapper))
