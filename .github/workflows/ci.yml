@@ -31,9 +31,6 @@ jobs:
             elixir: 1.9.4
             otp: 21.3.8.16
           - alpine: 3.11.6
-            elixir: 1.9.4
-            otp: 21.3.8.16
-          - alpine: 3.11.6
             elixir: 1.10.3
             otp: 21.3.8.16
           - alpine: 3.11.6
