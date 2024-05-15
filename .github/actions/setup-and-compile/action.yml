@@ -39,6 +39,10 @@ outputs:
 runs:
   using: composite
   steps:
+    - name: Install tar for actions/cache
+      shell: sh
+      run: apk add --no-cache tar
+
     - id: cache
       uses: ./.github/actions/compute-cache-key
       with:
