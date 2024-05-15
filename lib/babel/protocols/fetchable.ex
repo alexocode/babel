@@ -1,4 +1,6 @@
 defprotocol Babel.Fetchable do
+  @moduledoc false
+
   @typedoc """
   Anything that implements this protocol.
 

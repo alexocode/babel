@@ -1,4 +1,6 @@
 defprotocol Babel.Intoable do
+  @moduledoc false
+
   alias Babel.Context
   alias Babel.Trace
 
