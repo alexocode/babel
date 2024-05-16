@@ -1,7 +1,7 @@
 defmodule Babel.Trace do
   @moduledoc """
-  Represents the evaluation of a `Babel.Applicable`, information on the evaluated
-  applicable, the input data, the output result, and any traces of nested `Babel.Applicable`s.
+  Represents the evaluation of a `Babel.Applicable`. Contains the evaluated applicable,
+  the input data, the output result, and any traces of nested `Babel.Applicable`s.
 
   Implements `Inspect` to render a human-readable version of the information.
 

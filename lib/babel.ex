@@ -32,7 +32,7 @@ defmodule Babel do
   @typedoc "Arbitrary term describing a Babel step or pipeline."
   @type name :: term
 
-  @typedoc "TODO: Better docs"
+  @typedoc "A term or list of terms describing a key you'd like to fetch from a data structure."
   @type path :: term | [term]
 
   @doc """
