@@ -40,7 +40,7 @@ defimpl Babel.Fetchable, for: Any do
     end
   end
 
-  def fetch(nil, _path), do: {:ok, nil}
+  def fetch(nil, _path), do: :error
 
   def fetch(other, _path) do
     {:error, {:not_implemented, Babel.Fetchable, other}}
