@@ -103,6 +103,21 @@ defmodule Babel.FetchableTest do
     end
   end
 
+  describe "Nil" do
+    test "always returns :error" do
+      paths = [
+        :atom,
+        "string",
+        42,
+        nil
+      ]
+
+      for path <- paths do
+        assert Babel.Fetchable.fetch(nil, path) == :error
+      end
+    end
+  end
+
   describe "Range" do
     test "fetches the element at the given index when the path segment is an integer" do
       range = 1..3
