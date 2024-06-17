@@ -229,6 +229,79 @@ defmodule Babel.InspectTest do
       )
     end
 
+    test "omits success traces when requested" do
+      pipeline =
+        Babel.begin()
+        |> Babel.fetch(["foo", 0, "bar"])
+        |> Babel.into(%{
+          atom_key1: Babel.fetch("key1"),
+          atom_key2: Babel.fetch("key2")
+        })
+
+      data = %{
+        "foo" => [
+          %{"bar" => %{"key1" => :value1, "key2" => :value2}},
+          %{"something" => :else}
+        ]
+      }
+
+      trace = Babel.trace(pipeline, data)
+
+      assert_inspects_as(
+        trace,
+        [custom_options: [only_error: true]],
+        [
+          ~s'Babel.Trace<OK>{',
+          ~s'  data =',
+          ~s'    #{i(data, indent: 4)}',
+          ~s'  ',
+          ~s'  Babel.Pipeline<>',
+          ~s'  | ',
+          ~s'  | ... OK traces omitted (2) ...',
+          ~s'  | ',
+          ~s'  |=> %{atom_key1: :value1, atom_key2: :value2}',
+          ~s'}'
+        ]
+      )
+
+      data = %{
+        "foo" => [
+          %{"bar" => %{"key1" => :value1, "key3" => :value3}},
+          %{"something" => :else}
+        ]
+      }
+
+      trace = Babel.trace(pipeline, data)
+
+      assert_inspects_as(
+        trace,
+        [custom_options: [only_error: true]],
+        [
+          ~s'Babel.Trace<ERROR>{',
+          ~s'  data =',
+          ~s'    #{i(data, indent: 4)}',
+          ~s'  ',
+          ~s'  Babel.Pipeline<>',
+          ~s'  | ',
+          ~s'  | ... OK traces omitted (1) ...',
+          ~s'  | ',
+          ~s'  | Babel.into(%{atom_key1: Babel.fetch("key1"), atom_key2: Babel.fetch("key2")})',
+          ~s'  | |=< %{"key1" => :value1, "key3" => :value3}',
+          ~s'  | | ',
+          ~s'  | | ... OK traces omitted (1) ...',
+          ~s'  | | ',
+          ~s'  | | Babel.fetch("key2")',
+          ~s'  | | |=< %{"key1" => :value1, "key3" => :value3}',
+          ~s'  | | |=> {:error, {:not_found, "key2"}}',
+          ~s'  | | ',
+          ~s'  | |=> {:error, [not_found: "key2"]}',
+          ~s'  | ',
+          ~s'  |=> {:error, [not_found: "key2"]}',
+          ~s'}'
+        ]
+      )
+    end
+
     test "includes a pipelines on_error handling when relevant" do
       on_error = fn _error -> :recovered_value end
 

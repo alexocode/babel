@@ -260,6 +260,20 @@ defimpl Inspect, for: Babel.Trace do
   defp lines_for_nested([], _opts), do: []
 
   defp lines_for_nested(traces, opts) when is_list(traces) do
+    only_error = Keyword.get(opts.custom_options, :only_error, false)
+
+    {traces, nr_of_omitted} =
+      if only_error do
+        nested_errors = Enum.filter(traces, &Babel.Trace.error?/1)
+
+        {
+          nested_errors,
+          length(traces) - length(nested_errors)
+        }
+      else
+        {traces, 0}
+      end
+
     traces
     |> Enum.map(fn trace ->
       [
@@ -272,6 +286,7 @@ defimpl Inspect, for: Babel.Trace do
     end)
     |> List.flatten()
     |> List.insert_at(0, "")
+    |> summarize_omissions(nr_of_omitted)
     |> Enum.map(&concat("| ", &1))
   end
 
@@ -296,4 +311,7 @@ defimpl Inspect, for: Babel.Trace do
 
     no_breaks(concat("|=> ", to_doc(value, %{opts | limit: 5})))
   end
+
+  defp summarize_omissions(lines, 0), do: lines
+  defp summarize_omissions(lines, n), do: ["", "... OK traces omitted (#{n}) ..." | lines]
 end
