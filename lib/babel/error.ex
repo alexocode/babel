@@ -38,9 +38,7 @@ defmodule Babel.Error do
 
         Babel.Pipeline<>
         |
-        | Babel.fetch(["some", "nested", "path"])
-        | |=< %{"some" => %{"nested" => %{"path" => [%{"unexpected-key" => :value1}, %{...}, ...]}}}
-        | |=> [%{"unexpected-key" => :value1}, %{"unexpected-key" => :value2}, %{"unexpected-key" => :value3}]
+        | ... OK traces omitted (1) ...
         |
         | Babel.map(Babel.into(%{atom_key: Babel.fetch("string-key")}))
         | |=< [%{"unexpected-key" => :value1}, %{"unexpected-key" => :value2}, %{"unexpected-key" => :value3}]
@@ -117,7 +115,7 @@ defmodule Babel.Error do
     #{root_causes}
 
     Full Trace:
-    #{inspect(trace)}
+    #{inspect(trace, custom_options: [only_error: true])}
     """
   end
 end
