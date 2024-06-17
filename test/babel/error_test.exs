@@ -52,7 +52,7 @@ defmodule Babel.ErrorTest do
       2. #{inspect(root_cause2)}
 
       Full Trace:
-      #{inspect(trace)}
+      #{inspect(trace, custom_options: [only_error: true])}
       """)
     end
   end
