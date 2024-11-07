@@ -260,16 +260,28 @@ defimpl Inspect, for: Babel.Trace do
   defp lines_for_nested([], _opts), do: []
 
   defp lines_for_nested(traces, opts) when is_list(traces) do
-    only_error = Keyword.get(opts.custom_options, :only_error, false)
+    {error_only?, opts} =
+      get_and_update_in(opts.custom_options[:depth], fn
+        nil -> {true, 0}
+        :infinity -> {false, :infinity}
+        depth when is_integer(depth) -> {depth == 0, max(0, depth - 1)}
+      end)
 
     {traces, nr_of_omitted} =
-      if only_error do
-        nested_errors = Enum.filter(traces, &Babel.Trace.error?/1)
-
-        {
-          nested_errors,
-          length(traces) - length(nested_errors)
-        }
+      if error_only? do
+        # Only return error traces
+        traces
+        |> Enum.reduce({[], 0}, fn trace, {errors, nr_of_omitted} ->
+          if Babel.Trace.error?(trace) do
+            {[trace | errors], nr_of_omitted}
+          else
+            {errors, Babel.Trace.reduce(trace, nr_of_omitted, fn _, c -> c + 1 end)}
+          end
+        end)
+        |> case do
+          {nested_errors, nr_of_omitted} ->
+            {Enum.reverse(nested_errors), nr_of_omitted}
+        end
       else
         {traces, 0}
       end
