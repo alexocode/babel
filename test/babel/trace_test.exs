@@ -246,5 +246,27 @@ defmodule Babel.TraceTest do
     end
   end
 
+  describe "inspect/2" do
+    test "is convenience shortcut to render a trace with custom opts" do
+      trace =
+        trace(
+          nested: [
+            trace(
+              nested: [
+                trace()
+              ]
+            )
+          ]
+        )
+
+      assert Trace.inspect(trace) == inspect(trace)
+      assert Trace.inspect(trace, depth: 1) == inspect(trace, custom_options: [depth: 1])
+      assert Trace.inspect(trace, depth: 2) == inspect(trace, custom_options: [depth: 2])
+
+      assert Trace.inspect(trace, depth: :infinity) ==
+               inspect(trace, custom_options: [depth: :infinity])
+    end
+  end
+
   defp t(output), do: trace(output: output)
 end

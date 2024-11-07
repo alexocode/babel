@@ -1,4 +1,12 @@
 defmodule Babel.Trace do
+  inspect_opts = """
+  - `depth` controls how many levels of nested traces should be rendered (default `0`).
+    * `non_neg_integer`: Render nested traces until the given depth.
+    * `:error`: Omit all non-error nested traces but render erroring traces.
+    * `:infinity`: Render all nested traces.
+  - `indent` controls the number of leading spaces (default `0`).\
+  """
+
   @moduledoc """
   Represents the evaluation of a `Babel.Applicable`. Contains the evaluated applicable,
   the input data, the output result, and any traces of nested `Babel.Applicable`s.
@@ -7,6 +15,15 @@ defmodule Babel.Trace do
 
   To analyze a `Babel.Trace` - especially one with `nested` traces - `find/2` will
   be your friend.
+
+  ## Inspect Options
+
+  `Babel.Trace`'s implementation of `Inspect` allows you to pass two custom options:
+
+  #{inspect_opts}
+
+  You can either pass these by doing `inspect(trace, custom_options: [...])` or alternatively
+  you can use the `Babel.Trace.inspect/2` function which acts as a shortcut.
   """
   alias Babel.Builtin
   alias Babel.Context
@@ -162,4 +179,37 @@ defmodule Babel.Trace do
   end
 
   def matches_spec?(_babel, _spec), do: false
+
+  @doc """
+  Reduces over the current trace and all its nested traces.
+
+  ## Examples
+
+      iex> pipeline = Babel.fetch("list") |> Babel.map(Babel.into(%{some_key: Babel.fetch("some key")}))
+      iex> data = %{"list" => [%{"some key" => "value1"}, %{"some key" => "value2"}]}
+      iex> trace = Babel.trace(pipeline, data)
+      iex> Babel.Trace.reduce(trace, 0, fn _trace, count -> count + 1 end)
+      7
+  """
+  @spec reduce(t, accumulator, reducer) :: accumulator
+        when accumulator: any,
+             reducer: (t, accumulator -> accumulator)
+  def reduce(%__MODULE__{} = trace, acc, fun) do
+    Enum.reduce(trace.nested, fun.(trace, acc), &reduce(&1, &2, fun))
+  end
+
+  @type inspect_opts :: [
+          depth: :error | :infinity | non_neg_integer,
+          indent: non_neg_integer
+        ]
+  @doc """
+  Shortcut to `inspect(trace, custom_options: opts).
+
+  ## Options
+  #{inspect_opts}
+  """
+  @spec inspect(t, inspect_opts) :: String.t()
+  def inspect(%__MODULE__{} = trace, opts \\ []) do
+    Kernel.inspect(trace, custom_options: opts)
+  end
 end

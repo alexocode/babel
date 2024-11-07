@@ -115,7 +115,7 @@ defmodule Babel.Error do
     #{root_causes}
 
     Full Trace:
-    #{inspect(trace, custom_options: [only_error: true])}
+    #{inspect(trace, custom_options: [depth: :error])}
     """
   end
 end

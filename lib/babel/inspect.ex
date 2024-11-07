@@ -151,7 +151,8 @@ defimpl Inspect, for: Babel.Trace do
   import Inspect.Algebra
 
   def inspect(%Babel.Trace{} = trace, opts) do
-    level = Keyword.get(opts.custom_options, :indent, 0)
+    opts = merge_default_opts(opts)
+    level = opts.custom_options[:indent]
 
     nest(
       concat([
@@ -164,6 +165,11 @@ defimpl Inspect, for: Babel.Trace do
       ]),
       level
     )
+  end
+
+  @default_opts [indent: 0, depth: 0]
+  defp merge_default_opts(%Inspect.Opts{} = opts) do
+    update_in(opts.custom_options, &Keyword.merge(@default_opts, &1))
   end
 
   defp nesting(level, indent \\ [])
@@ -260,19 +266,8 @@ defimpl Inspect, for: Babel.Trace do
   defp lines_for_nested([], _opts), do: []
 
   defp lines_for_nested(traces, opts) when is_list(traces) do
-    only_error = Keyword.get(opts.custom_options, :only_error, false)
-
-    {traces, nr_of_omitted} =
-      if only_error do
-        nested_errors = Enum.filter(traces, &Babel.Trace.error?/1)
-
-        {
-          nested_errors,
-          length(traces) - length(nested_errors)
-        }
-      else
-        {traces, 0}
-      end
+    {depth, opts} = decrement_depth(opts)
+    {traces, nr_of_omitted} = omit_traces_by_depth(traces, depth)
 
     traces
     |> Enum.map(fn trace ->
@@ -289,6 +284,40 @@ defimpl Inspect, for: Babel.Trace do
     |> summarize_omissions(nr_of_omitted)
     |> Enum.map(&concat("| ", &1))
   end
+
+  defp decrement_depth(opts) do
+    depth = opts.custom_options[:depth]
+
+    {
+      depth,
+      case depth do
+        :error -> opts
+        :infinity -> opts
+        depth when is_integer(depth) -> put_in(opts.custom_options[:depth], max(depth - 1, 0))
+      end
+    }
+  end
+
+  defp omit_traces_by_depth(traces, :error) do
+    # Omit non-error traces
+    {error_traces, nr_of_omitted} =
+      Enum.reduce(traces, {[], 0}, fn trace, {errors, nr_of_omitted} ->
+        if Babel.Trace.error?(trace) do
+          {[trace | errors], nr_of_omitted}
+        else
+          {errors, nr_of_omitted + deep_count(trace)}
+        end
+      end)
+
+    {Enum.reverse(error_traces), nr_of_omitted}
+  end
+
+  defp omit_traces_by_depth(traces, :infinity), do: {traces, 0}
+  defp omit_traces_by_depth(traces, depth) when depth > 0, do: {traces, 0}
+  defp omit_traces_by_depth(traces, 0), do: {[], deep_count(traces)}
+
+  defp deep_count(traces) when is_list(traces), do: Enum.reduce(traces, 0, &(deep_count(&1) + &2))
+  defp deep_count(%Babel.Trace{} = trace), do: Babel.Trace.reduce(trace, 0, fn _, c -> c + 1 end)
 
   defp input(%{input: input}, opts), do: input(input, opts)
 
@@ -313,5 +342,5 @@ defimpl Inspect, for: Babel.Trace do
   end
 
   defp summarize_omissions(lines, 0), do: lines
-  defp summarize_omissions(lines, n), do: ["", "... OK traces omitted (#{n}) ..." | lines]
+  defp summarize_omissions(lines, n), do: ["", "... traces omitted (#{n}) ..." | lines]
 end
