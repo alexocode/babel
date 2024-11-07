@@ -227,7 +227,7 @@ defmodule Babel.InspectTest do
             |> Babel.chain(
               :nested_pipeline
               |> Babel.begin()
-              |> Babel.call(Function, :identity)
+              |> Babel.chain(Babel.identity())
             ),
           atom_key2: Babel.fetch("key2")
         })
@@ -256,7 +256,7 @@ defmodule Babel.InspectTest do
           ~s'  | |=< #{inspect(data)}',
           ~s'  | |=> %{"key1" => :value1, "key2" => :value2}',
           ~s'  | ',
-          ~s'  | Babel.into(%{atom_key1: :cool_transform |> Babel.begin() |> Babel.fetch("key1") |> Babel.call(Atom, :to_string) |> Babel.chain(:nested_pipeline |> Babel.begin() |> Babel.call(Function, :identity)), atom_key2: Babel.fetch("key2")})',
+          ~s'  | Babel.into(%{atom_key1: :cool_transform |> Babel.begin() |> Babel.fetch("key1") |> Babel.call(Atom, :to_string) |> Babel.chain(:nested_pipeline |> Babel.begin() |> Babel.chain(Babel.identity())), atom_key2: Babel.fetch("key2")})',
           ~s'  | |=< %{"key1" => :value1, "key2" => :value2}',
           ~s'  | | ',
           ~s'  | | ... traces omitted (6) ...',
@@ -282,7 +282,7 @@ defmodule Babel.InspectTest do
           ~s'  | |=< #{inspect(data)}',
           ~s'  | |=> %{"key1" => :value1, "key2" => :value2}',
           ~s'  | ',
-          ~s'  | Babel.into(%{atom_key1: :cool_transform |> Babel.begin() |> Babel.fetch("key1") |> Babel.call(Atom, :to_string) |> Babel.chain(:nested_pipeline |> Babel.begin() |> Babel.call(Function, :identity)), atom_key2: Babel.fetch("key2")})',
+          ~s'  | Babel.into(%{atom_key1: :cool_transform |> Babel.begin() |> Babel.fetch("key1") |> Babel.call(Atom, :to_string) |> Babel.chain(:nested_pipeline |> Babel.begin() |> Babel.chain(Babel.identity())), atom_key2: Babel.fetch("key2")})',
           ~s'  | |=< %{"key1" => :value1, "key2" => :value2}',
           ~s'  | | ',
           ~s'  | | Babel.Pipeline<:cool_transform>',
@@ -317,7 +317,7 @@ defmodule Babel.InspectTest do
           ~s'  | |=< #{inspect(data)}',
           ~s'  | |=> %{"key1" => :value1, "key2" => :value2}',
           ~s'  | ',
-          ~s'  | Babel.into(%{atom_key1: :cool_transform |> Babel.begin() |> Babel.fetch("key1") |> Babel.call(Atom, :to_string) |> Babel.chain(:nested_pipeline |> Babel.begin() |> Babel.call(Function, :identity)), atom_key2: Babel.fetch("key2")})',
+          ~s'  | Babel.into(%{atom_key1: :cool_transform |> Babel.begin() |> Babel.fetch("key1") |> Babel.call(Atom, :to_string) |> Babel.chain(:nested_pipeline |> Babel.begin() |> Babel.chain(Babel.identity())), atom_key2: Babel.fetch("key2")})',
           ~s'  | |=< %{"key1" => :value1, "key2" => :value2}',
           ~s'  | | ',
           ~s'  | | Babel.Pipeline<:cool_transform>',
@@ -334,7 +334,7 @@ defmodule Babel.InspectTest do
           ~s'  | | | Babel.Pipeline<:nested_pipeline>',
           ~s'  | | | |=< "value1"',
           ~s'  | | | | ',
-          ~s'  | | | | Babel.call(Function, :identity)',
+          ~s'  | | | | Babel.identity()',
           ~s'  | | | | |=< "value1"',
           ~s'  | | | | |=> "value1"',
           ~s'  | | | | ',
