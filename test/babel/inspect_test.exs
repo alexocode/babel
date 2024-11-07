@@ -354,7 +354,7 @@ defmodule Babel.InspectTest do
       )
     end
 
-    test "renders nested error traces if the root trace is an error" do
+    test "renders nested error traces if `depth` is `:error`" do
       pipeline =
         Babel.begin()
         |> Babel.fetch(["foo", 0, "bar"])
@@ -382,6 +382,23 @@ defmodule Babel.InspectTest do
           ~s'  Babel.Pipeline<>',
           ~s'  | ',
           ~s'  | ... traces omitted (4) ...',
+          ~s'  | ',
+          ~s'  |=> {:error, [not_found: "key2"]}',
+          ~s'}'
+        ]
+      )
+
+      assert_inspects_as(
+        trace,
+        [custom_options: [depth: :error]],
+        [
+          ~s'Babel.Trace<ERROR>{',
+          ~s'  data =',
+          ~s'    #{i(data, indent: 4)}',
+          ~s'  ',
+          ~s'  Babel.Pipeline<>',
+          ~s'  | ',
+          ~s'  | ... traces omitted (1) ...',
           ~s'  | ',
           ~s'  | Babel.into(%{atom_key1: Babel.fetch("key1"), atom_key2: Babel.fetch("key2")})',
           ~s'  | |=< %{"key1" => :value1, "key3" => :value3}',
