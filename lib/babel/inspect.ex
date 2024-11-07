@@ -325,5 +325,5 @@ defimpl Inspect, for: Babel.Trace do
   end
 
   defp summarize_omissions(lines, 0), do: lines
-  defp summarize_omissions(lines, n), do: ["", "... OK traces omitted (#{n}) ..." | lines]
+  defp summarize_omissions(lines, n), do: ["", "... traces omitted (#{n}) ..." | lines]
 end
