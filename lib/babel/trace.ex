@@ -180,4 +180,10 @@ defmodule Babel.Trace do
   def reduce(%__MODULE__{} = trace, acc, fun) do
     Enum.reduce(trace.nested, fun.(trace, acc), &reduce(&1, &2, fun))
   end
+
+  @doc "Shortcut to `inspect(trace, custom_options: opts)."
+  @spec inspect(t, opts :: [depth: :infinity | non_neg_integer]) :: String.t()
+  def inspect(%__MODULE__{} = trace, opts \\ []) do
+    Kernel.inspect(trace, custom_options: opts)
+  end
 end
