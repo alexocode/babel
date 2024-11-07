@@ -162,4 +162,22 @@ defmodule Babel.Trace do
   end
 
   def matches_spec?(_babel, _spec), do: false
+
+  @doc """
+  Reduces over the current trace and all its nested traces.
+
+  ## Examples
+
+      iex> pipeline = Babel.fetch("list") |> Babel.map(Babel.into(%{some_key: Babel.fetch("some key")}))
+      iex> data = %{"list" => [%{"some key" => "value1"}, %{"some key" => "value2"}]}
+      iex> trace = Babel.trace(pipeline, data)
+      iex> Babel.Trace.reduce(trace, 0, fn _trace, count -> count + 1 end)
+      7
+  """
+  @spec reduce(t, accumulator, reducer) :: accumulator
+        when accumulator: any,
+             reducer: (t, accumulator -> accumulator)
+  def reduce(%__MODULE__{} = trace, acc, fun) do
+    Enum.reduce(trace.nested, fun.(trace, acc), &reduce(&1, &2, fun))
+  end
 end
