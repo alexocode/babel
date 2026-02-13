@@ -153,6 +153,19 @@ defmodule Babel.Pipeline do
   end
 
   defimpl Applicable do
-    defdelegate apply(pipeline, data), to: Babel.Pipeline
+    def apply(pipeline, context) do
+      trace_or_result =
+        try do
+          Babel.Pipeline.apply(pipeline, context)
+        rescue
+          error in [Babel.Error] -> error.trace
+          other -> {:error, other}
+        end
+
+      case trace_or_result do
+        %Babel.Trace{} = trace -> trace
+        result -> Babel.Trace.new(pipeline, context, result)
+      end
+    end
   end
 end

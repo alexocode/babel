@@ -592,13 +592,22 @@ defmodule Babel do
   @doc "See `then/3`."
   @spec then((input -> Step.result_or_trace(output))) :: t(output)
         when input: any, output: any
-  defdelegate then(function), to: Builtin.Then, as: :new
+  @spec then(Step.t(input, output)) :: Step.t(input, output)
+        when input: any, output: any
+  def then(function) when is_function(function, 1), do: Builtin.Then.new(function)
+  def then(%_{} = step), do: step
 
   @doc "See `then/3`."
   @spec then(t(input), (input -> Step.result_or_trace(output))) :: t(output)
         when input: data, output: term
-  def then(babel, function) when is_babel(babel) do
+  @spec then(t(input), Step.t(input, output)) :: t(output)
+        when input: data, output: term
+  def then(babel, function) when is_babel(babel) and is_function(function, 1) do
     chain(babel, then(function))
+  end
+
+  def then(babel, %_{} = step) when is_babel(babel) do
+    chain(babel, step)
   end
 
   @spec then(name, (input -> Step.result_or_trace(output))) :: t(output)

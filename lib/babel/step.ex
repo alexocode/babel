@@ -45,12 +45,17 @@ defmodule Babel.Step do
     quote generated: true, location: :keep do
       defimpl Babel.Applicable do
         def apply(step, context) do
-          case unquote(module).apply(step, context) do
-            %Babel.Trace{} = trace ->
-              trace
+          trace_or_result =
+            try do
+              unquote(module).apply(step, context)
+            rescue
+              error in [Babel.Error] -> error.trace
+              other -> {:error, other}
+            end
 
-            result ->
-              Babel.Trace.new(step, context, result)
+          case trace_or_result do
+            %Babel.Trace{} = trace -> trace
+            result -> Babel.Trace.new(step, context, result)
           end
         end
       end

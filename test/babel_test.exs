@@ -100,6 +100,9 @@ defmodule BabelTest do
       assert Babel.then(function) == Builtin.Then.new(function)
       assert Babel.then(:my_name, function) == Builtin.Then.new(:my_name, function)
 
+      step = unique_step()
+      assert Babel.then(step) == step
+
       applicables = [Babel.fail(:some_reason), unique_step()]
       assert Babel.try(applicables) == Builtin.Try.new(applicables)
       assert Babel.try(applicables, :default) == Builtin.Try.new(applicables, :default)
@@ -122,6 +125,7 @@ defmodule BabelTest do
       assert composes(Babel, :map, [unique_step()])
       assert composes(Babel, :match, [fn _ -> unique_step() end])
       assert composes(Babel, :then, [fn _ -> :do_the_thing end])
+      assert composes(Babel, :then, [unique_step()])
       assert composes(Babel, :then, [:my_name, fn _ -> :do_the_thing end])
       assert composes(Babel, :try, [[Babel.fail(:some_reason), unique_step()]])
       assert composes(Babel, :try, [[Babel.fail(:some_reason), unique_step()], :default])

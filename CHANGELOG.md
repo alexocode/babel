@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 ### Removed
 
+## [1.3.0]
+### Added
+- Add exception handling to the `Applicable` protocol impl and `Pipeline`'s `Applicable` impl, creating proper error traces instead of crashing the caller [@alexocode]
+- Add `Babel.then/1` and `Babel.then/2` overloads that accept a `Babel.Step` struct for direct composition [@alexocode]
+
+### Fixed
+- Fix deprecation warning for range pattern matching without step in test factory [@alexocode]
+- Remove unrelated `Mix.Tasks.GhostCompare` that was accidentally added to the project [@alexocode]
+
 ## [1.2.0]
 ### Added
 - Add a custom `depth` inspect option for `Babel.Trace`s which controls how many nested traces should be rendered [@alexocode]
@@ -30,7 +39,8 @@ Improve docs and gracefully handle `nil` when fetching paths.
 ## [1.0.0]
 First release of Babel with a stable API.
 
-[Unreleased]: https://github.com/alexocode/babel/compare/v1.2.0...main
+[Unreleased]: https://github.com/alexocode/babel/compare/v1.3.0...main
+[1.3.0]: https://github.com/alexocode/babel/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/alexocode/babel/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/alexocode/babel/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/alexocode/babel/compare/v1.0.0...v1.0.1

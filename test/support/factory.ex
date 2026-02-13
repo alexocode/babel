@@ -46,7 +46,7 @@ defmodule Babel.Test.Factory do
     )
   end
 
-  defp random_nr_of(generator, min..max = range) when min <= max do
+  defp random_nr_of(generator, min..max//_ = range) when min <= max do
     generator
     |> Stream.repeatedly()
     |> Enum.take(Enum.random(range))
