@@ -168,6 +168,33 @@ defmodule BabelTest do
     end
   end
 
+  describe "then/1 with a custom Babel.Step" do
+    test "executes the custom step and returns its result" do
+      step = Babel.then(Babel.Test.ContextStep.new(&Map.get(&1.data, :value)))
+      data = %{value: :custom_step_result}
+
+      assert Babel.apply(step, data) == {:ok, :custom_step_result}
+    end
+
+    test "composes a custom step into a pipeline" do
+      custom = Babel.Test.ContextStep.new(fn context -> context.data * 2 end)
+
+      pipeline =
+        Babel.begin()
+        |> Babel.then(fn _ -> 21 end)
+        |> Babel.then(custom)
+
+      assert {:ok, 42} = Babel.apply(pipeline, :ignored)
+    end
+
+    test "propagates errors from a custom step" do
+      custom = Babel.Test.ContextStep.new(fn _context -> {:error, :custom_failure} end)
+      step = Babel.then(custom)
+
+      assert {:error, %Babel.Error{reason: :custom_failure}} = Babel.apply(step, %{})
+    end
+  end
+
   describe "apply/2" do
     test "returns {:ok, <result>} when everything is fine" do
       step = Babel.identity()
