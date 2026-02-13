@@ -13,6 +13,7 @@ Data transformations made easy.
 - [Installation](#installation)
 - [Usage](#usage)
   - [Error Reporting](#error-reporting)
+  - [Telemetry](#telemetry)
 - [Contributing](#contributing)
 
 ## Installation
@@ -164,6 +165,66 @@ Babel.Trace<ERROR>{
 Rendering of a `Babel.Trace` is done through a custom `Inspect` implementation.
 
 You have to this information everywhere: in the `Babel.Error` message, in `iex`, and whenever you `inspect` a `Babel.Error` or `Babel.Trace`.
+
+### Telemetry
+
+Babel integrates with [`:telemetry`](https://hex.pm/packages/telemetry) to emit span events for every step and pipeline execution. `:telemetry` is an **optional dependency** — when it's not installed, the telemetry calls are no-ops and Babel remains dependency-free.
+
+To enable telemetry, add `:telemetry` to your dependencies:
+
+```elixir
+def deps do
+  [
+    {:babel, "~> 1.0"},
+    {:telemetry, "~> 0.4 or ~> 1.0"}
+  ]
+end
+```
+
+#### Events
+
+Babel emits the following [`telemetry:span/3`](https://hexdocs.pm/telemetry/telemetry.html#span/3) events:
+
+| Event | Description |
+|-------|-------------|
+| `[:babel, :step, :start]` | Emitted when a step begins execution |
+| `[:babel, :step, :stop]` | Emitted when a step completes |
+| `[:babel, :step, :exception]` | Emitted when a step raises an unrescued exception |
+| `[:babel, :pipeline, :start]` | Emitted when a pipeline begins execution |
+| `[:babel, :pipeline, :stop]` | Emitted when a pipeline completes |
+| `[:babel, :pipeline, :exception]` | Emitted when a pipeline raises an unrescued exception |
+
+#### Metadata
+
+**Start event metadata:**
+
+| Key | Value |
+|-----|-------|
+| `babel` | The step or pipeline struct being executed |
+| `input` | The `Babel.Context` passed as input |
+
+**Stop event metadata:**
+
+| Key | Value |
+|-----|-------|
+| `babel` | The step or pipeline struct that was executed |
+| `input` | The `Babel.Context` that was passed as input |
+| `trace` | The resulting `Babel.Trace` |
+| `result` | `:ok` or `:error` |
+
+#### Example
+
+```elixir
+:telemetry.attach(
+  "babel-logger",
+  [:babel, :pipeline, :stop],
+  fn _event, %{duration: duration}, %{babel: babel, result: result}, _config ->
+    duration_ms = System.convert_time_unit(duration, :native, :millisecond)
+    IO.puts("[Babel] #{inspect(babel)} completed in #{duration_ms}ms (#{result})")
+  end,
+  nil
+)
+```
 
 ## Contributing
 

@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Add telemetry spans (`[:babel, :step]` and `[:babel, :pipeline]`) to step and pipeline execution via optional `:telemetry` dependency [@alexocode]
 ### Changed
 ### Fixed
 ### Removed
