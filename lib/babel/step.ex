@@ -45,18 +45,27 @@ defmodule Babel.Step do
     quote generated: true, location: :keep do
       defimpl Babel.Applicable do
         def apply(step, context) do
-          trace_or_result =
-            try do
-              unquote(module).apply(step, context)
-            rescue
-              error in [Babel.Error] -> error.trace
-              other -> {:error, other}
-            end
+          Babel.Telemetry.span(
+            [:babel, :step],
+            %{babel: step, input: context},
+            fn ->
+              trace_or_result =
+                try do
+                  unquote(module).apply(step, context)
+                rescue
+                  error in [Babel.Error] -> error.trace
+                  other -> {:error, other}
+                end
 
-          case trace_or_result do
-            %Babel.Trace{} = trace -> trace
-            result -> Babel.Trace.new(step, context, result)
-          end
+              trace =
+                case trace_or_result do
+                  %Babel.Trace{} = trace -> trace
+                  result -> Babel.Trace.new(step, context, result)
+                end
+
+              {trace, %{babel: step, input: context, trace: trace, result: if(Babel.Trace.ok?(trace), do: :ok, else: :error)}}
+            end
+          )
         end
       end
     end

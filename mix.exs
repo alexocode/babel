@@ -64,6 +64,9 @@ defmodule MyPackage.MixProject do
       {:dialyxir, ">= 1.0.0", only: :dev, runtime: false},
       {:ex_doc, "~> 0.32", only: :dev, runtime: false},
 
+      # Optional
+      {:telemetry, "~> 0.4 or ~> 1.0", optional: true},
+
       # Test
       {:excoveralls, "~> 0.18", only: :test},
       {:mox, "~> 1.0", only: :test},

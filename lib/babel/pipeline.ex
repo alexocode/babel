@@ -154,18 +154,27 @@ defmodule Babel.Pipeline do
 
   defimpl Applicable do
     def apply(pipeline, context) do
-      trace_or_result =
-        try do
-          Babel.Pipeline.apply(pipeline, context)
-        rescue
-          error in [Babel.Error] -> error.trace
-          other -> {:error, other}
-        end
+      Babel.Telemetry.span(
+        [:babel, :pipeline],
+        %{babel: pipeline, input: context},
+        fn ->
+          trace_or_result =
+            try do
+              Babel.Pipeline.apply(pipeline, context)
+            rescue
+              error in [Babel.Error] -> error.trace
+              other -> {:error, other}
+            end
 
-      case trace_or_result do
-        %Babel.Trace{} = trace -> trace
-        result -> Babel.Trace.new(pipeline, context, result)
-      end
+          trace =
+            case trace_or_result do
+              %Babel.Trace{} = trace -> trace
+              result -> Babel.Trace.new(pipeline, context, result)
+            end
+
+          {trace, %{babel: pipeline, input: context, trace: trace, result: if(Babel.Trace.ok?(trace), do: :ok, else: :error)}}
+        end
+      )
     end
   end
 end
