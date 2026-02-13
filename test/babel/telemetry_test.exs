@@ -1,6 +1,5 @@
 defmodule Babel.TelemetryTest do
   use ExUnit.Case, async: false
-  @moduletag :telemetry
 
   import Babel.Test.Factory
 
