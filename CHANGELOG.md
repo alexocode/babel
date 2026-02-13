@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 ### Removed
 
+## [1.4.1]
+### Fixed
+- Fix `mix format` compliance for telemetry span metadata maps [@alexocode]
+- Fix range pattern match in test factory for Elixir < 1.12 compatibility [@alexocode]
+- Start `:telemetry` application in test helper for environments where optional deps aren't auto-started [@alexocode]
+- Drop Elixir 1.14/1.15 + OTP 24 CI matrix entries incompatible with telemetry 1.3.0 [@alexocode]
+
 ## [1.4.0]
 ### Added
 - Add telemetry spans (`[:babel, :step]` and `[:babel, :pipeline]`) to step and pipeline execution via optional `:telemetry` dependency [@alexocode]
@@ -43,7 +50,8 @@ Improve docs and gracefully handle `nil` when fetching paths.
 ## [1.0.0]
 First release of Babel with a stable API.
 
-[Unreleased]: https://github.com/alexocode/babel/compare/v1.4.0...main
+[Unreleased]: https://github.com/alexocode/babel/compare/v1.4.1...main
+[1.4.1]: https://github.com/alexocode/babel/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/alexocode/babel/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/alexocode/babel/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/alexocode/babel/compare/v1.1.0...v1.2.0
