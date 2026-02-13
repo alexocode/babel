@@ -172,7 +172,13 @@ defmodule Babel.Pipeline do
               result -> Babel.Trace.new(pipeline, context, result)
             end
 
-          {trace, %{babel: pipeline, input: context, trace: trace, result: if(Babel.Trace.ok?(trace), do: :ok, else: :error)}}
+          {trace,
+           %{
+             babel: pipeline,
+             input: context,
+             trace: trace,
+             result: if(Babel.Trace.ok?(trace), do: :ok, else: :error)
+           }}
         end
       )
     end

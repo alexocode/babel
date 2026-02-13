@@ -63,7 +63,13 @@ defmodule Babel.Step do
                   result -> Babel.Trace.new(step, context, result)
                 end
 
-              {trace, %{babel: step, input: context, trace: trace, result: if(Babel.Trace.ok?(trace), do: :ok, else: :error)}}
+              {trace,
+               %{
+                 babel: step,
+                 input: context,
+                 trace: trace,
+                 result: if(Babel.Trace.ok?(trace), do: :ok, else: :error)
+               }}
             end
           )
         end
