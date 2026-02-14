@@ -12,6 +12,7 @@ Data transformations made easy.
 - [Table of Contents](#table-of-contents)
 - [Installation](#installation)
 - [Usage](#usage)
+  - [Private Context](#private-context)
   - [Error Reporting](#error-reporting)
   - [Telemetry](#telemetry)
 - [Contributing](#contributing)
@@ -64,6 +65,42 @@ Babel.apply(pipeline, data)
    %{atom_key: :value3}
 ]}
 ```
+
+### Private Context
+
+The `Babel.Context` includes a `private` field for passing metadata through your pipeline without affecting the transformed data. This is useful for session IDs, authentication tokens, request metadata, or any context that steps need to share.
+
+Steps can update the private context by returning a three-tuple `{:ok, data, private}`:
+
+```elixir
+# Step 1: Set session info in private context
+authenticate = Babel.then(fn credentials ->
+  # Validate credentials...
+  session = %{user_id: 123, session_id: "abc-xyz"}
+  {:ok, credentials, session_id: session.session_id, user_id: session.user_id}
+end)
+
+# Step 2: Access private context in subsequent step
+check_permissions = Babel.then(fn data ->
+  # Custom step implementation can access the full context
+  # using Babel.Test.ContextStep pattern or custom Step behavior
+  {:ok, data}
+end)
+
+pipeline = Babel.chain(authenticate, check_permissions)
+```
+
+The private context accepts either a map or keyword list:
+
+```elixir
+# Using map
+{:ok, data, %{session_id: "abc", user_id: 123}}
+
+# Using keyword list (converted to map internally)
+{:ok, data, session_id: "abc", user_id: 123}
+```
+
+Private values from multiple steps are merged together, with later values overwriting earlier ones for the same keys. The private context is passed to each step via `Babel.Context`, but is not included in the final `Babel.apply/2` result — it remains internal pipeline state.
 
 ### Error Reporting
 

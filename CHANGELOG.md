@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Add `private` field to `Babel.Context` for passing metadata through pipelines without affecting transformed data [@systemic-engineer]
+- Add support for steps returning `{:ok, data, private}` tuple to update both data and private context (accepts map or keyword list) [@systemic-engineer]
 ### Changed
 ### Fixed
 ### Removed
@@ -60,3 +62,4 @@ First release of Babel with a stable API.
 [1.0.0]: https://github.com/alexocode/babel/compare/176373951df796ded497645fc36409090c489be1...v1.0.0
 
 [@alexocode]: https://github.com/alexocode
+[@systemic-engineer]: https://github.com/systemic-engineer

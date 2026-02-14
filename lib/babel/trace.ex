@@ -83,6 +83,7 @@ defmodule Babel.Trace do
     case output do
       :error -> {:error, :unknown}
       {:error, reason} -> {:error, reason}
+      {:ok, value, private} when is_map(private) or is_list(private) -> {:ok, value}
       {:ok, value} -> {:ok, value}
       value -> {:ok, value}
     end

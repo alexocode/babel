@@ -57,36 +57,57 @@ defmodule Babel.Pipeline do
   end
 
   @spec apply(t(input, output), Context.t(input)) :: Trace.t(output) when input: any, output: any
-  def apply(%__MODULE__{} = pipeline, %Context{data: data, history: history}) do
-    {reversed_traces, _, result} =
+  def apply(%__MODULE__{} = pipeline, %Context{data: data, history: history, private: private}) do
+    {reversed_traces, _, _, result} =
       pipeline.reversed_steps
       |> Enum.reverse()
       |> Enum.reduce_while(
-        {[], history, {:ok, data}},
-        fn applicable, {traces, history, {:ok, data}} ->
-          trace = Applicable.apply(applicable, Context.new(data, history))
+        {[], history, private, {:ok, data}},
+        fn applicable, {traces, history, private, {:ok, data}} ->
+          trace = Applicable.apply(applicable, Context.new(data, history, private))
           traces = [trace | traces]
           history = [trace | history]
-          result = Trace.result(trace)
+          {result, updated_private} = extract_result_and_private(trace, private)
 
           cond do
             Trace.ok?(trace) ->
-              {:cont, {traces, history, result}}
+              {:cont, {traces, history, updated_private, result}}
 
             is_nil(pipeline.on_error) ->
-              {:halt, {traces, history, result}}
+              {:halt, {traces, history, updated_private, result}}
 
             true ->
               on_error_trace = OnError.recover(pipeline.on_error, Error.new(trace))
               traces = [on_error_trace | traces]
               history = [on_error_trace | history]
+              {error_result, error_private} = extract_result_and_private(on_error_trace, updated_private)
 
-              {:halt, {traces, history, Trace.result(on_error_trace)}}
+              {:halt, {traces, history, error_private, error_result}}
           end
         end
       )
 
     Trace.new(pipeline, data, result, Enum.reverse(reversed_traces))
+  end
+
+  # Extract result and optionally updated private from a trace
+  defp extract_result_and_private(%Trace{output: output}, current_private) do
+    case output do
+      {:ok, data, new_private} when is_map(new_private) ->
+        {{:ok, data}, Map.merge(current_private, new_private)}
+
+      {:ok, data, new_private} when is_list(new_private) ->
+        {{:ok, data}, Map.merge(current_private, Map.new(new_private))}
+
+      {:ok, data} ->
+        {{:ok, data}, current_private}
+
+      {:error, _} = error ->
+        {error, current_private}
+
+      other ->
+        {{:ok, other}, current_private}
+    end
   end
 
   @doc """
